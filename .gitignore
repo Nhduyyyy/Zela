@@ -1,0 +1,39 @@
+# Thư mục build output của .NET
+bin/
+obj/
+
+# Rider IDE
+.idea/
+*.sln.iml
+
+# Visual Studio
+.vs/
+*.user
+*.suo
+
+# ASP.NET Core MVC
+/wwwroot/lib/
+/publish/
+/appsettings.*.json
+
+# EF Core Migrations
+Migrations/
+
+# NuGet
+*.nupkg
+packages/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# macOS
+.DS_Store
+
+# Node/npm (nếu có)
+node_modules/
+npm-debug.log*
+
+# Log & temp
+*.log
+*.tmp
