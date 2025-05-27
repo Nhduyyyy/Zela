@@ -1,0 +1,123 @@
+@model Zela.Models.LoginModel
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
+
+@{
+    Layout = null;
+    ViewData["Title"] = "Đăng nhập";
+    var currentPath = HttpContextAccessor.HttpContext.Request.Path.ToString();
+    var secondPart = currentPath.Split('/').Last().ToLower();
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Chatzy</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+    <style>
+        body {
+            background-color: #f9f9f9;
+            font-family: 'Segoe UI', sans-serif;
+        }
+        .login-wrapper {
+            max-width: 400px;
+            margin: auto;
+            margin-top: 80px;
+        }
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            padding: 2rem;
+        }
+        .btn-social {
+            width: 100%;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+        .btn-google { background-color: #fff; border: 1px solid #ccc; color: #444; }
+        .btn-github { background-color: #000; color: #fff; }
+        .btn-microsoft { background-color: #2F2F2F; color: #fff; }
+        .btn-facebook { background-color: #1877f2; color: #fff; }
+        .divider {
+            text-align: center;
+            margin: 1rem 0;
+            position: relative;
+        }
+        .divider::before, .divider::after {
+            content: "";
+            height: 1px;
+            width: 45%;
+            background: #ddd;
+            position: absolute;
+            top: 50%;
+        }
+        .divider::before { left: 0; }
+        .divider::after { right: 0; }
+        .divider span {
+            padding: 0 1rem;
+            background: #fff;
+            color: #888;
+            position: relative;
+            z-index: 1;
+        }
+        .form-control {
+            border-radius: 6px;
+        }
+        .btn-login {
+            background-color: #000;
+            color: #fff;
+        }
+        .magic-tab {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 1rem;
+        }
+        .magic-tab input {
+            width: 48%;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-wrapper">
+        <div class="card">
+            <h4 class="text-center mb-4">Sign in to your account</h4>
+            <p class="text-center"><a href="/signup">Don't have an account? Sign up</a></p>
+
+            <a href="/externallogin/google" class="btn btn-social btn-google"><i class="fab fa-google me-2"></i>Sign in with Google</a>
+            <a href="/externallogin/github" class="btn btn-social btn-github"><i class="fab fa-github me-2"></i>Sign in with GitHub</a>
+            <a href="/externallogin/microsoft" class="btn btn-social btn-microsoft"><i class="fab fa-microsoft me-2"></i>Sign in with Microsoft</a>
+            <a href="/externallogin/facebook" class="btn btn-social btn-facebook"><i class="fab fa-facebook-f me-2"></i>Sign in with Facebook</a>
+
+            <div class="divider"><span>Or continue with</span></div>
+
+            <form asp-action="Login" method="post">
+                <div class="magic-tab">
+                    <input type="radio" id="magic" name="authMethod" checked>
+                    <label for="magic">Magic Link</label>
+                    <input type="radio" id="password" name="authMethod">
+                    <label for="password">Password</label>
+                </div>
+
+                <div class="mb-3">
+                    <input type="email" asp-for="Username" class="form-control" placeholder="Email" required />
+                    <span asp-validation-for="Username" class="text-danger"></span>
+                </div>
+
+                <!-- Password Field (hidden or shown with JS later based on toggle) -->
+                <div class="mb-3">
+                    <input type="password" asp-for="Password" class="form-control" placeholder="Password (optional)" />
+                    <span asp-validation-for="Password" class="text-danger"></span>
+                </div>
+
+                <button type="submit" class="btn btn-login w-100">Send magic link</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
