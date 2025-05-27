@@ -1,0 +1,113 @@
+body.login-body {
+    background-color: #FAFAFA;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+.zela-logo {
+    font-family: 'Orbitron', sans-serif; /* font mạnh mẽ, tech style */
+    font-size: 64px;
+    font-weight: 900;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    display: inline-block;
+    background: linear-gradient(135deg, #03A4ED, #FE3F40);
+    -webkit-background-clip: text;
+    color: transparent;
+    position: relative;
+    transition: transform 0.3s ease-in-out;
+    cursor: pointer;
+}
+
+/* Tách riêng màu cho từng phần */
+.z-letter {
+    color: #03A4ED;
+    text-shadow: 2px 2px 5px rgba(3, 164, 237, 0.6);
+}
+
+.ela-letters {
+    color: #FE3F40;
+    text-shadow: 2px 2px 5px rgba(254, 63, 64, 0.6);
+}
+
+/* Hover effect */
+.zela-logo:hover {
+    transform: scale(1.08);
+    text-shadow: 4px 4px 15px rgba(0,0,0,0.3);
+}
+
+/* Optional glowing animation */
+@keyframes glow {
+    0% {
+        text-shadow: 0 0 5px #03A4ED, 0 0 10px #03A4ED, 0 0 15px #FE3F40;
+    }
+    50% {
+        text-shadow: 0 0 10px #FE3F40, 0 0 20px #FE3F40, 0 0 30px #03A4ED;
+    }
+    100% {
+        text-shadow: 0 0 5px #03A4ED, 0 0 10px #03A4ED, 0 0 15px #FE3F40;
+    }
+}
+
+.zela-logo:hover .z-letter,
+.zela-logo:hover .ela-letters {
+    animation: glow 1.5s infinite alternate;
+}
+
+
+.card.login-card {
+    max-width: 420px;
+    border-radius: 16px;
+    background: #fff;
+}
+
+.tab-switch .btn-tab {
+    width: 100px;
+    border-radius: 999px;
+    border: none;
+    background-color: #e0f0eb;
+    color: #2c3e50;
+    margin: 0 5px;
+    transition: 0.3s;
+}
+
+.tab-switch .btn-tab.active {
+    background-color: #00b894;
+    color: white;
+}
+
+.btn-social {
+    width: 45px;
+    height: 45px;
+    line-height: 45px;
+    border-radius: 50%;
+    color: white;
+    font-size: 18px;
+    margin: 0 6px;
+    display: inline-block;
+    text-align: center;
+}
+.btn-login {
+    background-color: #FE3F40;
+    color: white;
+    font-weight: 600;
+    font-size: 16px;
+    padding: 12px;
+    border: none;
+    border-radius: 10px;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 4px 12px rgba(254, 63, 64, 0.4);
+}
+
+.btn-login:hover {
+    background-color: #e03233;
+    transform: scale(1.02);
+}
+
+.btn-login:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(254, 63, 64, 0.5);
+}
+
+.btn-social.google { background-color: #db4437; }
+.btn-social.twitter { background-color: #1da1f2; }
+.btn-social.facebook { background-color: #3b5998; }
