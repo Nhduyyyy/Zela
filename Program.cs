@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore;
 using Zela.DbContext;
 
 var builder = WebApplication.CreateBuilder(args);
+
 // Đăng ký IHttpContextAccessor
 builder.Services.AddHttpContextAccessor();
+
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
