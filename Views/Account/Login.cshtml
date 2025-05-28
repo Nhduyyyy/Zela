@@ -1,0 +1,13 @@
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<div style="max-width: 400px; margin: 100px auto; padding: 32px; border: 1px solid #eee; border-radius: 12px; box-shadow: 0 4px 16px #eee;">
+    <h2 style="text-align: center; margin-bottom: 2rem;">Đăng nhập hệ thống</h2>
+    <form asp-controller="Account" asp-action="GoogleLogin" method="post" style="text-align:center">
+        <button type="submit" style="background:#4285F4;color:white;padding:12px 32px;border:none;border-radius:6px;font-size:18px">
+            <img src="https://developers.google.com/identity/images/g-logo.png" style="width:24px;vertical-align:middle;margin-right:10px" />
+            Đăng nhập bằng Google
+        </button>
+    </form>
+</div>
