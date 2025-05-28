@@ -9,4 +9,9 @@ public class MessengerController : Controller
     {
         return View();
     }
+    
+    public IActionResult chat_1()
+    {
+        return View();
+    }
 }

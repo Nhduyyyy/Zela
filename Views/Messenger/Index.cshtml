@@ -12,9 +12,6 @@
 
     <!-- Template core CSS -->
     <link href="~/css/template.min.css" rel="stylesheet">
-    <link href="~/css/template.dark.min.css" rel="stylesheet" media="(prefers-color-scheme: dark)">
-
-
 </head>
 <!-- Head -->
 
@@ -1014,7 +1011,7 @@
                             <!-- Chats -->
                             <nav class="nav d-block list-discussions-js mb-n6">
                                 <!-- Chat link -->
-                                <a class="text-reset nav-link p-0 mb-6" href="chat-1.html">
+                                <a class="text-reset nav-link p-0 mb-6" asp-controller="Messenger" asp-action="chat_1">
                                     <div class="card card-active-listener">
                                         <div class="card-body">
 
@@ -1028,7 +1025,8 @@
 
                                                 <div class="media-body overflow-hidden">
                                                     <div class="d-flex align-items-center mb-1">
-                                                        <h6 class="text-truncate mb-0 mr-auto">Kiệt cân mọi loại html/css</h6>
+                                                        <h6 class="text-truncate mb-0 mr-auto">Kiệt cân mọi loại
+                                                            html/css</h6>
                                                         <p class="small text-muted text-nowrap ml-4">10:42 am</p>
                                                     </div>
                                                     <div class="text-truncate">Anna Bridges: Hey, Maher! How are you?
@@ -1040,7 +1038,8 @@
                                         </div>
 
 
-                                        <div class="badge badge-circle badge-primary badge-border-light badge-top-right">
+                                        <div
+                                            class="badge badge-circle badge-primary badge-border-light badge-top-right">
                                             <span>3</span>
                                         </div>
 
