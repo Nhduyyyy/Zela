@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<h2>Dashboard cá nhân</h2>
+
+@if (ViewBag.FullName != null)
+{
+    <p>Xin chào, <b>@ViewBag.FullName</b></p>
+    <img src="@ViewBag.AvatarUrl" width="60" style="border-radius:50%" />
+}
+else
+{
+    <p>Bạn chưa đăng nhập!</p>
+}
