@@ -27,7 +27,7 @@ namespace Zela.Controllers
 
         // Khi bấm nút Google Login (gọi bằng form POST)
         [HttpPost]
-        public IActionResult GoogleLogin(string returnUrl = "/Dashboard/Index")
+        public IActionResult GoogleLogin(string returnUrl = "/Messenger/Index")
         {
             var properties = new AuthenticationProperties
             {
@@ -38,7 +38,7 @@ namespace Zela.Controllers
 
         // Google callback về đây
         [HttpGet]
-        public async Task<IActionResult> GoogleResponse(string returnUrl = "/Dashboard/Index")
+        public async Task<IActionResult> GoogleResponse(string returnUrl = "/Messenger/Index")
         {
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
