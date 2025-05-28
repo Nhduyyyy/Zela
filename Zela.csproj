@@ -22,6 +22,7 @@
 
     <ItemGroup>
       <_ContentIncludedByDefault Remove="Views\Account\Login.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Dashboard\Index.cshtml" />
     </ItemGroup>
 
 </Project>
