@@ -1,0 +1,74 @@
+@using Zela.ViewModels
+@model IEnumerable<Zela.ViewModels.UserWithFriendshipStatus>
+@{
+    ViewData["Title"] = "Tìm bạn mới";
+}
+
+<h2>@ViewData["Title"]</h2>
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger">@TempData["Error"]</div>
+}
+
+<table class="table table-striped mt-4">
+    <thead>
+        <tr>
+            <th>UserId</th>
+            <th>UserName</th>
+            <th>Trạng thái</th>
+            <th>Hành động</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var user in Model)
+        {
+            <tr>
+                <td>@user.UserId</td>
+                <td>@user.UserName</td>
+                <td>
+                    @switch (user.Role)
+                    {
+                        case FriendshipRole.None:
+                            @:<span class="text-muted">Chưa là bạn</span>
+                            break;
+                        case FriendshipRole.PendingSent:
+                            @:<span class="text-info">Đã gửi lời mời</span>
+                            break;
+                        case FriendshipRole.PendingReceived:
+                            @:<span class="text-warning">Có lời mời đến</span>
+                            break;
+                        case FriendshipRole.Accepted:
+                            @:<span class="text-success">Đã là bạn</span>
+                            break;
+                    }
+                </td>
+                <td>
+                    @switch (user.Role)
+                    {
+                        case FriendshipRole.None:
+                            <form asp-action="SendRequest" method="post" class="mb-0">
+                                <input type="hidden" name="userId2" value="@user.UserId" />
+                                <button type="submit" class="btn btn-sm btn-primary">Kết bạn</button>
+                            </form>
+                            break;
+                        case FriendshipRole.PendingSent:
+                            @:<span class="text-secondary">Đang chờ</span>
+                            break;
+                        case FriendshipRole.PendingReceived:
+                            @:<span class="text-secondary">Chờ phản hồi</span>
+                            break;
+                        case FriendshipRole.Accepted:
+                            <form asp-action="RemoveFriend" method="post" class="mb-0">
+                                <input type="hidden" name="friendId" value="@user.UserId" />
+                                <button type="submit" class="btn btn-sm btn-danger">Hủy bạn</button>
+                            </form>
+                            break;
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<a asp-action="Index" class="btn btn-secondary">Quay về</a>

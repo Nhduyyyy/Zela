@@ -8,6 +8,7 @@
 
     <ItemGroup>
       <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.16" />
+      <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.16">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -18,11 +19,6 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <_ContentIncludedByDefault Remove="Views\Account\Login.cshtml" />
-      <_ContentIncludedByDefault Remove="Views\Dashboard\Index.cshtml" />
     </ItemGroup>
 
 </Project>

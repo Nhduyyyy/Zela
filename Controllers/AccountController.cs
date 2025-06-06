@@ -27,7 +27,7 @@ namespace Zela.Controllers
 
         // Khi bấm nút Google Login (gọi bằng form POST)
         [HttpPost]
-        public IActionResult GoogleLogin(string returnUrl = "/Messenger/Index")
+        public IActionResult GoogleLogin(string returnUrl = "/Chat/Index")
         {
             var properties = new AuthenticationProperties
             {
@@ -38,7 +38,7 @@ namespace Zela.Controllers
 
         // Google callback về đây
         [HttpGet]
-        public async Task<IActionResult> GoogleResponse(string returnUrl = "/Messenger/Index")
+        public async Task<IActionResult> GoogleResponse(string returnUrl = "/Chat/Index")
         {
             var result = await HttpContext.AuthenticateAsync(CookieAuthenticationDefaults.AuthenticationScheme);
 
@@ -87,8 +87,16 @@ namespace Zela.Controllers
             HttpContext.Session.SetInt32("UserId", user.UserId);
             HttpContext.Session.SetString("FullName", user.FullName ?? "");
             HttpContext.Session.SetString("AvatarUrl", user.AvatarUrl ?? "");
+            
+            var claims = result.Principal.Claims.ToList();
+            claims.Add(new Claim("UserId", user.UserId.ToString()));
 
-            await HttpContext.SignInAsync(result.Principal);
+            var identity  = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+            
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal);
             return Redirect(returnUrl);
         }
         
