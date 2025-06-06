@@ -1,0 +1,13 @@
+@model List<Zela.ViewModels.MessageViewModel>
+@foreach (var msg in Model)
+{
+    <div class="message @(msg.IsMine ? "right" : "left")">
+        <img src="@msg.AvatarUrl" class="message-avatar" />
+        <span class="message-text">
+            @msg.Content
+        </span>
+        <span class="message-time">
+            @msg.SentAt.ToString("HH:mm")
+        </span>
+    </div>
+}
