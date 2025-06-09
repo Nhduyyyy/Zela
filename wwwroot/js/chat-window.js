@@ -63,3 +63,8 @@ function scrollToBottom() {
     let chatContent = $('.chat-content');
     chatContent.scrollTop(chatContent[0].scrollHeight);
 }
+
+$(document).on('click', '.btn-video-call', function() {
+    let peerId = $(this).data('peer');
+    window.location.href = '/VideoCall/Room?userId=' + peerId;
+});
