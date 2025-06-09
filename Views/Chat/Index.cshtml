@@ -4,11 +4,12 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/chat-window.css" />
+    <link rel="stylesheet" href="~/css/chat-window.css"/>
 }
 
 <section class="chat-window">
     <div class="friend-list">
+        @Html.Partial("_SidebarChat")
         <ul class="friend-items" id="friend-list">
             @foreach (var f in Model)
             {
@@ -23,9 +24,6 @@
                         <span class="friend-status @(f.IsOnline ? "online" : "offline")">
                             <i class="bi bi-circle-fill"></i>
                         </span>
-                        <button class="btn-video-call" title="Gọi video" data-peer="@f.UserId" style="background:none;border:none;cursor:pointer;">
-                            <i class="bi bi-camera-video" style="font-size:1.3em;color:#1e88e5;"></i>
-                        </button>
                     </div>
                 </li>
             }
@@ -34,22 +32,51 @@
 
     <div class="chat-panel">
         <div class="chat-header">
-            <div class="chat-title">
-                <h2 id="chat-friend-name">Chọn bạn để bắt đầu trò chuyện</h2>
+            <button class="mobile-menu-btn d-md-none">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <div class="chat-user-info">
+                @foreach (var f in Model)
+                {
+                    <img class="chat-user-avatar @(f.IsOnline ? "online-avatar" : "offline-avatar")" src="@f.AvatarUrl"
+                         alt="Avatar">
+                    <div class="chat-user-details">
+                        <h5> @f.FullName</h5>
+                        <p class="chat-user-status">
+                            <span class="status-dot"></span>
+                            @(f.IsOnline ? "Online" : "Offline")
+                        </p>
+                    </div>
+                }
             </div>
+
             <div class="chat-actions">
-                <i class="bi bi-search"></i>
-                <i class="bi bi-three-dots-vertical"></i>
+                @foreach (var f in Model)
+                {
+                    <i class="bi bi-telephone"></i>
+                    <i class="bi bi-camera-video" title="Gọi video" data-peer="@f.UserId"></i>
+                    <i class="bi bi-search"></i>
+                    <i class="bi bi-three-dots-vertical"></i>
+                }
             </div>
         </div>
+
         <div class="chat-content"></div>
         <div class="chat-input-bar">
-            <input type="text" placeholder="Nhập nội dung..."/>
-            <div class="input-icons">
-                <i class="bi bi-send"></i>
+            <div class="input-group d-flex align-items-center">
+                <input type="text" placeholder="Nhập tin nhắn..." class="flex-fill">
+                <div class="input-actions">
+                    <i class="bi bi-image" title="Hình ảnh"></i>
+                    <i class="bi bi-paperclip" title="Đính kèm"></i>
+                    <i class="bi bi-emoji-smile" title="Emoji"></i>
+                    <i class="bi bi-send btn-send" title="Gửi"></i>
+                </div>
             </div>
         </div>
     </div>
+
+    @Html.Partial("_SidebarRight")
 </section>
 
 @section Scripts {

@@ -45,18 +45,43 @@ $('.chat-input-bar input').on('keypress', function(e) {
 function sendMessage() {
     let content = $('.chat-input-bar input').val();
     if (!content.trim() || !currentFriendId) return;
-    connection.invoke("SendMessage", currentFriendId, content);
+
+    connection.invoke("SendMessage", currentFriendId, content)
+        .then(() => {
+            // Sau khi gửi thành công, làm mới toàn bộ lịch sử chat
+            $.get('/Chat/GetMessages', { friendId: currentFriendId }, function(html) {
+                $('.chat-content').html(html);
+                scrollToBottom();
+            });
+        })
+        .catch(err => console.error(err.toString()));
+
     $('.chat-input-bar input').val('');
 }
 
 // Render tin nhắn mới
 function renderMessage(msg) {
-    let side = msg.isMine ? 'right' : 'left'; // camelCase
-    return `<div class="message ${side}">
-        <img src="${msg.avatarUrl}" class="message-avatar" />
-        <span class="message-text">${msg.content}</span>
-        <span class="message-time">${msg.sentAt.substring(11,16)}</span>
-    </div>`;
+    let side = msg.isMine ? 'right' : 'left';
+
+    if (msg.isMine) {
+        // Người gửi: thời gian -> tin nhắn -> avatar
+        return `<div class="message ${side}">
+            <div class="message-content">
+                <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
+                <span class="message-bubble">${msg.content}</span>
+            </div>
+            <img src="${msg.avatarUrl}" class="message-avatar" />
+        </div>`;
+    } else {
+        // Người nhận: avatar -> tin nhắn -> thời gian
+        return `<div class="message ${side}">
+            <img src="${msg.avatarUrl}" class="message-avatar" />
+            <div class="message-content">
+                <span class="message-bubble">${msg.content}</span>
+                <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
+            </div>
+        </div>`;
+    }
 }
 
 function scrollToBottom() {
