@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Authorization;
 using Zela.Services;
+using Microsoft.AspNetCore.Authorization;
 
-namespace Zela.Controllers
+namespace ZelaTestDemo.Controllers
 {
     [Authorize]
     public class ChatController : Controller

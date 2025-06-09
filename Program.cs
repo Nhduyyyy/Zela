@@ -65,6 +65,8 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
+app.UseStatusCodePagesWithRedirects("/Account/Login?error=403");
+
 app.MapHub<ChatHub>("/chathub");
 
 app.Run();
