@@ -1,16 +1,73 @@
+/*Cấu trúc tổ chức:
+
+0. CSS Variables - Tất cả biến màu sắc, kích thước
+1. Base Styles - Styles cơ bản cho body và container chính
+2. Friend List Sidebar - Phần danh sách bạn bè bên trái
+3. Chat Panel - Phần chat chính giữa
+4. Chat Input Bar - Thanh nhập tin nhắn
+5. Chat Info Panel - Panel thông tin bên phải
+6. Scrollbar Styles - Tùy chỉnh scrollbar
+7. Dark Mode Support - Hỗ trợ chế độ tối
+8. Responsive Design - Responsive cho mobile/tablet*/
+
+/*=======================================================================================*/
+/*                                    CSS VARIABLES                                     */
+/*=======================================================================================*/
+
 :root {
+    /* Primary Colors */
+    --primary-light: #129990;
+    --primary-color: #129990;
+    --primary-dark: #096B68;
+    --secondary-color: #FFFBDE;
+    --accent-color: #90D1CA;
+
+    /* Background Colors */
+    --bg-primary: #FFFBDE;
+    --bg-secondary: rgba(255, 251, 222, 0.8);
+    --bg-hover: rgba(144, 209, 202, 0.1);
+    --bg-active: rgba(144, 209, 202, 0.2);
     --bg-light: #ffffff;
     --bg-gray: #f1f3f5;
     --bg-dark: #1e1e2f;
-    --primary: #1e88e5;
+
+    /* Text Colors */
+    --text-primary: #096B68;
+    --text-secondary: #129990;
+    --text-muted: rgba(9, 107, 104, 0.6);
     --text-color: #333;
+
+    /* Border & Shadow */
+    --border-color: rgba(144, 209, 202, 0.3);
+    --shadow-sm: 0 1px 2px 0 rgba(9, 107, 104, 0.05);
+    --shadow-md: 0 4px 6px -1px rgba(9, 107, 104, 0.1), 0 2px 4px -2px rgba(9, 107, 104, 0.05);
+
+    /* Border Radius */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
     --border-radius: 12px;
-    --transition: 0.3s ease;
+
+    /* Status Colors */
     --online-color: #00c853;
-    --offline-color: #b0bec5;
+    --offline-color: rgba(9, 107, 104, 0.4);
+
+    /* Layout Dimensions */
+    --sidebar-width: 280px;
+    --chat-info-width: 320px;
+    --header-height: 70px;
+
+    /* Other Variables */
+    --transition: 0.3s ease;
+    --hover-bg: #FFFBDE;
+    --message-bg: #828282;
     --bubble-left: #f1f0f0;
     --bubble-right: #daf1ff;
 }
+
+/*=======================================================================================*/
+/*                                  1. BASE STYLES                                      */
+/*=======================================================================================*/
 
 body {
     margin: 0;
@@ -24,140 +81,387 @@ body {
     overflow: hidden;
 }
 
-/* ===== FRIEND LIST ===== */
+/*=======================================================================================*/
+/*                                 2. FRIEND LIST SIDEBAR                               */
+/*=======================================================================================*/
+
+/* 2.1 Friend List Container */
 .friend-list {
     width: 280px;
-    background: #f9f9f9;
-    border-right: 1px solid #e0e0e0;
+    border-right: 1px solid var(--border-color);
     overflow-y: auto;
-    padding-top: 12px;
+    height: 100vh;
+    box-shadow: var(--shadow-sm);
 }
 
+/* 2.2 Sidebar Header */
+.sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.sidebar-header h4 {
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.2rem;
+}
+
+/* 2.3 Sidebar Search */
+.sidebar-search {
+    padding: 15px 20px;
+    background: #ffffff;
+}
+
+.search-input {
+    position: relative;
+}
+
+.search-input input {
+    width: 100%;
+    padding: 12px 20px 12px 45px;
+    border: 1px solid var(--border-color);
+    border-radius: 25px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: var(--secondary-color);
+}
+
+.search-input input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(18, 153, 144, 0.1);
+    background: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(18, 153, 144, 0.15);
+}
+
+.search-input i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-secondary);
+}
+
+/* 2.4 Navigation Tabs */
+.nav-tabs {
+    border: none;
+    padding: 0 20px;
+    background: white;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: var(--text-secondary);
+    font-weight: 500;
+    padding: 15px 20px;
+    border-radius: 0;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    background: none;
+}
+
+.nav-tabs .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 3px;
+    background: var(--primary-color);
+    border-radius: 2px;
+}
+
+/* 2.5 Friend Items Container */
 .friend-items {
     list-style: none;
-    padding: 0;
+    padding: 8px;
     margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
+/* 2.6 Individual Friend Item */
 .friend-item {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 12px 16px;
+    gap: 12px;
+    padding: 12px;
     cursor: pointer;
-    transition: background var(--transition);
+    border-radius: var(--radius-md);
+    transition: var(--transition);
+    position: relative;
+    background: var(--bg-primary);
+    border: 1px solid transparent;
 }
 
-.friend-item:hover,
+.friend-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, #129990 0%, #096B68 100%);
+    border-radius: 0 2px 2px 0;
+    opacity: 0;
+    transition: var(--transition);
+}
+
+.friend-item:hover {
+    background: var(--bg-hover);
+    border-color: var(--accent-color);
+    transform: translateX(2px);
+    box-shadow: 0 2px 8px rgba(144, 209, 202, 0.2);
+}
+
 .friend-item.active {
-    background: #e3f2fd;
+    background: var(--bg-active);
+    border-color: var(--primary-light);
+    box-shadow: 0 4px 12px rgba(18, 153, 144, 0.15);
 }
 
+.friend-item.active::before {
+    opacity: 1;
+}
+
+/* 2.7 Friend Avatar */
 .friend-avatar {
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     object-fit: cover;
+    border: 2px solid rgba(144, 209, 202, 0.5);
+    transition: var(--transition);
+    position: relative;
+    flex-shrink: 0;
 }
 
+.friend-item:hover .friend-avatar {
+    border-color: var(--accent-color);
+    transform: scale(1.05);
+    box-shadow: 0 0 0 3px rgba(144, 209, 202, 0.2);
+}
+
+.friend-item.active .friend-avatar {
+    border-color: var(--primary-light);
+    box-shadow: 0 0 0 3px rgba(18, 153, 144, 0.2);
+}
+
+/* 2.8 Friend Information */
 .friend-info {
     flex: 1;
     display: flex;
     flex-direction: column;
+    gap: 2px;
+    min-width: 0; /* Để text truncation hoạt động */
 }
 
 .friend-name {
     font-weight: 600;
-    font-size: 16px;
-    color: var(--text-color);
+    font-size: 15px;
+    color: var(--text-primary);
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: var(--transition);
+}
+
+.friend-item:hover .friend-name {
+    color: var(--primary-light);
 }
 
 .friend-last-msg {
     font-size: 13px;
-    color: #777;
-    margin-top: 2px;
+    color: var(--text-secondary);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    transition: var(--transition);
 }
 
+.friend-item:hover .friend-last-msg {
+    color: var(--primary-color);
+}
+
+/* 2.9 Friend Meta (Time & Status) */
 .friend-meta {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
-    gap: 4px;
-    font-size: 12px;
+    gap: 6px;
+    font-size: 11px;
+    flex-shrink: 0;
 }
 
 .friend-time {
-    color: #888;
+    color: var(--text-muted);
+    font-weight: 500;
+    padding: 3px 8px;
+    background: rgba(144, 209, 202, 0.1);
+    border-radius: var(--radius-sm);
+    transition: var(--transition);
+    border: 1px solid rgba(144, 209, 202, 0.2);
+}
+
+.friend-item:hover .friend-time {
+    background: rgba(18, 153, 144, 0.1);
+    color: var(--primary-color);
+    border-color: rgba(18, 153, 144, 0.3);
+}
+
+.friend-status {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.friend-status i {
+    font-size: 10px;
+    transition: var(--transition);
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
 }
 
 .friend-status.online i {
     color: var(--online-color);
+    animation: pulse-online 2s infinite;
 }
 
 .friend-status.offline i {
     color: var(--offline-color);
 }
 
-/* ===== CHAT PANEL ===== */
-.chat-panel {
+/* 2.10 Online Status Animation */
+@keyframes pulse-online {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+/*=======================================================================================*/
+/*                                  3. CHAT PANEL                                       */
+/*=======================================================================================*/
+
+/* 3.1 Chat Panel Container */
+div.chat-panel {
     flex: 1;
     display: flex;
     flex-direction: column;
-    background: #fff;
+    background: white;
+    position: relative;
 }
 
-.chat-header {
-    padding: 12px 20px;
+/* 3.2 Chat Header */
+div.chat-header {
+    height: var(--header-height);
+    padding: 0 25px;
+    border-bottom: 1px solid var(--border-color);
     display: flex;
-    justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid #ddd;
-    background: #fdfdfd;
+    justify-content: space-between;
+    background: white;
+    box-shadow: 0 2px 10px rgba(9, 107, 104, 0.05);
 }
 
-.chat-title h2 {
-    font-size: 18px;
+div.chat-user-info {
+    display: flex;
+    align-items: center;
+}
+
+img.chat-user-avatar {
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    object-fit: cover;
+}
+
+.online-avatar {
+    border: 2px solid var(--primary-color);
+}
+
+.offline-avatar {
+    border: 2px solid gray;
+}
+
+div.chat-user-details h5 {
     margin: 0;
-    color: var(--text-color);
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
-.chat-actions i {
-    font-size: 1.2rem;
-    margin-left: 16px;
-    color: #666;
+div.chat-user-status {
+    font-size: 13px;
+    color: var(--primary-color);
+    margin: 0;
+    display: flex;
+    align-items: center;
+}
+
+div.status-dot {
+    width: 8px;
+    height: 8px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    margin-right: 6px;
+}
+
+div.chat-actions {
+    display: flex;
+    gap: 15px;
+}
+
+div.chat-actions i {
+    font-size: 18px;
+    color: var(--text-secondary);
     cursor: pointer;
-    transition: color var(--transition);
+    transition: all 0.2s ease;
 }
 
-.chat-actions i:hover {
-    color: var(--primary);
+div.chat-actions i:hover {
+    color: var(--primary-color);
+    transform: scale(1.1);
 }
 
-/* ===== CHAT CONTENT ===== */
+/* 3.3 Chat Content Area */
 .chat-content {
     flex: 1;
-    padding: 20px;
     overflow-y: auto;
-    background: var(--bg-gray);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    scroll-behavior: smooth;
+    padding: 20px;
+    background: linear-gradient(180deg, #FFFBDE 0%, #ffffff 100%);
 }
 
+/* 3.4 Message Styling */
 .message {
+    margin-bottom: 16px;
     display: flex;
     align-items: flex-end;
-    max-width: 70%;
+    animation: fadeInUp 0.3s ease;
 }
 
 .message.left {
-    align-self: flex-start;
+    justify-content: flex-start;
+    flex-direction: row;
 }
 
 .message.right {
-    align-self: flex-end;
     flex-direction: row-reverse;
 }
 
@@ -169,61 +473,283 @@ body {
     object-fit: cover;
 }
 
-.message-text {
-    background: var(--bubble-left);
-    border-radius: var(--border-radius);
-    padding: 10px 14px;
-    font-size: 14px;
-    line-height: 1.4;
-    color: var(--text-color);
-    max-width: 100%;
-    word-wrap: break-word;
+.message-content {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    max-width: 70%;
 }
 
-.message.right .message-text {
-    background: var(--bubble-right);
+.message.right .message-content {
+    align-items: flex-end;
+}
+
+.message-bubble {
+    padding: 12px 18px;
+    border-radius: 20px;
+    position: relative;
+    animation: messageSlide 0.3s ease;
+    transition: all 0.2s ease;
+}
+
+.message.left .message-bubble {
+    background: var(--message-bg);
+    color: white;
+    border-bottom-left-radius: 5px;
+}
+
+.message.right .message-bubble {
+    background: var(--primary-color);
+    color: white;
+    border-bottom-right-radius: 5px;
+}
+
+.message-info {
+    font-size: 11px;
+    color: #999;
+    margin-bottom: 4px;
+    display: flex;
+    gap: 6px;
+}
+
+.message.right .message-info {
+    flex-direction: row-reverse;
 }
 
 .message-time {
-    font-size: 11px;
-    color: #999;
-    margin-left: 4px;
+    font-size: 12px;
+    color: #6b7280;
+    opacity: 0.7;
 }
 
-/* ===== INPUT BAR ===== */
+/*=======================================================================================*/
+/*                                  4. CHAT INPUT BAR                                   */
+/*=======================================================================================*/
+
 .chat-input-bar {
-    padding: 10px 20px;
-    background: #fff;
+    padding: 20px 25px;
+    border-top: 1px solid var(--border-color);
+    background: white;
+}
+
+.input-group {
+    position: relative;
+    background: var(--secondary-color);
+    border-radius: 25px;
+    padding: 5px;
+}
+
+.input-group input {
+    border: none;
+    background: transparent;
+    padding: 12px 20px;
+    font-size: 14px;
+    flex: 1;
+}
+
+.input-group input:focus {
+    outline: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 20px rgba(18, 153, 144, 0.15);
+}
+
+.input-actions {
     display: flex;
     align-items: center;
-    border-top: 1px solid #ddd;
+    gap: 10px;
+    padding-right: 10px;
 }
 
-.chat-input-bar input[type="text"] {
-    flex: 1;
-    padding: 10px 14px;
-    border: 1px solid #ccc;
-    border-radius: var(--border-radius);
-    font-size: 14px;
-    outline: none;
-    transition: border-color var(--transition);
-}
-
-.chat-input-bar input:focus {
-    border-color: var(--primary);
-}
-
-.input-icons {
-    margin-left: 12px;
-    color: var(--primary);
-    font-size: 1.3rem;
+.input-actions i {
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
     cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 16px;
+    color: var(--text-secondary);
 }
 
-/* ===== SCROLLBAR ===== */
+.input-actions i:hover {
+    background: white;
+    color: var(--primary-color);
+    transform: scale(1.2) rotate(5deg);
+}
+
+.input-actions .btn-send {
+    background: var(--primary-color);
+    color: white;
+}
+
+.input-actions .btn-send:hover {
+    background: var(--primary-dark);
+    color: white;
+}
+
+/*=======================================================================================*/
+/*                                5. CHAT INFO PANEL                                    */
+/*=======================================================================================*/
+
+.chat-info-panel {
+    width: var(--chat-info-width);
+    background: white;
+    border-left: 1px solid var(--border-color);
+    overflow-y: auto;
+    padding: 0;
+}
+
+/* 5.1 Info Header */
+.info-header {
+    padding: 20px;
+    text-align: center;
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    color: white;
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.info-header h4 {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* 5.2 Group Meta Information */
+.group-meta {
+    padding: 25px;
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.group-meta h5 {
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+
+.group-meta p {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.group-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.group-actions .btn {
+    padding: 10px;
+    font-size: 13px;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    background: white;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.group-actions .btn:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(18, 153, 144, 0.2);
+}
+
+/* 5.3 Info Sections */
+.info-section {
+    padding: 25px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.info-section h6 {
+    margin-bottom: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* 5.4 Media Grid */
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+.media-grid img {
+    width: 100%;
+    height: 70px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.media-grid img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 15px rgba(9, 107, 104, 0.2);
+}
+
+.view-all-link {
+    color: var(--primary-color);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* 5.5 File List */
+.file-list {
+    list-style: none;
+    padding: 0;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    padding: 12px 0;
+    border-bottom: 1px solid rgba(144, 209, 202, 0.3);
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-item i {
+    font-size: 24px;
+    color: var(--primary-color);
+    margin-right: 12px;
+}
+
+.file-details {
+    flex: 1;
+}
+
+.file-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin: 0;
+    font-size: 14px;
+}
+
+.file-size {
+    color: var(--text-secondary);
+    font-size: 12px;
+    margin: 0;
+}
+
+/*=======================================================================================*/
+/*                                  6. SCROLLBAR STYLES                                 */
+/*=======================================================================================*/
+
 .friend-list::-webkit-scrollbar,
 .chat-content::-webkit-scrollbar {
     width: 8px;
+}
+
+.friend-list::-webkit-scrollbar-track,
+.chat-content::-webkit-scrollbar-track {
+    background: transparent;
 }
 
 .friend-list::-webkit-scrollbar-thumb,
@@ -232,25 +758,103 @@ body {
     border-radius: 4px;
 }
 
-.friend-list::-webkit-scrollbar-track,
-.chat-content::-webkit-scrollbar-track {
-    background: transparent;
+.friend-list::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* ===== RESPONSIVE ===== */
+.friend-list::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+}
+
+.friend-list::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+    transition: var(--transition);
+}
+
+.friend-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-muted);
+}
+
+/*=======================================================================================*/
+/*                                7. DARK MODE SUPPORT                                  */
+/*=======================================================================================*/
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg-primary: #FFFFFF;
+        --bg-secondary: rgba(9, 107, 104, 0.1);
+        --bg-hover: rgba(144, 209, 202, 0.08);
+        --bg-active: rgba(144, 209, 202, 0.15);
+        --text-primary: #20746b;
+        --text-secondary: #129990;
+        --text-muted: rgba(144, 209, 202, 0.7);
+        --border-color: rgba(144, 209, 202, 0.2);
+    }
+
+    .friend-list {
+        box-shadow: 0 1px 3px 0 rgba(9, 107, 104, 0.3);
+    }
+}
+
+/*=======================================================================================*/
+/*                                8. RESPONSIVE DESIGN                                  */
+/*=======================================================================================*/
+
+/* 8.1 Mobile Styles */
 @media (max-width: 768px) {
-    .chat-window {
-        flex-direction: column;
+    .chat-container {
+        position: relative;
+    }
+
+    .sidebar {
+        position: absolute;
+        left: -100%;
+        top: 0;
+        height: 100%;
+        z-index: 1000;
+        transition: left 0.3s ease;
+    }
+
+    .sidebar.active {
+        left: 0;
+    }
+
+    .chat-info-panel {
+        display: none;
+    }
+
+    .mobile-menu-btn {
+        display: block;
+        background: none;
+        border: none;
+        font-size: 20px;
+        color: var(--text-secondary);
     }
 
     .friend-list {
         width: 100%;
-        height: 250px;
         border-right: none;
-        border-bottom: 1px solid #ddd;
+        border-bottom: 1px solid var(--border-color);
     }
 
-    .chat-panel {
-        height: calc(100vh - 250px);
+    .friend-items {
+        padding: 4px;
+    }
+
+    .friend-item {
+        padding: 10px;
+    }
+
+    .friend-avatar {
+        width: 40px;
+        height: 40px;
+    }
+}
+
+/* 8.2 Desktop Styles */
+@media (min-width: 769px) {
+    .mobile-menu-btn {
+        display: none;
     }
 }
