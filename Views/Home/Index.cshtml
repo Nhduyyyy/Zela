@@ -1,207 +1,227 @@
 ﻿@{
-  Layout = null;
+    Layout = null;
 }
 
 <!DOCTYPE html>
-<html lang="en">
-
+<html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="">
-  <meta name="author" content="">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
-        rel="stylesheet">
-  
-  <!-- Bootstrap core CSS -->
-  <link href="@Url.Content("~/bootstrap/css/bootstrap.min.css")" rel="stylesheet"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zela - Nền tảng học trực tuyến</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
+          rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
 
-  <!-- Additional CSS Files -->
-  <link rel="stylesheet" href="@Url.Content("~/css/fontawesome.css")"/>
-  <link rel="stylesheet" href="@Url.Content("~/css/templatemo-space-dynamic.css")"/>
-  <link rel="stylesheet" href="@Url.Content("~/css/animated.css")"/>
-  <link rel="stylesheet" href="@Url.Content("~/css/owl.css")"/>
+
+    <!-- Bootstrap CSS -->
+    <link href="@Url.Content("~/bootstrap/css/bootstrap.min.css")" rel="stylesheet"/>
+
+    <!-- Additional CSS Files -->
+    <link rel="stylesheet" href="@Url.Content("~/css/index-new.css")"/>
 </head>
-
 <body>
+<!-- Video Background -->
+<video class="video-background" autoplay muted loop>
+    <source src="@Url.Content("~/videos/index.mp4")" type="video/mp4">
+    Your browser does not support the video tag.
+</video>
+<div class="video-overlay"></div>
 
-<!-- ***** Preloader Start ***** -->
-<div id="js-preloader" class="js-preloader">
-  <div class="preloader-inner">
-    <span class="dot"></span>
-    <div class="dots">
-      <span></span>
-      <span></span>
-      <span></span>
-    </div>
-  </div>
+<!-- Floating Elements -->
+<div class="floating-elements">
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
+    <div class="floating-element"></div>
 </div>
-<!-- ***** Preloader End ***** -->
 
-<!-- ***** Header Area Start ***** -->
-<header class="header-area header-sticky wow slideInDown" data-wow-duration="0.75s" data-wow-delay="0s">
-  <div class="container">
-    <div class="row">
-      <div class="col-12">
-        <nav class="main-nav">
-          <!-- ***** Logo Start ***** -->
-          <a href="index.html" class="logo">
-            <h4>Z<span>ELA</span></h4>
-          </a>
-          <!-- ***** Logo End ***** -->
-          <!-- ***** Menu Start ***** -->
-          <ul class="nav">
-            <li class="scroll-to-section"><a href="#top" class="active">Trang Chủ</a></li>
-            <li class="scroll-to-section"><a href="#services">Dịch Vụ</a></li>
-            <li class="scroll-to-section">
-              <div class="main-red-button"><a href="/Account/Login">Đăng Nhập</a></div>
+<!-- Header -->
+<header class="header" id="header">
+    <div class="nav-container">
+        <a href="@Url.Action("Index", "Home")" class="logo">Z<span>ELA</span></a>
+        <ul class="nav-menu">
+            <li><a href="#hero" class="nav-link">Trang Chủ</a></li>
+            <li><a href="#features" class="nav-link">Dịch Vụ</a></li>
+            <li><a href="#contact" class="nav-link">Liên Hệ</a></li>
+            <li><a href="@Url.Action("Login", "Account")" class="login-btn">Đăng Nhập</a></li>
+            <li>
+                <div class="d-flex align-items-center gap-2">
+                    <button onclick="playAudio()"
+                            class="btn btn-audio btn-sm d-flex align-items-center gap-2" id="btn-audio">
+                        <i class="bi bi-music-note-beamed"></i> Bật nhạc
+                    </button>
+                </div>
+
+                <audio id="myAudio" loop style="display: none;">
+                    <source src="@Url.Content("~/audio/index.mp3")" type="audio/mp3"/>
+                </audio>
             </li>
-          </ul>
-          <a class='menu-trigger'>
-            <span>Menu</span>
-          </a>
-          <!-- ***** Menu End ***** -->
-        </nav>
-      </div>
+        </ul>
+        <div class="mobile-menu-toggle">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
     </div>
-  </div>
 </header>
-<!-- ***** Header Area End ***** -->
 
-<div class="main-banner wow fadeIn" id="top" data-wow-duration="1s" data-wow-delay="0.5s">
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-12">
-        <div class="row">
-          <div class="col-lg-6 align-self-center">
-            <div class="left-content header-text wow fadeInLeft" data-wow-duration="1s" data-wow-delay="1s">
-              <h6>Chào mừng bạn đến với Web Zela - Nhóm 6</h6>
-              <h2>Chúng tôi phát triển <em>Zela Chat</em> &amp; <span>Gọi Video</span> Học Tập</h2>
-              <p>Zela là một nền tảng học trực tuyến hỗ trợ trò chuyện và gọi video, giúp kết nối người học một cách dễ
-                dàng và hiệu quả. Dự án được xây dựng nhằm hỗ trợ học tập linh hoạt và tương tác thời gian thực.</p>
+<!-- Hero Section -->
+<section class="hero" id="hero">
+    <div class="hero-content">
+        <h6>Chào mừng bạn đến với Web Zela - Nhóm 6</h6>
+        <h1>Chúng tôi phát triển <em>Zela Chat</em> & <span>Gọi Video</span> Học Tập</h1>
+        <p>Zela là một nền tảng học trực tuyến hỗ trợ trò chuyện và gọi video, giúp kết nối người học một cách dễ dàng
+            và hiệu quả. Dự án được xây dựng nhằm hỗ trợ học tập linh hoạt và tương tác thời gian thực.</p>
 
-              <form id="search" method="GET" asp-action="AnalyzeSite">
-                <fieldset>
-                  <input type="text" name="address" class="email" placeholder="Nói gì đi các tình eeeuuuu <3"
-                         autocomplete="on" required>
-                </fieldset>
-                <fieldset>
-                  <button type="submit" class="main-button">Hỏi đi con vợ ??</button>
-                </fieldset>
-              </form>
+        <form class="search-form" method="GET" asp-action="AnalyzeSite">
+            <input type="text" name="address" class="search-input" placeholder="Nói gì đi các tình eeeuuuu <3"
+                   autocomplete="on" required>
+            <button type="submit" class="search-btn">Hỏi đi con vợ ??</button>
+        </form>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="features" id="features">
+    <div class="container">
+        <div class="section-title">
+            <h2>Khám phá Zela: <em>Gọi video</em> & <span>Chat</span> hỗ trợ học tập</h2>
+        </div>
+
+        <div class="features-grid">
+            @{
+                var features = new[]
+                {
+                    new { Title = "Call Video", Description = "Thực hiện cuộc gọi video 1-1 và nhóm mượt mà, tích hợp ghi âm, chia sẻ màn hình và quản lý người tham gia.", Icon = "fas fa-video" },
+                    new { Title = "Chat Real Time", Description = "Trò chuyện thời gian thực với hỗ trợ gửi media, emoji, phản hồi nhanh và lịch sử tin nhắn được lưu trữ an toàn.", Icon = "fas fa-comments" },
+                    new { Title = "AI Support", Description = "Tích hợp AI để hiển thị phụ đề trực tiếp, dịch ngôn ngữ, tóm tắt nội dung và trả lời câu hỏi tự động trong buổi học.", Icon = "fas fa-robot" },
+                    new { Title = "Best Study", Description = "Hỗ trợ học tập tối ưu với quiz builder, Pomodoro, bảng trắng cộng tác và đồng bộ lịch học với Google Calendar.", Icon = "fas fa-graduation-cap" }
+                };
+            }
+
+            @foreach (var feature in features)
+            {
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="@feature.Icon"></i>
+                    </div>
+                    <h4>@feature.Title</h4>
+                    <p>@feature.Description</p>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<!-- Contact Section -->
+<section class="contact" id="contact">
+    <div class="container">
+        <div class="contact-content">
+            <h2>Liên hệ với chúng tôi</h2>
+            <p>Nếu bạn có bất kỳ yêu cầu nào liên quan đến hệ thống học tập, gọi video, chat thời gian thực hoặc tích
+                hợp AI, đừng ngần ngại gửi tin nhắn cho chúng tôi.</p>
+
+            <div class="phone-info">
+                <i class="fas fa-phone"></i>
+                <span>Mọi thắc mắc vui lòng gọi: <a href="tel:010-020-0340">010-020-0340</a></span>
             </div>
-          </div>
-          <div class="col-lg-6">
-            <iframe
-              src="https://my.spline.design/bearintheforesthoverloopanimation-KysQbtcjc6j5VzvwMdJLPyAK/"
-              frameborder="0"
-              width="100%"
-              height="100%"
-              style="pointer-events: none; display: block;">
-            </iframe>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
-</div>
+</section>
 
-<div id="about" class="about-us section">
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-4">
-        <div class="left-image wow fadeIn" data-wow-duration="1s" data-wow-delay="0.2s">
-          <img src="@Url.Content("~/images/about-left-image.png")" alt="person graphic"/>
-        </div>
-      </div>
-      <div class="col-lg-8 align-self-center">
-        <div class="services">
-          <div class="row">
-            <!-- Service Items -->
-            @* Repeatable structure here: Add your dynamic or static content *@
-          </div>
-        </div>
-      </div>
+<!-- Footer -->
+<footer class="footer">
+    <div class="container">
+        <p>&copy; Zela - @DateTime.Now.Year. Design: <a href="#">Kiệt Đẹp Trai</a></p>
     </div>
-  </div>
-</div>
-@{
-  Layout = null;
-}
-
-<div id="portfolio" class="our-portfolio section">
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-6 offset-lg-3">
-        <div class="section-heading wow bounceIn" data-wow-duration="1s" data-wow-delay="0.2s">
-          <h2>Khám phá Zela: <em>Gọi video</em> &amp; <span>Chat</span> hỗ trợ học tập</h2>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      @foreach (var item in new[]
-                  {
-                    new { Title = "Call Video", Description = "Thực hiện cuộc gọi video 1-1 và nhóm mượt mà, tích hợp ghi âm, chia sẻ màn hình và quản lý người tham gia." },
-                    new { Title = "Chat Real Time", Description = "Trò chuyện thời gian thực với hỗ trợ gửi media, emoji, phản hồi nhanh và lịch sử tin nhắn được lưu trữ an toàn." },
-                    new { Title = "AI Support", Description = "Tích hợp AI để hiển thị phụ đề trực tiếp, dịch ngôn ngữ, tóm tắt nội dung và trả lời câu hỏi tự động trong buổi học." },
-                    new { Title = "Best Study", Description = "Hỗ trợ học tập tối ưu với quiz builder, Pomodoro, bảng trắng cộng tác và đồng bộ lịch học với Google Calendar." }
-                  })
-      {
-        <div class="col-lg-3 col-sm-6">
-          <a href="#">
-            <div class="item wow bounceInUp" data-wow-duration="1s" data-wow-delay="0.3s">
-              <div class="hidden-content">
-                <h4>@item.Title</h4>
-                <p>@item.Description</p>
-              </div>
-              <div class="showed-content">
-                <img src="@Url.Content("~/images/portfolio-image.png")" alt="Portfolio Image"/>
-              </div>
-            </div>
-          </a>
-        </div>
-      }
-    </div>
-  </div>
-</div>
-
-
-<div id="contact" class="contact-us section">
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-6 align-self-center wow fadeInLeft" data-wow-duration="0.5s" data-wow-delay="0.25s">
-        <div class="section-heading">
-          <h2>Liên hệ với chúng tôi nếu bạn cần hỗ trợ về nền tảng học trực tuyến</h2>
-          <p>Nếu bạn có bất kỳ yêu cầu nào liên quan đến hệ thống học tập, gọi video, chat thời gian thực hoặc tích hợp AI, đừng ngần ngại gửi tin nhắn cho chúng tôi.</p>
-          <div class="phone-info">
-            <h4>Mọi thắc mắc vui lòng gọi: 
-              <span><i class="fa fa-phone"></i> <a href="#">010-020-0340</a></span>
-            </h4>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<footer>
-  <div class="container">
-    <div class="row">
-      <div class="col-lg-12 wow fadeIn" data-wow-duration="1s" data-wow-delay="0.25s">
-        <p>&copy; Zela - 2025. 
-          <br/>Design: <a rel="nofollow" href="https://templatemo.com">Kiệt Đẹp Traio</a></p>
-      </div>
-    </div>
-  </div>
 </footer>
+
 <!-- Scripts -->
 <script src="@Url.Content("~/jquery/jquery.min.js")"></script>
 <script src="@Url.Content("~/bootstrap/js/bootstrap.bundle.min.js")"></script>
-<script src="@Url.Content("~/js/owl-carousel.js")"></script>
 <script src="@Url.Content("~/js/animation.js")"></script>
-<script src="@Url.Content("~/js/imagesloaded.js")"></script>
 <script src="@Url.Content("~/js/templatemo-custom.js")"></script>
 
+<script>
+    function playAudio() {
+        const audio = document.getElementById("myAudio");
+        audio.play().then(() => {
+            console.log("Nhạc nền đang phát.");
+            const btn = document.getElementById("btn-audio");
+            btn.innerHTML = '<i class="bi bi-pause-fill"></i> Dừng nhạc';
+            btn.onclick = pauseAudio;
+        }).catch(err => {
+            console.warn("Không thể phát nhạc:", err);
+        });
+    }
+
+    function pauseAudio() {
+        const audio = document.getElementById("myAudio");
+        audio.pause();
+        const btn = document.getElementById("btn-audio");
+        btn.innerHTML = '<i class="bi bi-music-note-beamed"></i> Bật nhạc';
+        btn.onclick = playAudio;
+    }
+
+    $(document).ready(function () {
+        // Header scroll effect
+        $(window).scroll(function () {
+            if ($(window).scrollTop() > 100) {
+                $('#header').addClass('scrolled');
+            } else {
+                $('#header').removeClass('scrolled');
+            }
+        });
+
+        // Smooth scrolling
+        $('a[href^="#"]').on('click', function (e) {
+            e.preventDefault();
+            var target = $(this.getAttribute('href'));
+            if (target.length) {
+                $('html, body').animate({
+                    scrollTop: target.offset().top
+                }, 1000);
+            }
+        });
+
+        // Mobile menu toggle
+        $('.mobile-menu-toggle').click(function () {
+            $('.nav-menu').slideToggle();
+        });
+
+        // Feature cards hover effect
+        $('.feature-card').hover(
+            function () {
+                $(this).css({
+                    'transform': 'translateY(-10px) scale(1.02)',
+                    'transition': 'all 0.3s ease'
+                });
+            },
+            function () {
+                $(this).css({
+                    'transform': 'translateY(0) scale(1)',
+                    'transition': 'all 0.3s ease'
+                });
+            }
+        );
+
+        // Form validation
+        $('.search-form').on('submit', function (e) {
+            var input = $(this).find('.search-input');
+            if (!input.val().trim()) {
+                e.preventDefault();
+                input.focus();
+                alert('Vui lòng nhập nội dung tìm kiếm!');
+            }
+        });
+
+        // Add loading animation on form submit
+        $('.search-form').on('submit', function () {
+            var btn = $(this).find('.search-btn');
+            btn.html('<i class="fas fa-spinner fa-spin"></i> Đang xử lý...');
+            btn.prop('disabled', true);
+        });
+    });
+</script>
 </body>
 </html>

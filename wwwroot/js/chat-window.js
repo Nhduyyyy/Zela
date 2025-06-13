@@ -7,29 +7,50 @@ const connection = new signalR.HubConnectionBuilder()
 
 // Nhận message mới (realtime, từ chính mình hoặc bạn bè)
 connection.on("ReceiveMessage", function (msg) {
-    console.log("SignalR nhận được:", msg, "currentFriendId:", currentFriendId, typeof currentFriendId, "senderId:", msg.senderId, typeof msg.senderId);
+    console.log("SignalR nhận được:", msg);
 
-    // Ép kiểu currentFriendId về số để so sánh chắc chắn đúng
     let currentId = Number(currentFriendId);
 
-    // Dùng đúng key camelCase như server trả về!
     if (currentId && (msg.senderId === currentId || msg.recipientId === currentId)) {
+        // FIX: Chỉ append vào nội dung bên trong chat-content, không tạo nested
         $('.chat-content').append(renderMessage(msg));
         scrollToBottom();
     }
 });
 
+
 connection.start().catch(err => console.error(err.toString()));
 
 // Khi click chọn một người bạn → load lịch sử chat
-$(document).on('click', '.friend-item', function() {
-    currentFriendId = Number($(this).data('id')); // ép kiểu về số ở đây luôn!
+$(document).on('click', '.friend-item', function () {
+    currentFriendId = Number($(this).data('id'));
+
     $('.friend-item').removeClass('active');
     $(this).addClass('active');
+
     $('#chat-friend-name').text($(this).find('.friend-name').text());
-    // AJAX load toàn bộ lịch sử chat cũ
+
+    // Hiện toàn bộ phần thông tin người chat nếu đang bị ẩn
+    $('.chat-user-info').removeClass('d-none').show(); // nếu dùng Bootstrap
+    // hoặc: $('.chat-user-info').show();
+    // Ẩn tất cả user trong phần info
+    $('.chat-user-info .chat-user').hide();
+
+    // Hiện đúng người được chọn
+    $('.chat-user-info .chat-user[data-id="' + currentFriendId + '"]').show();
+
+    // Ẩn placeholder nếu có
+    $('.chat-content .no-chat-placeholder').hide();
+
+    // FIX: Chỉ load nội dung messages, không load cả wrapper chat-content
     $.get('/Chat/GetMessages', { friendId: currentFriendId }, function(html) {
-        $('.chat-content').html(html);
+        // Nếu server trả về có chứa <div class="chat-content">, chỉ lấy nội dung bên trong
+        let $response = $(html);
+        if ($response.hasClass('chat-content')) {
+            $('.chat-content').html($response.html());
+        } else {
+            $('.chat-content').html(html);
+        }
         scrollToBottom();
     });
 });
@@ -48,37 +69,31 @@ function sendMessage() {
 
     connection.invoke("SendMessage", currentFriendId, content)
         .then(() => {
-            // Sau khi gửi thành công, làm mới toàn bộ lịch sử chat
-            $.get('/Chat/GetMessages', { friendId: currentFriendId }, function(html) {
-                $('.chat-content').html(html);
-                scrollToBottom();
-            });
+            console.log("Tin nhắn đã gửi thành công");
         })
         .catch(err => console.error(err.toString()));
 
     $('.chat-input-bar input').val('');
 }
 
-// Render tin nhắn mới
+// Render tin nhắn mới - FIX: Chỉ trả về nội dung message, không có wrapper chat-content
 function renderMessage(msg) {
-    let side = msg.isMine ? 'right' : 'left';
+    let isMine = msg.senderId === currentUserId;
+    let side = isMine ? 'right' : 'left';
 
-    if (msg.isMine) {
-        // Người gửi: thời gian -> tin nhắn -> avatar
+    if (isMine) {
         return `<div class="message ${side}">
             <div class="message-content">
                 <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
                 <span class="message-bubble">${msg.content}</span>
             </div>
-            <img src="${msg.avatarUrl}" class="message-avatar" />
         </div>`;
     } else {
-        // Người nhận: avatar -> tin nhắn -> thời gian
         return `<div class="message ${side}">
             <img src="${msg.avatarUrl}" class="message-avatar" />
             <div class="message-content">
-                <span class="message-bubble">${msg.content}</span>
                 <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
+                <span class="message-bubble">${msg.content}</span>
             </div>
         </div>`;
     }
