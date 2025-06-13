@@ -1,5 +1,5 @@
 :root {
-    --primary-color: #129990;
+    --primary-color: #FF8558;
     --primary-dark: #096B68;
     --secondary-color: #FFFBDE;
     --accent-color: #90D1CA;
@@ -10,12 +10,12 @@
 * {
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    
 }
 
 body {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(135deg, #90D1CA, #129990);
+    background: linear-gradient(168deg, #0B68AB, #041C35);
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -25,7 +25,7 @@ body {
 .login-wrapper {
     width: 100%;
     max-width: 480px; /* to hơn */
-    background: #fff;
+    background: #d7ebff;
     padding: 50px 40px;
     border-radius: 25px;
     box-shadow: 0 12px 50px rgba(0, 0, 0, 0.08);
@@ -106,6 +106,7 @@ body {
 
 /* Google */
 .btn-google {
+    width: 90%;
     color: #ea4335;
     border-color: #ea4335;
     background: white;
@@ -117,6 +118,7 @@ body {
 
 /* GitHub */
 .btn-github {
+    width: 90%;
     color: #333;
     border-color: #333;
     background: white;
@@ -128,6 +130,7 @@ body {
 
 /* Facebook */
 .btn-facebook {
+    width: 90%;
     color: #1877f2;
     border-color: #1877f2;
     background: white;

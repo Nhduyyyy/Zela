@@ -1,5 +1,5 @@
 ﻿@{
-Layout = null;
+    Layout = null;
 }
 
 <!DOCTYPE html>
@@ -18,9 +18,7 @@ Layout = null;
     <link href="@Url.Content("~/bootstrap/css/bootstrap.min.css")" rel="stylesheet"/>
 
     <!-- Additional CSS Files -->
-    <link rel="stylesheet" href="@Url.Content("~/css/fontawesome.css")"/>
-    <link rel="stylesheet" href="@Url.Content("~/css/animated.css")"/>
-    <link rel="stylesheet" href="@Url.Content("~/css/index.css")"/>
+    <link rel="stylesheet" href="@Url.Content("~/css/index-new.css")"/>
 </head>
 <body>
 <!-- Video Background -->
@@ -49,7 +47,7 @@ Layout = null;
             <li>
                 <div class="d-flex align-items-center gap-2">
                     <button onclick="playAudio()"
-                            class="btn btn-outline-secondary btn-sm d-flex align-items-center gap-1" id="btn-audio">
+                            class="btn btn-audio btn-sm d-flex align-items-center gap-2" id="btn-audio">
                         <i class="bi bi-music-note-beamed"></i> Bật nhạc
                     </button>
                 </div>
@@ -92,24 +90,24 @@ Layout = null;
 
         <div class="features-grid">
             @{
-            var features = new[]
-            {
-            new { Title = "Call Video", Description = "Thực hiện cuộc gọi video 1-1 và nhóm mượt mà, tích hợp ghi âm, chia sẻ màn hình và quản lý người tham gia.", Icon = "fas fa-video" },
-            new { Title = "Chat Real Time", Description = "Trò chuyện thời gian thực với hỗ trợ gửi media, emoji, phản hồi nhanh và lịch sử tin nhắn được lưu trữ an toàn.", Icon = "fas fa-comments" },
-            new { Title = "AI Support", Description = "Tích hợp AI để hiển thị phụ đề trực tiếp, dịch ngôn ngữ, tóm tắt nội dung và trả lời câu hỏi tự động trong buổi học.", Icon = "fas fa-robot" },
-            new { Title = "Best Study", Description = "Hỗ trợ học tập tối ưu với quiz builder, Pomodoro, bảng trắng cộng tác và đồng bộ lịch học với Google Calendar.", Icon = "fas fa-graduation-cap" }
-            };
+                var features = new[]
+                {
+                    new { Title = "Call Video", Description = "Thực hiện cuộc gọi video 1-1 và nhóm mượt mà, tích hợp ghi âm, chia sẻ màn hình và quản lý người tham gia.", Icon = "fas fa-video" },
+                    new { Title = "Chat Real Time", Description = "Trò chuyện thời gian thực với hỗ trợ gửi media, emoji, phản hồi nhanh và lịch sử tin nhắn được lưu trữ an toàn.", Icon = "fas fa-comments" },
+                    new { Title = "AI Support", Description = "Tích hợp AI để hiển thị phụ đề trực tiếp, dịch ngôn ngữ, tóm tắt nội dung và trả lời câu hỏi tự động trong buổi học.", Icon = "fas fa-robot" },
+                    new { Title = "Best Study", Description = "Hỗ trợ học tập tối ưu với quiz builder, Pomodoro, bảng trắng cộng tác và đồng bộ lịch học với Google Calendar.", Icon = "fas fa-graduation-cap" }
+                };
             }
 
             @foreach (var feature in features)
             {
-            <div class="feature-card">
-                <div class="feature-icon">
-                    <i class="@feature.Icon"></i>
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i class="@feature.Icon"></i>
+                    </div>
+                    <h4>@feature.Title</h4>
+                    <p>@feature.Description</p>
                 </div>
-                <h4>@feature.Title</h4>
-                <p>@feature.Description</p>
-            </div>
             }
         </div>
     </div>
