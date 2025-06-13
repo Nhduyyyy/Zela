@@ -4,7 +4,7 @@
 }
 
 @section Styles {
-    <link rel="stylesheet" href="~/css/chat-window.css"/>
+    <link rel="stylesheet" href="~/css/chat-window-8.css"/>
 }
 
 <section class="chat-window">
@@ -35,34 +35,38 @@
             <button class="mobile-menu-btn d-md-none">
                 <i class="bi bi-list"></i>
             </button>
-
-            <div class="chat-user-info">
+            
+            <div class="chat-user-info d-none">
                 @foreach (var f in Model)
                 {
-                    <img class="chat-user-avatar @(f.IsOnline ? "online-avatar" : "offline-avatar")" src="@f.AvatarUrl"
-                         alt="Avatar">
-                    <div class="chat-user-details">
-                        <h5> @f.FullName</h5>
-                        <p class="chat-user-status">
-                            <span class="status-dot"></span>
-                            @(f.IsOnline ? "Online" : "Offline")
-                        </p>
+                    <div class="chat-user" data-id="@f.UserId">
+                        <img class="chat-user-avatar @(f.IsOnline ? "online-avatar" : "offline-avatar")" src="@f.AvatarUrl"
+                             alt="Avatar">
+                        <div class="chat-user-details">
+                            <h5> @f.FullName</h5>
+                            <p class="chat-user-status @(f.IsOnline ? "" : "offline")">
+                                <span class="status-dot @(f.IsOnline ? "status-online" : "status-offline")"></span>
+                                @(f.IsOnline ? "Online" : "Offline")
+                            </p>
+                        </div>
                     </div>
                 }
             </div>
 
             <div class="chat-actions">
-                @foreach (var f in Model)
-                {
                     <i class="bi bi-telephone"></i>
-                    <i class="bi bi-camera-video" title="Gọi video" data-peer="@f.UserId"></i>
+                    <i class="bi bi-camera-video" ></i>
                     <i class="bi bi-search"></i>
                     <i class="bi bi-three-dots-vertical"></i>
-                }
             </div>
         </div>
 
-        <div class="chat-content"></div>
+        <div class="chat-content">
+            <div class="no-chat-placeholder text-center text-muted mt-5">
+                <i class="bi bi-chat-dots fs-1"></i>
+                <p class="mt-2">Hãy chọn bạn để bắt đầu trò chuyện</p>
+            </div>
+        </div>
         <div class="chat-input-bar">
             <div class="input-group d-flex align-items-center">
                 <input type="text" placeholder="Nhập tin nhắn..." class="flex-fill">
@@ -80,5 +84,9 @@
 </section>
 
 @section Scripts {
+    <script>
+        // Set current user ID để xác định tin nhắn của mình
+        const currentUserId = @(User.Identity.IsAuthenticated ? User.FindFirst("UserId")?.Value ?? "0" : "0");
+    </script>
     <script src="~/js/chat-window.js"></script>
 }

@@ -1,95 +1,102 @@
 @model ZelaTestDemo.ViewModels.FriendshipIndexViewModel
-@{
-    ViewData["Title"] = "Quản lý kết bạn";
-}
-
-<h2>@ViewData["Title"]</h2>
 
 @if (TempData["Error"] != null)
 {
     <div class="alert alert-danger">@TempData["Error"]</div>
 }
+@section Styles {
+    <link rel="stylesheet" href="~/css/friend.css"/>
+}
+<div class="container">
+        <h2>Quản lý kết bạn</h2>
 
-<div class="row mt-4">
-    <div class="col-md-4">
-        <h4>Bạn bè (@Model.Friends.Count)</h4>
-        <ul class="list-group">
-            @if (!Model.Friends.Any())
-            {
-                <li class="list-group-item text-muted">Chưa có bạn bè</li>
-            }
-            else
-            {
-                @foreach (var friend in Model.Friends)
-                {
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>@(string.IsNullOrWhiteSpace(friend.FullName) ? friend.Email : friend.FullName)</span>
-                        <form asp-action="RemoveFriend" method="post">
-                            <input type="hidden" name="friendId" value="@friend.UserId" />
-                            <button type="submit" class="btn btn-sm btn-danger">Hủy kết bạn</button>
-                        </form>
-                    </li>
-                }
-            }
-        </ul>
-        <a asp-action="Find" class="btn btn-primary mt-3">Tìm bạn mới</a>
-    </div>
-    <div class="col-md-4">
-        <h4>Lời mời đến (@Model.IncomingRequests.Count)</h4>
-        <ul class="list-group">
-            @if (!Model.IncomingRequests.Any())
-            {
-                <li class="list-group-item text-muted">Không có lời mời đến</li>
-            }
-            else
-            {
-                @foreach (var req in Model.IncomingRequests)
-                {
-                    <li class="list-group-item">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <span>
-                                @(string.IsNullOrWhiteSpace(req.RequesterName) ? req.RequesterName : req.RequesterName)
-                                <br /><small class="text-muted">@req.RequestedAt.ToString("yyyy-MM-dd HH:mm")</small>
-                            </span>
-                            <div>
-                                <form asp-action="AcceptRequest" method="post" class="d-inline">
-                                    <input type="hidden" name="requesterId" value="@req.RequesterId" />
-                                    <button type="submit" class="btn btn-sm btn-success">Chấp nhận</button>
+        <div class="alert alert-danger" style="display: none;">
+            <!-- TempData Error sẽ hiển thị ở đây -->
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-4">
+                <h4>Bạn bè (@Model.Friends.Count)</h4>
+                <ul class="list-group">
+                    @if (!Model.Friends.Any())
+                    {
+                        <li class="list-group-item text-muted">Chưa có bạn bè</li>
+                    }
+                    else
+                    {
+                        @foreach (var friend in Model.Friends)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>@(string.IsNullOrWhiteSpace(friend.FullName) ? friend.Email : friend.FullName)</span>
+                                <form asp-action="RemoveFriend" method="post">
+                                    <input type="hidden" name="friendId" value="@friend.UserId"/>
+                                    <button type="submit" class="btn btn-sm btn-danger">Hủy kết bạn</button>
                                 </form>
-                                <form asp-action="RejectRequest" method="post" class="d-inline">
-                                    <input type="hidden" name="requesterId" value="@req.RequesterId" />
-                                    <button type="submit" class="btn btn-sm btn-warning">Từ chối</button>
+                            </li>
+                        }
+                    }
+                </ul>
+                <a asp-action="Find" class="btn btn-primary mt-3">Tìm bạn mới</a>
+            </div>
+            <div class="col-md-4">
+                <h4>Lời mời đến (@Model.IncomingRequests.Count)</h4>
+                <ul class="list-group">
+                    @if (!Model.IncomingRequests.Any())
+                    {
+                        <li class="list-group-item text-muted">Không có lời mời đến</li>
+                    }
+                    else
+                    {
+                        @foreach (var req in Model.IncomingRequests)
+                        {
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <span>
+                                        @(string.IsNullOrWhiteSpace(req.RequesterName) ? req.RequesterName : req.RequesterName)
+                                        <br/><small class="text-muted">@req.RequestedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                                    </span>
+                                    <div>
+                                        <form asp-action="AcceptRequest" method="post" class="d-inline">
+                                            <input type="hidden" name="requesterId" value="@req.RequesterId"/>
+                                            <button type="submit" class="btn btn-sm btn-success">Chấp nhận</button>
+                                        </form>
+                                        <form asp-action="RejectRequest" method="post" class="d-inline">
+                                            <input type="hidden" name="requesterId" value="@req.RequesterId"/>
+                                            <button type="submit" class="btn btn-sm btn-warning">Từ chối</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+            <div class="col-md-4">
+                <h4>Lời mời đi (@Model.OutgoingRequests.Count)</h4>
+                <ul class="list-group">
+                    @if (!Model.OutgoingRequests.Any())
+                    {
+                        <li class="list-group-item text-muted">Không có lời mời đi</li>
+                    }
+                    else
+                    {
+                        @foreach (var req in Model.OutgoingRequests)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>
+                                    @(string.IsNullOrWhiteSpace(req.AddresseeName) ? req.AddresseeName : req.AddresseeName)
+                                    <br/><small class="text-muted">@req.RequestedAt.ToString("yyyy-MM-dd HH:mm")</small>
+                                </span>
+                                <form asp-action="CancelRequest" method="post">
+                                    <input type="hidden" name="userId2" value="@req.AddresseeId"/>
+                                    <button type="submit" class="btn btn-sm btn-danger">Hủy lời mời</button>
                                 </form>
-                            </div>
-                        </div>
-                    </li>
-                }
-            }
-        </ul>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
     </div>
-    <div class="col-md-4">
-        <h4>Lời mời đi (@Model.OutgoingRequests.Count)</h4>
-        <ul class="list-group">
-            @if (!Model.OutgoingRequests.Any())
-            {
-                <li class="list-group-item text-muted">Không có lời mời đi</li>
-            }
-            else
-            {
-                @foreach (var req in Model.OutgoingRequests)
-                {
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>
-                            @(string.IsNullOrWhiteSpace(req.AddresseeName) ? req.AddresseeName : req.AddresseeName)
-                            <br /><small class="text-muted">@req.RequestedAt.ToString("yyyy-MM-dd HH:mm")</small>
-                        </span>
-                        <form asp-action="CancelRequest" method="post">
-                            <input type="hidden" name="userId2" value="@req.AddresseeId" />
-                            <button type="submit" class="btn btn-sm btn-danger">Hủy lời mời</button>
-                        </form>
-                    </li>
-                }
-            }
-        </ul>
-    </div>
-</div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>

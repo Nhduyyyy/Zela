@@ -1,0 +1,156 @@
+/* Zela Theme CSS - Chỉ cần thêm vào file CSS hiện tại */
+
+/* Background chính */
+body {
+    background: linear-gradient(135deg, #0B1D34 0%, #08192C 100%);
+    color: #FFFFFF;
+    min-height: 100vh;
+}
+
+/* Header styling */
+h2 {
+    color: #D3E0F1;
+    text-align: center;
+    margin-bottom: 2rem;
+    font-weight: 600;
+}
+
+/* Alert styling */
+.alert-danger {
+    background-color: rgba(255, 94, 91, 0.2);
+    border: 1px solid #FF5E5B;
+    color: #FF7A59;
+}
+
+/* Table styling */
+.table {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 12px;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.table thead th {
+    background-color: rgba(11, 29, 52, 0.8);
+    color: #D3E0F1;
+    border-bottom: 2px solid #29B6F6;
+    font-weight: 600;
+    padding: 1rem;
+}
+
+.table tbody td {
+    background-color: rgba(255, 255, 255, 0.03);
+    color: #FFFFFF;
+    border-bottom: 1px solid rgba(41, 182, 246, 0.2);
+    padding: 1rem;
+}
+
+.table-striped tbody tr:nth-of-type(odd) td {
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+/* Status text colors */
+.text-muted {
+    color: #D3E0F1 !important;
+}
+
+.text-info {
+    color: #29B6F6 !important;
+}
+
+.text-warning {
+    color: #00F0B5 !important;
+}
+
+.text-success {
+    color: #41D7A7 !important;
+}
+
+.text-secondary {
+    color: #D3E0F1 !important;
+}
+
+/* Button styling */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #41D7A7, #22E3AC);
+    border-color: #41D7A7;
+    color: #0B1D34;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #22E3AC, #00F0B5);
+    border-color: #29B6F6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34, 227, 172, 0.3);
+}
+
+.btn-danger {
+    background: linear-gradient(135deg, #FF5E5B, #FF7A59);
+    border-color: #FF5E5B;
+    color: #FFFFFF;
+}
+
+.btn-danger:hover {
+    background: linear-gradient(135deg, #FF7A59, #FF5E5B);
+    border-color: #29B6F6;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 94, 91, 0.3);
+}
+
+.btn-secondary {
+    background: linear-gradient(135deg, #29B6F6, #0B1D34);
+    border-color: #29B6F6;
+    color: #FFFFFF;
+}
+
+.btn-secondary:hover {
+    background: linear-gradient(135deg, #0B1D34, #29B6F6);
+    border-color: #00F0B5;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(41, 182, 246, 0.3);
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+}
+
+/* Form styling */
+form.mb-0 {
+    display: inline-block;
+}
+
+/* Container styling */
+.container, .container-fluid {
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-top: 2rem;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(41, 182, 246, 0.1);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+
+    .btn-sm {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+
+    .container, .container-fluid {
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+}
