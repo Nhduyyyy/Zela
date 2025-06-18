@@ -27,37 +27,49 @@ public class FileUploadService : IFileUploadService
             : $"{folder.TrimEnd('/')}/{Guid.NewGuid():N}";
 
         UploadResult result;
-        if (file.ContentType.StartsWith("image/"))
+        try
         {
-            var parms = new ImageUploadParams
+            if (file.ContentType.StartsWith("image/"))
             {
-                File     = new FileDescription(file.FileName, file.OpenReadStream()),
-                PublicId = publicId
-            };
-            result = await _cloudinary.UploadAsync(parms);
+                var parms = new ImageUploadParams
+                {
+                    File     = new FileDescription(file.FileName, file.OpenReadStream()),
+                    PublicId = publicId
+                };
+                result = await _cloudinary.UploadAsync(parms);
+            }
+            else if (file.ContentType.StartsWith("video/"))
+            {
+                var parms = new VideoUploadParams
+                {
+                    File     = new FileDescription(file.FileName, file.OpenReadStream()),
+                    PublicId = publicId
+                };
+                result = await _cloudinary.UploadAsync(parms);
+            }
+            else
+            {
+                var parms = new RawUploadParams
+                {
+                    File     = new FileDescription(file.FileName, file.OpenReadStream()),
+                    PublicId = publicId
+                };
+                result = await _cloudinary.UploadAsync(parms);
+            }
         }
-        else if (file.ContentType.StartsWith("video/"))
+        catch (Exception ex)
         {
-            var parms = new VideoUploadParams
-            {
-                File     = new FileDescription(file.FileName, file.OpenReadStream()),
-                PublicId = publicId
-            };
-            result = await _cloudinary.UploadAsync(parms);
-        }
-        else
-        {
-            var parms = new RawUploadParams
-            {
-                File     = new FileDescription(file.FileName, file.OpenReadStream()),
-                PublicId = publicId
-            };
-            result = await _cloudinary.UploadAsync(parms);
+            Console.WriteLine($"[Cloudinary Upload ERROR] File: {file.FileName}, Type: {file.ContentType}, Error: {ex.Message}");
+            throw;
         }
 
         if (result.Error is not null)
+        {
+            Console.WriteLine($"[Cloudinary Upload RESULT ERROR] File: {file.FileName}, Type: {file.ContentType}, Error: {result.Error.Message}");
             throw new Exception($"Upload lỗi: {result.Error.Message}");
+        }
 
+        Console.WriteLine($"[Cloudinary Upload SUCCESS] File: {file.FileName}, Type: {file.ContentType}, Url: {result.SecureUrl}");
         return result.SecureUrl.ToString();
     }
 

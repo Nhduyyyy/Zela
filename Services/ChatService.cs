@@ -30,7 +30,9 @@ public class ChatService : IChatService
 
         if (file != null && file.Length > 0)
         {
+            Console.WriteLine($"[ChatService] Uploading file: {file.FileName}, type: {file.ContentType}, size: {file.Length}");
             var url = await _fileUploadService.UploadAsync(file, "chat");
+            Console.WriteLine($"[ChatService] Uploaded file url: {url}");
             msg.Media.Add(new Media
             {
                 MediaType = file.ContentType,
