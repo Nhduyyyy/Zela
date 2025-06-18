@@ -189,7 +189,7 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
         // -------------------------
 
         #region VideoRoom ↔ RoomParticipant
-
+        
         modelBuilder.Entity<RoomParticipant>()
             .HasOne(rp => rp.VideoRoom)
             .WithMany(vr => vr.Participants)
@@ -203,6 +203,16 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
             .OnDelete(DeleteBehavior.Restrict);
 
         #endregion
+        
+        #region VideoRoom unique index
+
+        // Bắt buộc Password (mã tham gia) phải là duy nhất
+        modelBuilder.Entity<VideoRoom>()
+            .HasIndex(vr => vr.Password)
+            .IsUnique();
+
+        #endregion
+
 
         #region VideoRoom ↔ CallSession → Attendance & Transcript
 

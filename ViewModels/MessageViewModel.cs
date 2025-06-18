@@ -1,4 +1,3 @@
-
 namespace Zela.ViewModels;
 
 public class MessageViewModel
@@ -12,4 +11,13 @@ public class MessageViewModel
     public DateTime SentAt { get; set; }
     public bool IsMine { get; set; }
     public bool IsEdited { get; set; }
+
+    // Thêm thuộc tính này:
+    public List<MediaViewModel> Media { get; set; } = new();
+}
+
+public class MediaViewModel
+{
+    public string Url { get; set; }
+    public string MediaType { get; set; }
 }
