@@ -17,7 +17,7 @@ public class Media
     [MaxLength(500)]
     public string Url { get; set; }                // NVARCHAR(500)
 
-    [MaxLength(50)]
+    [MaxLength(255)]
     public string MediaType { get; set; }          // NVARCHAR(50)
 
     [ForeignKey(nameof(MessageId))]

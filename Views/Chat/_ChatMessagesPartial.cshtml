@@ -20,7 +20,11 @@
                         }
                         else
                         {
-                            <a href="@media.Url" target="_blank" style="display:block; margin-bottom:5px;">@System.IO.Path.GetFileName(media.Url)</a>
+                            <div class="chat-file-attachment">
+                                <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                                <span class="file-name">@System.IO.Path.GetFileName(media.Url)</span>
+                                <a href="@media.Url" download class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                            </div>
                         }
                     }
                 }
@@ -50,7 +54,11 @@
                         }
                         else
                         {
-                            <a href="@media.Url" target="_blank" style="display:block; margin-bottom:5px;">@System.IO.Path.GetFileName(media.Url)</a>
+                            <div class="chat-file-attachment">
+                                <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                                <span class="file-name">@System.IO.Path.GetFileName(media.Url)</span>
+                                <a href="@media.Url" download class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                            </div>
                         }
                     }
                 }
