@@ -1,0 +1,93 @@
+@model List<Zela.ViewModels.GroupViewModel>
+
+@{
+    ViewData["Title"] = "Zela Chat – Nhóm";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/chat-window-8.css"/>
+}
+
+<section class="chat-window">
+    <div class="friend-list">
+        @Html.Partial("_SidebarChat")
+        <ul class="friend-items" id="group-list">
+            @foreach (var group in Model)
+            {
+                <li class="friend-item" data-id="@group.GroupId" data-type="group">
+                    <img class="friend-avatar" src="@group.AvatarUrl" alt="Group Avatar"/>
+                    <div class="friend-info">
+                        <div class="friend-name">@group.Name</div>
+                        <div class="friend-last-msg">@group.LastMessage</div>
+                    </div>
+                    <div class="friend-meta">
+                        <span class="friend-time">@group.LastTime</span>
+                        <span class="friend-status online">
+                            <i class="bi bi-circle-fill"></i>
+                        </span>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="chat-panel">
+        <div class="chat-header">
+            <button class="mobile-menu-btn d-md-none">
+                <i class="bi bi-list"></i>
+            </button>
+            
+            <div class="chat-user-info d-none">
+                @foreach (var group in Model)
+                {
+                    <div class="chat-user" data-id="@group.GroupId" data-type="group">
+                        <img class="chat-user-avatar online-avatar" src="@group.AvatarUrl" alt="Group Avatar">
+                        <div class="chat-user-details">
+                            <h5>@group.Name</h5>
+                            <p class="chat-user-status">
+                                <span class="status-dot status-online"></span>
+                                @group.MemberCount thành viên
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="chat-actions">
+                <i class="bi bi-telephone"></i>
+                <i class="bi bi-camera-video"></i>
+                <i class="bi bi-search"></i>
+                <i class="bi bi-three-dots-vertical toggle-sidebar-btn" style="cursor: pointer;"></i>
+            </div>
+        </div>
+
+        <div class="chat-content">
+            <div class="no-chat-placeholder text-center text-muted mt-5">
+                <i class="bi bi-chat-square-dots fs-1"></i>
+                <p class="mt-2">Hãy chọn nhóm để bắt đầu trò chuyện</p>
+            </div>
+        </div>
+        <div class="chat-input-bar">
+            <div class="input-group d-flex align-items-center">
+                <input type="text" placeholder="Nhập tin nhắn..." class="flex-fill">
+                <div class="input-actions">
+                    <i class="bi bi-image" title="Hình ảnh"></i>
+                    <i class="bi bi-paperclip" title="Đính kèm"></i>
+                    <i class="bi bi-emoji-smile" title="Emoji"></i>
+                    <i class="bi bi-send btn-send" title="Gửi"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sidebar-right" class="sidebar-right d-none">
+        @Html.Partial("~/Views/Chat/_SidebarRight.cshtml")
+    </div>
+</section>
+
+<!-- Hidden element to store current user ID -->
+<div data-current-user-id="@(User.Identity.IsAuthenticated ? (User.FindFirst("UserId") != null ? User.FindFirst("UserId").Value : "0") : "0")" style="display: none;"></div>
+
+@section Scripts {
+    <script src="~/js/group-chat-window.js"></script>
+} 
