@@ -13,13 +13,12 @@
 }
 
 .zela-sidebar {
-    width: 240px;
+    width: 270px;
     background: linear-gradient(180deg, #0B1D34 0%, #08192C 100%);
     color: #FFFFFF;
     display: flex;
     flex-direction: column;
     height: 100vh;
-    padding: 16px 0;
     flex-shrink: 0;
     position: relative;
     box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
@@ -158,4 +157,130 @@
     right: 0;
     height: 2px;
     background: linear-gradient(90deg, #FF5E5B 0%, #00F0B5 50%, #29B6F6 100%);
+}
+/*CSS cho User*/
+/* CSS for User Section in Sidebar */
+.zela-user-section {
+    padding: 10px 5px;
+    display: flex;
+    align-items: center;
+    background-color: #f4f6f9; /* Light background for contrast */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar-container {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.user-avatar-sidebar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid #ddd; /* Subtle border around avatar */
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.user-avatar-sidebar:hover {
+    transform: scale(1.1); /* Add a slight hover effect */
+}
+
+.user-status-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: #28a745; /* Green online indicator */
+    border-radius: 50%;
+    border: 2px solid #ffffff; /* Border to give indicator visibility */
+}
+
+.user-info {
+    flex: 1; /* Allow user info to take up remaining space */
+}
+
+.user-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333333; /* Dark color for name */
+    margin-bottom: 5px;
+}
+
+.user-status-text {
+    font-size: 14px;
+    color: #6c757d; /* Neutral gray for less emphasis */
+}
+
+.user-status-text i {
+    margin-right: 5px;
+}
+
+.user-actions {
+    margin-left: auto;
+}
+
+.user-menu-btn {
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    font-size: 1.2rem; /* Slightly larger icon size */
+    color: #6c757d;
+    transition: color 0.2s ease;
+}
+
+.user-menu-btn:hover {
+    color: #343a40; /* Slightly darker on hover */
+}
+
+/* Dropdown Styling */
+.dropdown-menu {
+    min-width: 200px;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+    font-size: 14px;
+    color: #333333;
+    padding: 10px 15px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa; /* Light hover for items */
+    color: #007bff;
+}
+
+.dropdown-item.text-danger {
+    color: #dc3545;
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: #f8d7da; /* Subtle hover for danger option */
+    color: #721c24;
+}
+
+.dropdown-divider {
+    margin: 5px 0;
+    border-top: 1px solid #f1f1f1;
+}
+
+/* Logout Button */
+.logout-btn {
+    font-size: 18px;
+    color: #6c757d;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.logout-btn:hover {
+    color: #dc3545; /* Red hover effect */
 }

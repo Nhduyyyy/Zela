@@ -6,13 +6,14 @@
         {
             <!-- Người GỬI: thời gian -> media -> tin nhắn -> avatar -->
             <div class="message-content">
+                <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
                 @if (msg.Media != null && msg.Media.Count > 0)
                 {
                     foreach (var media in msg.Media)
                     {
                         if (media.MediaType != null && media.MediaType.StartsWith("image/"))
                         {
-                            <img src="@media.Url" class="message-media-img" alt="Ảnh gửi" />
+                            <img src="@media.Url" class="message-media-img" alt="Ảnh gửi"/>
                         }
                         else if (media.MediaType != null && media.MediaType.StartsWith("video/"))
                         {
@@ -33,20 +34,20 @@
                     <span class="message-bubble">@msg.Content</span>
                 }
             </div>
-            <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
         }
         else
         {
             <!-- Người NHẬN: avatar -> media -> tin nhắn -> thời gian -->
             <img src="@msg.AvatarUrl" class="message-avatar" />
             <div class="message-content">
+                <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
                 @if (msg.Media != null && msg.Media.Count > 0)
                 {
                     foreach (var media in msg.Media)
                     {
                         if (media.MediaType != null && media.MediaType.StartsWith("image/"))
                         {
-                            <img src="@media.Url" class="message-media-img" alt="Ảnh gửi" />
+                            <img src="@media.Url" class="message-media-img" alt="Ảnh gửi"/>
                         }
                         else if (media.MediaType != null && media.MediaType.StartsWith("video/"))
                         {
@@ -67,7 +68,6 @@
                     <span class="message-bubble">@msg.Content</span>
                 }
             </div>
-            <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
         }
     </div>
 }

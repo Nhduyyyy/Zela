@@ -517,6 +517,8 @@ div.chat-user p.chat-user-status.offline {
 
 /* 3.7 Chat Actions */
 div.chat-actions {
+    right: 0;
+    position: absolute;
     display: flex;
     gap: 15px;
 }
@@ -591,42 +593,31 @@ img.message-avatar {
 .message-bubble {
     padding: 12px 18px;
     border-radius: 20px;
-    margin: 2px 0;
-    font-size: 15px;
-    font-weight: 500;
-    background: #41D7A7;
-    color: #0B1D34;
-    box-shadow: 0 2px 10px rgba(65, 215, 167, 0.18);
-    border-bottom-right-radius: 5px;
-    border-bottom-left-radius: 20px;
-    border-top-left-radius: 20px;
-    border-top-right-radius: 20px;
-    transition: background 0.2s;
-}
-
-.message.right .message-bubble {
-    background: linear-gradient(90deg, #00F0B5, #22E3AC);
-    color: #0B1D34;
+    position: relative;
+    animation: messageSlide 0.3s ease;
+    transition: all 0.2s ease;
+    margin: 2px 0; /* Khoảng cách giữa bubble và time */
 }
 
 .message.left .message-bubble {
-    background: #41D7A7;
-    color: #FFFFFF;
+    background: var(--mint-green);
+    color: white;
+    border-bottom-left-radius: 5px;
+    box-shadow: 0 2px 10px rgba(65, 215, 167, 0.3);
+}
+
+.message.right .message-bubble {
+    background: var(--neon-green);
+    color: var(--text-dark);
+    border-bottom-right-radius: 5px;
+    box-shadow: 0 2px 10px rgba(0, 240, 181, 0.3);
 }
 
 .message-time {
     font-size: 12px;
-    color: #29B6F6;
-    opacity: 0.85;
-    margin-top: 4px;
-    margin-bottom: 2px;
-    align-self: flex-end;
-    font-weight: 500;
-    letter-spacing: 0.5px;
-    background: rgba(11,29,52,0.08);
-    padding: 2px 8px;
-    border-radius: 8px;
-    display: inline-block;
+    color: #6b7280;
+    opacity: 0.7;
+    padding: 2px 4px;
 }
 
 @keyframes fadeInUp {
@@ -944,18 +935,21 @@ img.message-avatar {
 /*=======================================================================================*/
 
 .friend-list::-webkit-scrollbar,
+.sidebar-right::-webkit-scrollbar,
 .chat-content::-webkit-scrollbar,
 .chat-info-panel::-webkit-scrollbar {
     width: 8px;
 }
 
 .friend-list::-webkit-scrollbar-track,
+.sidebar-right::-webkit-scrollbar-track,
 .chat-content::-webkit-scrollbar-track,
 .chat-info-panel::-webkit-scrollbar-track {
     background: transparent;
 }
 
 .friend-list::-webkit-scrollbar-thumb,
+.sidebar-right::-webkit-scrollbar-thumb,
 .chat-content::-webkit-scrollbar-thumb,
 .chat-info-panel::-webkit-scrollbar-thumb {
     background: linear-gradient(180deg, var(--sky-blue), var(--neon-green));
@@ -964,11 +958,13 @@ img.message-avatar {
 }
 
 .friend-list::-webkit-scrollbar-thumb:hover,
+.sidebar-right::-webkit-scrollbar-thumb:hover,
 .chat-content::-webkit-scrollbar-thumb:hover,
 .chat-info-panel::-webkit-scrollbar-thumb:hover {
     background: var(--neon-green);
     box-shadow: 0 0 10px rgba(0, 240, 181, 0.5);
 }
+
 
 /*=======================================================================================*/
 /*                                7. DARK MODE SUPPORT                                  */
@@ -1263,6 +1259,41 @@ img.message-avatar {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     font-weight: bold;
+}
+
+/*CSS mới*/
+
+.sidebar-right {
+    top: 0;
+    right: 0;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    overflow-y: auto;
+    transition: transform 0.3s ease;
+}
+
+.sidebar-right.show {
+    display: block !important;
+}
+
+.sidebar-right.d-none {
+    display: none !important;
+}
+
+/* Message Sender Name for Group Chat */
+.message-sender {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--neon-green);
+    margin-bottom: 2px;
+    text-shadow: 0 0 5px rgba(0, 240, 181, 0.3);
+}
+
+.message.left .message-sender {
+    color: var(--neon-green);
+}
+
+.message.right .message-sender {
+    display: none; /* Không hiển thị tên người gửi cho tin nhắn của mình */
 }
 
 /*=======================================================================================*/

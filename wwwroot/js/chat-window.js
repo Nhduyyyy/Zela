@@ -9,6 +9,7 @@
     const fileInputEl = document.getElementById('chat-file-input');
     const sendBtn = document.querySelector('.btn-send');
     const previewEl = document.getElementById('chat-preview');
+    const chatFriendNameEl = document.getElementById('chat-friend-name');
 
     // Khởi tạo kết nối SignalR (signalR đã được load trước qua CDN hoặc script tag)
     const connection = new signalR.HubConnectionBuilder()
@@ -23,8 +24,10 @@
             chatContentEl.insertAdjacentHTML('beforeend', renderMessage(msg));
             scrollToBottom();
             // Nếu có file đang preview, ẩn luôn
-            previewEl.innerHTML = '';
-            previewEl.style.display = 'none';
+            if (previewEl) {
+                previewEl.innerHTML = '';
+                previewEl.style.display = 'none';
+            }
         }
     });
 
@@ -33,7 +36,7 @@
     // Gửi tin nhắn
     async function sendMessage() {
         const content = chatInputEl.value.trim();
-        const file = fileInputEl.files[0];
+        const file = fileInputEl ? fileInputEl.files[0] : null;
         const friendId = currentFriendId;
         if (!content && !file) return;
 
@@ -50,9 +53,11 @@
             });
             if (res.ok) {
                 chatInputEl.value = '';
-                fileInputEl.value = '';
-                previewEl.innerHTML = '';
-                previewEl.style.display = 'none';
+                if (fileInputEl) fileInputEl.value = '';
+                if (previewEl) {
+                    previewEl.innerHTML = '';
+                    previewEl.style.display = 'none';
+                }
             }
             return;
         } else {
@@ -60,6 +65,7 @@
             connection.invoke('SendMessage', friendId, content)
                 .then(() => {
                     chatInputEl.value = '';
+                    console.log("Tin nhắn đã gửi thành công");
                 })
                 .catch(err => console.error('SendMessage error:', err));
         }
@@ -96,24 +102,25 @@
         if (msg.content && msg.content.trim() !== '') {
             textHtml = `<span class="message-bubble">${msg.content}</span>`;
         }
+
         if (isMine) {
             return `
         <div class="message ${side}">
           <div class="message-content">
+            <span class="message-time">${time}</span>
             ${mediaHtml}
             ${textHtml}
           </div>
-          <span class="message-time">${time}</span>
         </div>`;
         } else {
             return `
         <div class="message ${side}">
           <img src="${msg.avatarUrl}" class="message-avatar" />
           <div class="message-content">
+            <span class="message-time">${time}</span>
             ${mediaHtml}
             ${textHtml}
           </div>
-          <span class="message-time">${time}</span>
         </div>`;
         }
     }
@@ -129,9 +136,17 @@
         const friendItem = e.target.closest('.friend-item');
         if (friendItem) {
             currentFriendId = Number(friendItem.dataset.id);
+
+            // Remove active class from all friend items
             document.querySelectorAll('.friend-item')
                 .forEach(el => el.classList.remove('active'));
             friendItem.classList.add('active');
+
+            // Set friend name
+            const friendNameEl = friendItem.querySelector('.friend-name');
+            if (chatFriendNameEl && friendNameEl) {
+                chatFriendNameEl.textContent = friendNameEl.textContent;
+            }
 
             // Hiện/ẩn khung thông tin user
             chatUserInfoEl.classList.remove('d-none');
@@ -170,6 +185,16 @@
             sendMessage();
             return;
         }
+
+        // Click nút video call
+        const videoCallBtn = e.target.closest('.btn-video-call');
+        if (videoCallBtn) {
+            const peerId = videoCallBtn.dataset.peer;
+            if (peerId) {
+                window.location.href = '/VideoCall/Room?userId=' + peerId;
+            }
+            return;
+        }
     });
 
     // Gửi khi Enter
@@ -181,13 +206,22 @@
     });
 
     // Khi click vào icon ảnh hoặc file, mở input file
-    document.querySelector('.bi-image').addEventListener('click', function () {
-        document.getElementById('chat-file-input').click();
-    });
-    document.querySelector('.bi-paperclip').addEventListener('click', function () {
-        document.getElementById('chat-file-input').click();
-    });
+    const imageIcon = document.querySelector('.bi-image');
+    const paperclipIcon = document.querySelector('.bi-paperclip');
 
+    if (imageIcon) {
+        imageIcon.addEventListener('click', function () {
+            if (fileInputEl) fileInputEl.click();
+        });
+    }
+
+    if (paperclipIcon) {
+        paperclipIcon.addEventListener('click', function () {
+            if (fileInputEl) fileInputEl.click();
+        });
+    }
+
+    // Load messages function (from jQuery version)
     async function loadMessages(friendId) {
         const res = await fetch(`/Chat/GetMessages?friendId=${friendId}`);
         const html = await res.text();
@@ -195,38 +229,44 @@
         scrollToBottom();
     }
 
-    fileInputEl.addEventListener('change', function () {
-        if (this.files && this.files.length > 0) {
+    // File input change handler
+    if (fileInputEl) {
+        fileInputEl.addEventListener('change', function () {
+            if (this.files && this.files.length > 0) {
+                // Nếu chỉ cho phép 1 file:
+                if (this.files[0].size > 50 * 1024 * 1024) {
+                    alert("File quá lớn! Vui lòng chọn file nhỏ hơn 50MB.");
+                    this.value = "";
+                    return;
+                }
 
-            // Nếu chỉ cho phép 1 file:
-            if (this.files[0].size > 50 * 1024 * 1024) {
-                alert("File quá lớn! Vui lòng chọn file nhỏ hơn 50MB.");
-                this.value = "";
-            }
-
-            previewEl.style.display = "flex";
-            previewEl.innerHTML = '';
-            const file = this.files[0];
-            if (file.type.startsWith('image/')) {
-                const img = document.createElement('img');
-                img.src = URL.createObjectURL(file);
-                img.className = 'message-media-img';
-                previewEl.appendChild(img);
-            } else if (file.type.startsWith('video/')) {
-                const video = document.createElement('video');
-                video.className = 'message-media-video';
-                video.src = URL.createObjectURL(file);
-                video.controls = true;
-                previewEl.appendChild(video);
+                if (previewEl) {
+                    previewEl.style.display = "flex";
+                    previewEl.innerHTML = '';
+                    const file = this.files[0];
+                    if (file.type.startsWith('image/')) {
+                        const img = document.createElement('img');
+                        img.src = URL.createObjectURL(file);
+                        img.className = 'message-media-img';
+                        previewEl.appendChild(img);
+                    } else if (file.type.startsWith('video/')) {
+                        const video = document.createElement('video');
+                        video.className = 'message-media-video';
+                        video.src = URL.createObjectURL(file);
+                        video.controls = true;
+                        previewEl.appendChild(video);
+                    } else {
+                        const p = document.createElement('p');
+                        p.textContent = file.name;
+                        previewEl.appendChild(p);
+                    }
+                }
             } else {
-                const p = document.createElement('p');
-                p.textContent = file.name;
-                previewEl.appendChild(p);
+                if (previewEl) {
+                    previewEl.style.display = "none";
+                    previewEl.innerHTML = "";
+                }
             }
-        } else {
-            previewEl.style.display = "none";
-            previewEl.innerHTML = "";
-        }
-    });
+        });
+    }
 })();
-
