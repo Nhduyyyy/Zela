@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using Zela.Services;
-
+using ZelaTestDemo.ViewModels;
 
 public class ChatHub : Hub
 {

@@ -591,31 +591,42 @@ img.message-avatar {
 .message-bubble {
     padding: 12px 18px;
     border-radius: 20px;
-    position: relative;
-    animation: messageSlide 0.3s ease;
-    transition: all 0.2s ease;
-    margin: 2px 0; /* Khoảng cách giữa bubble và time */
-}
-
-.message.left .message-bubble {
-    background: var(--mint-green);
-    color: white;
-    border-bottom-left-radius: 5px;
-    box-shadow: 0 2px 10px rgba(65, 215, 167, 0.3);
+    margin: 2px 0;
+    font-size: 15px;
+    font-weight: 500;
+    background: #41D7A7;
+    color: #0B1D34;
+    box-shadow: 0 2px 10px rgba(65, 215, 167, 0.18);
+    border-bottom-right-radius: 5px;
+    border-bottom-left-radius: 20px;
+    border-top-left-radius: 20px;
+    border-top-right-radius: 20px;
+    transition: background 0.2s;
 }
 
 .message.right .message-bubble {
-    background: var(--neon-green);
-    color: var(--text-dark);
-    border-bottom-right-radius: 5px;
-    box-shadow: 0 2px 10px rgba(0, 240, 181, 0.3);
+    background: linear-gradient(90deg, #00F0B5, #22E3AC);
+    color: #0B1D34;
+}
+
+.message.left .message-bubble {
+    background: #41D7A7;
+    color: #FFFFFF;
 }
 
 .message-time {
     font-size: 12px;
-    color: #6b7280;
-    opacity: 0.7;
-    padding: 2px 4px;
+    color: #29B6F6;
+    opacity: 0.85;
+    margin-top: 4px;
+    margin-bottom: 2px;
+    align-self: flex-end;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+    background: rgba(11,29,52,0.08);
+    padding: 2px 8px;
+    border-radius: 8px;
+    display: inline-block;
 }
 
 @keyframes fadeInUp {
@@ -1252,4 +1263,418 @@ img.message-avatar {
     -webkit-text-fill-color: transparent;
     background-clip: text;
     font-weight: bold;
+}
+
+/*=======================================================================================*/
+/*                          ENHANCED IMAGE DISPLAY & PREVIEW STYLES                     */
+/*=======================================================================================*/
+
+/* 1. MESSAGE IMAGES - Hình ảnh trong tin nhắn */
+.message-media-img {
+    max-width: 240px;
+    max-height: 240px;
+    border-radius: 16px;
+    margin-bottom: 8px;
+    display: block;
+    object-fit: cover;
+    cursor: pointer;
+    border: 3px solid transparent;
+    background: linear-gradient(135deg, #0B1D34, #08192C) padding-box,
+    linear-gradient(135deg, #00F0B5, #29B6F6, #FF5E5B) border-box;
+    box-shadow:
+            0 8px 32px rgba(0, 240, 181, 0.18),
+            0 4px 16px rgba(41, 182, 246, 0.12),
+            inset 0 1px 0 rgba(255,255,255,0.08);
+    transition:
+            transform 0.25s cubic-bezier(0.4,0,0.2,1),
+            box-shadow 0.25s cubic-bezier(0.4,0,0.2,1),
+            border-color 0.25s;
+}
+
+.message-media-img:hover {
+    transform: scale(1.04) rotate(-1deg);
+    box-shadow:
+            0 16px 48px rgba(0, 240, 181, 0.28),
+            0 8px 24px rgba(41, 182, 246, 0.18),
+            0 0 0 2px #00F0B5;
+    border-color: #00F0B5;
+}
+
+/* Video trong chat: hiệu ứng tương tự ảnh */
+.message-media-video {
+    max-width: 240px;
+    border-radius: 16px;
+    margin-bottom: 8px;
+    background: #0B1D34;
+    box-shadow:
+            0 8px 32px rgba(0, 240, 181, 0.15),
+            0 4px 16px rgba(41, 182, 246, 0.10);
+    border: 2px solid #29B6F6;
+    transition:
+            transform 0.25s cubic-bezier(0.4,0,0.2,1),
+            box-shadow 0.25s cubic-bezier(0.4,0,0.2,1),
+            border-color 0.25s;
+}
+
+.message-media-video:hover {
+    transform: scale(1.03);
+    border-color: #00F0B5;
+    box-shadow:
+            0 16px 48px rgba(0, 240, 181, 0.22),
+            0 8px 24px rgba(41, 182, 246, 0.15);
+}
+
+/* 2. CHAT PREVIEW - Preview hình trước khi gửi */
+#chat-preview {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: center;
+    margin: 12px 0;
+    padding: 16px;
+    background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.1) 0%,
+    rgba(0, 240, 181, 0.05) 100%);
+    border-radius: 16px;
+    border: 1px solid rgba(0, 240, 181, 0.2);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+#chat-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg,
+    transparent 0%,
+    #00F0B5 20%,
+    #29B6F6 50%,
+    #FF5E5B 80%,
+    transparent 100%);
+    animation: preview-glow 3s ease-in-out infinite;
+}
+
+@keyframes preview-glow {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+}
+
+#chat-preview img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+
+    /* Gradient border */
+    border: 2px solid transparent;
+    background: linear-gradient(#0B1D34, #0B1D34) padding-box,
+    linear-gradient(45deg, #00F0B5, #29B6F6) border-box;
+
+    box-shadow:
+            0 4px 16px rgba(0, 240, 181, 0.2),
+            0 2px 8px rgba(41, 182, 246, 0.1);
+
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#chat-preview img:hover {
+    transform: scale(1.1) rotate(2deg);
+    box-shadow:
+            0 8px 32px rgba(0, 240, 181, 0.3),
+            0 4px 16px rgba(41, 182, 246, 0.2),
+            0 0 0 3px rgba(0, 240, 181, 0.4);
+}
+
+/* Remove button cho preview images */
+#chat-preview .preview-item {
+    position: relative;
+    display: inline-block;
+}
+
+#chat-preview .preview-remove {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF5E5B, #FF7A59);
+    color: white;
+    border: 2px solid #0B1D34;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: bold;
+    box-shadow: 0 2px 8px rgba(255, 94, 91, 0.4);
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+#chat-preview .preview-remove:hover {
+    transform: scale(1.2) rotate(90deg);
+    box-shadow: 0 4px 16px rgba(255, 94, 91, 0.6);
+    background: linear-gradient(135deg, #FF7A59, #FF5E5B);
+}
+
+/* 3. IMAGE GALLERY GRID - Khi có nhiều ảnh */
+.message-images-grid {
+    display: grid;
+    gap: 8px;
+    max-width: 320px;
+    margin-bottom: 8px;
+    border-radius: 16px;
+    overflow: hidden;
+    padding: 4px;
+    background: linear-gradient(135deg,
+    rgba(0, 240, 181, 0.1) 0%,
+    rgba(41, 182, 246, 0.05) 100%);
+    backdrop-filter: blur(5px);
+}
+
+/* 2 ảnh */
+.message-images-grid.grid-2 {
+    grid-template-columns: 1fr 1fr;
+}
+
+/* 3 ảnh */
+.message-images-grid.grid-3 {
+    grid-template-columns: 2fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.message-images-grid.grid-3 img:first-child {
+    grid-row: 1 / 3;
+}
+
+/* 4+ ảnh */
+.message-images-grid.grid-4plus {
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+}
+
+.message-images-grid img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 12px;
+    cursor: pointer;
+    position: relative;
+
+    border: 2px solid rgba(0, 240, 181, 0.3);
+    transition: all 0.3s ease;
+}
+
+.message-images-grid img:hover {
+    transform: scale(1.05);
+    border-color: #00F0B5;
+    box-shadow: 0 8px 24px rgba(0, 240, 181, 0.3);
+    z-index: 2;
+}
+
+/* Overlay cho ảnh thứ 4+ */
+.message-images-grid .more-images {
+    position: relative;
+    overflow: hidden;
+}
+
+.message-images-grid .more-images::after {
+    content: '+' attr(data-count);
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(11, 29, 52, 0.8);
+    color: #00F0B5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    backdrop-filter: blur(2px);
+    transition: all 0.3s ease;
+}
+
+.message-images-grid .more-images:hover::after {
+    background: rgba(0, 240, 181, 0.9);
+    color: #0B1D34;
+    transform: scale(1.1);
+}
+
+/* 4. LIGHTBOX MODAL - Xem ảnh full size */
+.image-lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(11, 29, 52, 0.95);
+    backdrop-filter: blur(20px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.4s ease;
+}
+
+.image-lightbox.active {
+    opacity: 1;
+    visibility: visible;
+}
+
+.image-lightbox img {
+    max-width: 90vw;
+    max-height: 90vh;
+    border-radius: 16px;
+    box-shadow:
+            0 16px 64px rgba(0, 240, 181, 0.2),
+            0 8px 32px rgba(41, 182, 246, 0.1);
+    transform: scale(0.8);
+    transition: transform 0.4s ease;
+}
+
+.image-lightbox.active img {
+    transform: scale(1);
+}
+
+.image-lightbox .close-btn {
+    position: absolute;
+    top: 30px;
+    right: 30px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #FF5E5B, #FF7A59);
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 4px 16px rgba(255, 94, 91, 0.4);
+    transition: all 0.3s ease;
+}
+
+.image-lightbox .close-btn:hover {
+    transform: scale(1.1) rotate(90deg);
+    box-shadow: 0 8px 32px rgba(255, 94, 91, 0.6);
+}
+
+/* 5. DRAG & DROP ZONE */
+.chat-input-bar.drag-over {
+    background: linear-gradient(135deg,
+    rgba(0, 240, 181, 0.1) 0%,
+    rgba(41, 182, 246, 0.05) 100%);
+    border: 2px dashed #00F0B5;
+    transform: scale(1.02);
+    box-shadow: 0 8px 32px rgba(0, 240, 181, 0.2);
+}
+
+.drop-zone-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 240, 181, 0.1);
+    backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 25px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.chat-input-bar.drag-over .drop-zone-overlay {
+    opacity: 1;
+}
+
+.drop-zone-text {
+    color: #00F0B5;
+    font-size: 18px;
+    font-weight: 600;
+    text-align: center;
+    text-shadow: 0 0 10px rgba(0, 240, 181, 0.5);
+}
+
+/* 6. IMAGE LOADING STATES */
+.image-uploading {
+    position: relative;
+    opacity: 0.7;
+}
+
+.image-uploading::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 30px;
+    height: 30px;
+    margin: -15px 0 0 -15px;
+    border: 3px solid rgba(0, 240, 181, 0.3);
+    border-top: 3px solid #00F0B5;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 7. RESPONSIVE IMAGES */
+@media (max-width: 768px) {
+    .message-media-img {
+        max-width: 220px;
+        max-height: 220px;
+        border-radius: 12px;
+    }
+
+    #chat-preview img {
+        width: 60px;
+        height: 60px;
+    }
+
+    .message-images-grid {
+        max-width: 280px;
+    }
+
+    .message-images-grid img {
+        height: 100px;
+    }
+
+    .image-lightbox img {
+        max-width: 95vw;
+        max-height: 95vh;
+    }
+}
+
+/* 8. ANIMATIONS */
+@keyframes imageAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.8) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.message-media-img,
+#chat-preview img {
+    animation: imageAppear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }

@@ -1,110 +1,227 @@
-let currentFriendId = null;
+(() => {
+    // ID của friend đang chat
+    let currentFriendId = null;
 
-// Kết nối SignalR
-const connection = new signalR.HubConnectionBuilder()
-    .withUrl("/chathub")
-    .build();
+    // Tham chiếu các phần tử DOM
+    const chatContentEl = document.querySelector('.chat-content');
+    const chatInputEl = document.querySelector('.chat-input-bar input[type="text"]');
+    const chatUserInfoEl = document.querySelector('.chat-user-info');
+    const fileInputEl = document.getElementById('chat-file-input');
+    const sendBtn = document.querySelector('.btn-send');
+    const previewEl = document.getElementById('chat-preview');
 
-// Nhận message mới (realtime, từ chính mình hoặc bạn bè)
-connection.on("ReceiveMessage", function (msg) {
-    console.log("SignalR nhận được:", msg);
+    // Khởi tạo kết nối SignalR (signalR đã được load trước qua CDN hoặc script tag)
+    const connection = new signalR.HubConnectionBuilder()
+        .withUrl('/chathub')
+        .build();
 
-    let currentId = Number(currentFriendId);
-
-    if (currentId && (msg.senderId === currentId || msg.recipientId === currentId)) {
-        // FIX: Chỉ append vào nội dung bên trong chat-content, không tạo nested
-        $('.chat-content').append(renderMessage(msg));
-        scrollToBottom();
-    }
-});
-
-
-connection.start().catch(err => console.error(err.toString()));
-
-// Khi click chọn một người bạn → load lịch sử chat
-$(document).on('click', '.friend-item', function () {
-    currentFriendId = Number($(this).data('id'));
-
-    $('.friend-item').removeClass('active');
-    $(this).addClass('active');
-
-    $('#chat-friend-name').text($(this).find('.friend-name').text());
-
-    // Hiện toàn bộ phần thông tin người chat nếu đang bị ẩn
-    $('.chat-user-info').removeClass('d-none').show(); // nếu dùng Bootstrap
-    // hoặc: $('.chat-user-info').show();
-    // Ẩn tất cả user trong phần info
-    $('.chat-user-info .chat-user').hide();
-
-    // Hiện đúng người được chọn
-    $('.chat-user-info .chat-user[data-id="' + currentFriendId + '"]').show();
-
-    // Ẩn placeholder nếu có
-    $('.chat-content .no-chat-placeholder').hide();
-
-    // FIX: Chỉ load nội dung messages, không load cả wrapper chat-content
-    $.get('/Chat/GetMessages', { friendId: currentFriendId }, function(html) {
-        // Nếu server trả về có chứa <div class="chat-content">, chỉ lấy nội dung bên trong
-        let $response = $(html);
-        if ($response.hasClass('chat-content')) {
-            $('.chat-content').html($response.html());
-        } else {
-            $('.chat-content').html(html);
+    // Xử lý khi nhận message mới
+    connection.on('ReceiveMessage', msg => {
+        console.log('SignalR nhận được:', msg);
+        const cid = Number(currentFriendId);
+        if (cid && (msg.senderId === cid || msg.recipientId === cid)) {
+            chatContentEl.insertAdjacentHTML('beforeend', renderMessage(msg));
+            scrollToBottom();
+            // Nếu có file đang preview, ẩn luôn
+            previewEl.innerHTML = '';
+            previewEl.style.display = 'none';
         }
-        scrollToBottom();
     });
-});
 
-// Gửi tin nhắn (nhấn Enter hoặc bấm icon gửi)
-$(document).on('click', '.bi-send', function() {
-    sendMessage();
-});
-$('.chat-input-bar input').on('keypress', function(e) {
-    if (e.which === 13) sendMessage();
-});
+    connection.start().catch(err => console.error('SignalR error:', err));
 
-function sendMessage() {
-    let content = $('.chat-input-bar input').val();
-    if (!content.trim() || !currentFriendId) return;
+    // Gửi tin nhắn
+    async function sendMessage() {
+        const content = chatInputEl.value.trim();
+        const file = fileInputEl.files[0];
+        const friendId = currentFriendId;
+        if (!content && !file) return;
 
-    connection.invoke("SendMessage", currentFriendId, content)
-        .then(() => {
-            console.log("Tin nhắn đã gửi thành công");
-        })
-        .catch(err => console.error(err.toString()));
+        if (file) {
+            // Gửi file qua HTTP POST
+            const formData = new FormData();
+            formData.append('content', content);
+            formData.append('friendId', friendId);
+            formData.append('file', file);
 
-    $('.chat-input-bar input').val('');
-}
-
-// Render tin nhắn mới - FIX: Chỉ trả về nội dung message, không có wrapper chat-content
-function renderMessage(msg) {
-    let isMine = msg.senderId === currentUserId;
-    let side = isMine ? 'right' : 'left';
-
-    if (isMine) {
-        return `<div class="message ${side}">
-            <div class="message-content">
-                <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
-                <span class="message-bubble">${msg.content}</span>
-            </div>
-        </div>`;
-    } else {
-        return `<div class="message ${side}">
-            <img src="${msg.avatarUrl}" class="message-avatar" />
-            <div class="message-content">
-                <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
-                <span class="message-bubble">${msg.content}</span>
-            </div>
-        </div>`;
+            const res = await fetch('/Chat/SendMessage', {
+                method: 'POST',
+                body: formData
+            });
+            if (res.ok) {
+                chatInputEl.value = '';
+                fileInputEl.value = '';
+                previewEl.innerHTML = '';
+                previewEl.style.display = 'none';
+            }
+            return;
+        } else {
+            // Gửi text qua SignalR
+            connection.invoke('SendMessage', friendId, content)
+                .then(() => {
+                    chatInputEl.value = '';
+                })
+                .catch(err => console.error('SendMessage error:', err));
+        }
     }
-}
 
-function scrollToBottom() {
-    let chatContent = $('.chat-content');
-    chatContent.scrollTop(chatContent[0].scrollHeight);
-}
+    // Render 1 tin nhắn
+    function renderMessage(msg) {
+        const isMine = msg.senderId === currentUserId;
+        const side = isMine ? 'right' : 'left';
+        const time = msg.sentAt.substring(11, 16);
 
-$(document).on('click', '.btn-video-call', function() {
-    let peerId = $(this).data('peer');
-    window.location.href = '/VideoCall/Room?userId=' + peerId;
-});
+        // Render media nếu có
+        let mediaHtml = '';
+        if (msg.media && msg.media.length > 0) {
+            for (const media of msg.media) {
+                if (media.mediaType && media.mediaType.startsWith('image/')) {
+                    mediaHtml += `<img src="${media.url}" class="message-media-img" alt="Ảnh gửi" />`;
+                } else if (media.mediaType && media.mediaType.startsWith('video/')) {
+                    mediaHtml += `<video src="${media.url}" class="message-media-video" controls></video>`;
+                } else {
+                    mediaHtml += `<a href="${media.url}" target="_blank">${media.url.split('/').pop()}</a>`;
+                }
+            }
+        }
+
+        // Render text nếu có
+        let textHtml = '';
+        if (msg.content && msg.content.trim() !== '') {
+            textHtml = `<span class="message-bubble">${msg.content}</span>`;
+        }
+
+        if (isMine) {
+            return `
+        <div class="message ${side}">
+          <div class="message-content">
+            ${mediaHtml}
+            ${textHtml}
+          </div>
+          <span class="message-time">${time}</span>
+        </div>`;
+        } else {
+            return `
+        <div class="message ${side}">
+          <img src="${msg.avatarUrl}" class="message-avatar" />
+          <div class="message-content">
+            ${mediaHtml}
+            ${textHtml}
+          </div>
+          <span class="message-time">${time}</span>
+        </div>`;
+        }
+    }
+
+    // Cuộn xuống cuối chat
+    function scrollToBottom() {
+        chatContentEl.scrollTop = chatContentEl.scrollHeight;
+    }
+
+    // Event delegation cho click
+    document.addEventListener('click', e => {
+        // Chọn friend
+        const friendItem = e.target.closest('.friend-item');
+        if (friendItem) {
+            currentFriendId = Number(friendItem.dataset.id);
+            document.querySelectorAll('.friend-item')
+                .forEach(el => el.classList.remove('active'));
+            friendItem.classList.add('active');
+
+            // Hiện/ẩn khung thông tin user
+            chatUserInfoEl.classList.remove('d-none');
+            chatUserInfoEl.style.display = '';
+            chatUserInfoEl.querySelectorAll('.chat-user')
+                .forEach(u => u.style.display = 'none');
+            const sel = chatUserInfoEl.querySelector(
+                `.chat-user[data-id="${currentFriendId}"]`
+            );
+            if (sel) sel.style.display = '';
+
+            // Ẩn placeholder nếu chưa có tin nhắn
+            const ph = chatContentEl.querySelector('.no-chat-placeholder');
+            if (ph) ph.style.display = 'none';
+
+            // Load lịch sử chat
+            fetch(`/Chat/GetMessages?friendId=${currentFriendId}`)
+                .then(res => res.text())
+                .then(html => {
+                    const tmp = document.createElement('div');
+                    tmp.innerHTML = html.trim();
+                    const first = tmp.firstElementChild;
+                    chatContentEl.innerHTML =
+                        (first && first.classList.contains('chat-content'))
+                            ? first.innerHTML
+                            : html;
+                    scrollToBottom();
+                })
+                .catch(err => console.error('Load history error:', err));
+
+            return;
+        }
+
+        // Click nút gửi
+        if (e.target.matches('.btn-send, .bi-send')) {
+            sendMessage();
+            return;
+        }
+    });
+
+    // Gửi khi Enter
+    chatInputEl.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    // Khi click vào icon ảnh hoặc file, mở input file
+    document.querySelector('.bi-image').addEventListener('click', function () {
+        document.getElementById('chat-file-input').click();
+    });
+    document.querySelector('.bi-paperclip').addEventListener('click', function () {
+        document.getElementById('chat-file-input').click();
+    });
+
+    async function loadMessages(friendId) {
+        const res = await fetch(`/Chat/GetMessages?friendId=${friendId}`);
+        const html = await res.text();
+        chatContentEl.innerHTML = html;
+        scrollToBottom();
+    }
+
+    fileInputEl.addEventListener('change', function () {
+        if (this.files && this.files.length > 0) {
+
+            // Nếu chỉ cho phép 1 file:
+            if (this.files[0].size > 50 * 1024 * 1024) {
+                alert("File quá lớn! Vui lòng chọn file nhỏ hơn 50MB.");
+                this.value = "";
+            }
+
+            previewEl.style.display = "flex";
+            previewEl.innerHTML = '';
+            const file = this.files[0];
+            if (file.type.startsWith('image/')) {
+                const img = document.createElement('img');
+                img.src = URL.createObjectURL(file);
+                img.className = 'message-media-img';
+                previewEl.appendChild(img);
+            } else if (file.type.startsWith('video/')) {
+                const video = document.createElement('video');
+                video.className = 'message-media-video';
+                video.src = URL.createObjectURL(file);
+                video.controls = true;
+                previewEl.appendChild(video);
+            } else {
+                const p = document.createElement('p');
+                p.textContent = file.name;
+                previewEl.appendChild(p);
+            }
+        } else {
+            previewEl.style.display = "none";
+            previewEl.innerHTML = "";
+        }
+    });
+})();
+
