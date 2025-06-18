@@ -80,17 +80,22 @@
                 } else if (media.mediaType && media.mediaType.startsWith('video/')) {
                     mediaHtml += `<video src="${media.url}" class="message-media-video" controls></video>`;
                 } else {
-                    mediaHtml += `<a href="${media.url}" target="_blank">${media.url.split('/').pop()}</a>`;
+                    // File thường: icon, tên file, nút tải về
+                    const fileName = media.url.split('/').pop();
+                    mediaHtml += `
+                    <div class="chat-file-attachment">
+                        <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                        <span class="file-name">${fileName}</span>
+                        <a href="${media.url}" download class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                    </div>`;
                 }
             }
         }
-
         // Render text nếu có
         let textHtml = '';
         if (msg.content && msg.content.trim() !== '') {
             textHtml = `<span class="message-bubble">${msg.content}</span>`;
         }
-
         if (isMine) {
             return `
         <div class="message ${side}">

@@ -1678,3 +1678,39 @@ img.message-avatar {
 #chat-preview img {
     animation: imageAppear 0.5s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* File attachment in chat */
+.chat-file-attachment {
+    display: flex;
+    align-items: center;
+    background: rgba(41,182,246,0.08);
+    border-radius: 10px;
+    padding: 8px 14px;
+    margin: 6px 0;
+    box-shadow: 0 2px 8px rgba(41,182,246,0.07);
+    max-width: 320px;
+}
+.chat-file-attachment .file-icon {
+    font-size: 1.6rem;
+    color: #29B6F6;
+    margin-right: 10px;
+}
+.chat-file-attachment .file-name {
+    flex: 1;
+    color: #D3E0F1;
+    font-size: 1rem;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.chat-file-attachment .file-download-btn {
+    color: #41D7A7;
+    margin-left: 10px;
+    font-size: 1.3rem;
+    transition: color 0.2s;
+}
+.chat-file-attachment .file-download-btn:hover {
+    color: #29B6F6;
+    text-decoration: none;
+}
