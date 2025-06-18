@@ -1,0 +1,68 @@
+@model Zela.ViewModels.ProfileViewModel
+
+<div class="modal fade" id="profileDialog" tabindex="-1" aria-labelledby="profileDialogLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="profileDialogLabel">Hồ sơ của bạn</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close" onclick="clearProfileAlerts()"></button>
+            </div>
+            <div class="modal-body">
+                <form id="profileForm">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" asp-for="UserId" />
+                    
+                    <div class="mb-3">
+                        <label asp-for="AvatarUrl" class="form-label">Ảnh đại diện</label>
+                        <div class="d-flex align-items-center gap-3">
+                            <img id="avatarPreview" src="@(Context.Session.GetString("AvatarUrl") ?? "/images/default-avatar.jpeg")" alt="Avatar" class="rounded-circle" style="width: 64px; height: 64px; object-fit: cover;" />
+                            <div class="flex-grow-1">
+                                <input type="file" class="form-control" id="avatarFile" accept="image/*" />
+                                <input asp-for="AvatarUrl" type="hidden" />
+                                <small class="text-muted">Chọn ảnh định dạng JPG, PNG hoặc GIF</small>
+                            </div>
+                        </div>
+                        <span asp-validation-for="AvatarUrl" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">Email</label>
+                        <input asp-for="Email" class="form-control" required />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label asp-for="FullName" class="form-label">Họ tên</label>
+                        <input asp-for="FullName" class="form-control" required maxlength="100" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Trạng thái tài khoản</label>
+                        <div class="form-control-plaintext">
+                            @(Model.IsPremium ? "Premium" : "Thường")
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Ngày tạo</label>
+                        <div class="form-control-plaintext">
+                            @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Lần đăng nhập cuối</label>
+                        <div class="form-control-plaintext">
+                            @Model.LastLoginAt.ToString("dd/MM/yyyy HH:mm")
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" onclick="clearProfileAlerts()">Đóng</button>
+                <button type="button" class="btn btn-primary" onclick="saveProfile()">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+</div> 

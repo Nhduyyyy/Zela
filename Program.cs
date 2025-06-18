@@ -111,6 +111,8 @@ builder.Services.AddScoped<IChatService, ChatService>();
 
 builder.Services.AddSingleton<IFileUploadService, FileUploadService>();
 
+builder.Services.AddScoped<IProfileService, ProfileService>();
+
 // ---------------------------------------------
 // 6) Build WebApplication
 //    - Sau khi đăng ký hết services, gọi Build() để tạo đối tượng app.

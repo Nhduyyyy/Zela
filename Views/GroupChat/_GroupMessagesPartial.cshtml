@@ -1,0 +1,25 @@
+@model List<Zela.ViewModels.GroupMessageViewModel>
+
+@foreach (var msg in Model)
+{
+    <div class="message @(msg.IsMine ? "right" : "left")">
+        @if (msg.IsMine)
+        {
+            <!-- Người GỬI: thời gian -> tin nhắn -> avatar -->
+            <div class="message-content">
+                <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
+                <span class="message-bubble">@msg.Content</span>
+            </div>
+        }
+        else
+        {
+            <!-- Người NHẬN: avatar -> tin nhắn -> thời gian -->
+            <img src="@msg.AvatarUrl" class="message-avatar" />
+            <div class="message-content">
+                <div class="message-sender">@msg.SenderName</div>
+                <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
+                <span class="message-bubble">@msg.Content</span>
+            </div>
+        }
+    </div>
+}
