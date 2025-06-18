@@ -1,5 +1,3 @@
-
-
 using Microsoft.EntityFrameworkCore;
 using Zela.DbContext;
 using Zela.Models;
@@ -112,7 +110,7 @@ namespace Zela.Services
                 // Đánh dấu thời điểm lời mời được tạo
                 CreatedAt = DateTime.UtcNow,
                 // Gán status = Pending (ví dụ Pending tương ứng với StatusId = 3)
-                StatusId = 3
+                StatusId = 1
             };
 
             // Thêm đối tượng mới vào DbContext; nó sẽ chờ SaveChangesAsync mới thực sự ghi vào DB
@@ -150,7 +148,7 @@ namespace Zela.Services
                 .FirstOrDefaultAsync(f =>
                     f.UserId1 == currentUserId &&
                     f.UserId2 == targetUserId &&
-                    f.StatusId == 3); // 3 = Pending
+                    f.StatusId == 1); // 3 = Pending
 
             // BƯỚC 2: Nếu không tồn tại lời mời hợp lệ => không thể hủy => trả về false
             if (existing == null)
@@ -167,10 +165,10 @@ namespace Zela.Services
         }
 
         // ---------------------------------------------
-// Author : A–DUY
-// Date   : 2025-06-04
-// Task   : Chấp nhận lời mời kết bạn được gửi từ requesterId đến currentUserId
-// ---------------------------------------------
+        // Author : A–DUY
+        // Date   : 2025-06-04
+        // Task   : Chấp nhận lời mời kết bạn được gửi từ requesterId đến currentUserId
+        // ---------------------------------------------
         /// <summary>
         /// 1) Tìm record lời mời kết bạn có trạng thái Pending (StatusId = 3),
         ///    với requesterId là người gửi (UserId1), và currentUserId là người nhận (UserId2).
@@ -192,7 +190,7 @@ namespace Zela.Services
                 .FirstOrDefaultAsync(f =>
                     f.UserId1 == requesterId &&
                     f.UserId2 == currentUserId &&
-                    f.StatusId == 3); // 3 = Pending
+                    f.StatusId == 1); // 3 = Pending
 
             // BƯỚC 2: Nếu không tìm thấy lời mời => không thể chấp nhận => trả false
             if (existing == null)
@@ -236,14 +234,14 @@ namespace Zela.Services
                 .FirstOrDefaultAsync(f =>
                     f.UserId1 == requesterId &&
                     f.UserId2 == currentUserId &&
-                    f.StatusId == 3); // 3 = Pending
+                    f.StatusId == 1); // 3 = Pending
 
             // BƯỚC 2: Nếu không tồn tại record hợp lệ => không thể từ chối => trả false
             if (existing == null)
                 return false;
 
             // BƯỚC 3: Cập nhật trạng thái thành Rejected (StatusId = 5)
-            existing.StatusId = 5;
+            existing.StatusId = 3;
 
             // GỢI Ý: Nếu hệ thống có cột thời điểm phản hồi (RespondedAt), cập nhật tại đây:
             // existing.RespondedAt = DateTime.UtcNow;
@@ -256,10 +254,10 @@ namespace Zela.Services
         }
 
         // ---------------------------------------------
-// Author : A–DUY
-// Date   : 2025-06-04
-// Task   : Xóa mối quan hệ bạn bè giữa currentUserId và friendUserId khi đã là bạn bè (Accepted)
-// ---------------------------------------------
+        // Author : A–DUY
+        // Date   : 2025-06-04
+        // Task   : Xóa mối quan hệ bạn bè giữa currentUserId và friendUserId khi đã là bạn bè (Accepted)
+        // ---------------------------------------------
         /// <summary>
         /// 1) Tìm record Friendship giữa currentUserId và friendUserId có trạng thái Accepted (StatusId = 2).
         ///    – Không phân biệt ai là người gửi/nhận lời mời ban đầu.
@@ -363,7 +361,7 @@ namespace Zela.Services
         public async Task<IEnumerable<FriendRequestInfo>> GetIncomingRequestsAsync(int currentUserId)
         {
             // ──────────────────────────────────────────────────────────────────
-            // BƯỚC 1: Truy vấn bảng Friendship để lấy các record “Pending” mà currentUser là Addressee
+            // BƯỚC 1: Truy vấn bảng Friendship để lấy các record "Pending" mà currentUser là Addressee
             // ──────────────────────────────────────────────────────────────────
             // .Include(f => f.Requester): Đảm bảo EF tải luôn đối tượng User tương ứng với UserId1
             // .Include(f => f.Addressee): Để có thể lấy tên của user nhận (mặc dù thường không cần hiển thị ở incoming)
@@ -377,7 +375,7 @@ namespace Zela.Services
                 .Include(f => f.Requester) // tải thông tin user gửi (Requester)
                 .Include(f => f.Addressee) // tải thông tin user nhận (Addressee)
                 .Include(f => f.Status) // tải thông tin status để lấy status.StatuName
-                .Where(f => f.UserId2 == currentUserId && f.StatusId == 3)
+                .Where(f => f.UserId2 == currentUserId && f.StatusId == 1)
                 .ToListAsync();
 
             // ──────────────────────────────────────────────────────────────────
@@ -450,7 +448,7 @@ namespace Zela.Services
                 .Include(f => f.Requester)
                 .Include(f => f.Addressee)
                 .Include(f => f.Status)
-                .Where(f => f.UserId1 == currentUserId && f.StatusId == 3)
+                .Where(f => f.UserId1 == currentUserId && f.StatusId == 1)
                 .ToListAsync();
 
             // ──────────────────────────────────────────────────────────────────
@@ -561,7 +559,7 @@ namespace Zela.Services
                 if (record != null)
                 {
                     // Kiểm tra trạng thái Pending (StatusId = 3)
-                    if (record.StatusId == 3)
+                    if (record.StatusId == 1)
                     {
                         // Nếu currentUserId khớp record.UserId1 => currentUser đã gửi lời mời (PendingSent)
                         if (record.UserId1 == currentUserId)

@@ -1,8 +1,6 @@
-
-
+using Zela.Models;
 using Microsoft.EntityFrameworkCore;
 using Zela.DbContext;
-using Zela.Models;
 using Zela.ViewModels;
 
 namespace Zela.Services;
@@ -10,39 +8,56 @@ namespace Zela.Services;
 public class ChatService : IChatService
 {
     private readonly ApplicationDbContext _dbContext;
+    private readonly IFileUploadService _fileUploadService;
 
-    public ChatService(ApplicationDbContext dbContext)
+    public ChatService(ApplicationDbContext dbContext, IFileUploadService fileUploadService)
     {
         _dbContext = dbContext;
+        _fileUploadService = fileUploadService;
     }
-    
-    public async Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content)
+
+    public async Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content, IFormFile? file = null)
     {
-        // 1. Tạo đối tượng Message
         var msg = new Message
         {
             SenderId = senderId,
             RecipientId = recipientId,
-            Content = content,
+            Content = content ?? "",
             SentAt = DateTime.Now,
-            IsEdited = false
+            IsEdited = false,
+            Media = new List<Media>()
         };
+
+        if (file != null && file.Length > 0)
+        {
+            var url = await _fileUploadService.UploadAsync(file, "chat");
+            msg.Media.Add(new Media
+            {
+                MediaType = file.ContentType,
+                Url = url
+            });
+        }
 
         _dbContext.Messages.Add(msg);
         await _dbContext.SaveChangesAsync();
 
-        // 2. Lấy info để trả về (avatar, tên người gửi v.v.)
         var sender = await _dbContext.Users.FindAsync(senderId);
-
-        // 3. Tạo viewmodel trả về cho client (phù hợp JS render)
         return new MessageViewModel
         {
+            MessageId = msg.MessageId,
             SenderId = senderId,
             RecipientId = recipientId,
-            Content = content,
+            SenderName = sender?.FullName ?? "Unknown",
+            AvatarUrl = sender?.AvatarUrl ?? "",
+            Content = msg.Content ?? "",
             SentAt = msg.SentAt,
-            AvatarUrl = sender.AvatarUrl,
-            IsMine = true // Vì đây là người gửi
+            IsMine = true,
+            IsEdited = false,
+            Media = msg.Media.Select(md => new MediaViewModel
+            {
+                Url = md.Url,
+                MediaType = md.MediaType
+            }).ToList()
         };
     }
 
@@ -89,6 +104,7 @@ public class ChatService : IChatService
         return await _dbContext.Messages
             .Include(m => m.Sender)
             .Include(m => m.Recipient)
+            .Include(m => m.Media)
             .Where(m =>
                 (m.SenderId == userId && m.RecipientId == friendId) ||
                 (m.SenderId == friendId && m.RecipientId == userId))
@@ -103,7 +119,12 @@ public class ChatService : IChatService
                 Content = m.Content,
                 SentAt = m.SentAt,
                 IsMine = m.SenderId == userId,
-                IsEdited = m.IsEdited
+                IsEdited = m.IsEdited,
+                Media = m.Media.Select(md => new MediaViewModel
+                {
+                    Url = md.Url,
+                    MediaType = md.MediaType
+                }).ToList()
             })
             .ToListAsync();
     }

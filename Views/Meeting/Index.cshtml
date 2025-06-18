@@ -1,0 +1,15 @@
+@{
+    ViewData["Title"] = "Video Call";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/video-call-index.css" />
+}
+
+<div class="video-call-index-container">
+    <h1>@ViewData["Title"]</h1>
+    <div class="action-buttons">
+        <a asp-action="Create" class="btn-create">Tạo cuộc họp mới</a>
+        <a asp-action="Join"   class="btn-join">Tham gia cuộc họp</a>
+    </div>
+</div>

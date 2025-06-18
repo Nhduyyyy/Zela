@@ -1,24 +1,65 @@
 @model List<Zela.ViewModels.MessageViewModel>
-@* FIX: Không bao bọc trong chat-content nữa, chỉ trả về nội dung messages *@
 @foreach (var msg in Model)
 {
     <div class="message @(msg.IsMine ? "right" : "left")">
         @if (msg.IsMine)
         {
-            <!-- Người GỬI: thời gian -> tin nhắn -> avatar -->
+            <!-- Người GỬI: thời gian -> media -> tin nhắn -> avatar -->
             <div class="message-content">
-                <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
-                <span class="message-bubble">@msg.Content</span>
+                @if (msg.Media != null && msg.Media.Count > 0)
+                {
+                    foreach (var media in msg.Media)
+                    {
+                        if (media.MediaType != null && media.MediaType.StartsWith("image/"))
+                        {
+                            <img src="@media.Url" class="message-media-img" alt="Ảnh gửi" />
+                        }
+                        else if (media.MediaType != null && media.MediaType.StartsWith("video/"))
+                        {
+                            <video src="@media.Url" class="message-media-video" controls></video>
+                        }
+                        else
+                        {
+                            <a href="@media.Url" target="_blank" style="display:block; margin-bottom:5px;">@System.IO.Path.GetFileName(media.Url)</a>
+                        }
+                    }
+                }
+                @if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
+                {
+                    <span class="message-bubble">@msg.Content</span>
+                }
             </div>
+            <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
         }
         else
         {
-            <!-- Người NHẬN: avatar -> tin nhắn -> thời gian -->
+            <!-- Người NHẬN: avatar -> media -> tin nhắn -> thời gian -->
             <img src="@msg.AvatarUrl" class="message-avatar" />
             <div class="message-content">
-                <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
-                <span class="message-bubble">@msg.Content</span>
+                @if (msg.Media != null && msg.Media.Count > 0)
+                {
+                    foreach (var media in msg.Media)
+                    {
+                        if (media.MediaType != null && media.MediaType.StartsWith("image/"))
+                        {
+                            <img src="@media.Url" class="message-media-img" alt="Ảnh gửi" />
+                        }
+                        else if (media.MediaType != null && media.MediaType.StartsWith("video/"))
+                        {
+                            <video src="@media.Url" class="message-media-video" controls></video>
+                        }
+                        else
+                        {
+                            <a href="@media.Url" target="_blank" style="display:block; margin-bottom:5px;">@System.IO.Path.GetFileName(media.Url)</a>
+                        }
+                    }
+                }
+                @if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
+                {
+                    <span class="message-bubble">@msg.Content</span>
+                }
             </div>
+            <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
         }
     </div>
 }

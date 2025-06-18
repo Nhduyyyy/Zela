@@ -1,0 +1,100 @@
+@{
+    ViewData["Title"] = "Phòng họp";
+    var code = ViewBag.MeetingCode as string ?? "";
+    var isHost = (bool)ViewBag.IsHost;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/room-videocall.css"/>
+}
+
+<div class="videocall-container">
+    <h2>Phòng: @(code)</h2>
+
+    <!-- Container hiển thị và copy code -->
+    <div class="meeting-code-container">
+        <input id="meeting-code-input" readonly value="@(code)"/>
+        <button id="copy-code-btn" class="btn-copy">Copy mã phòng</button>
+    </div>
+
+    <!-- Controls -->
+    <div id="controls">
+        <button id="toggle-mic" class="btn btn-secondary">Tắt mic</button>
+        <button id="toggle-cam" class="btn btn-secondary">Tắt cam</button>
+        <button id="share-screen" class="btn btn-secondary">Chia sẻ màn hình</button>
+        <button id="btnLeave" class="btn btn-warning">Rời cuộc gọi</button>
+        @if (isHost)
+        {
+            <button id="btnEnd" class="btn btn-danger">Kết thúc cuộc gọi</button>
+        }
+    </div>
+
+    <div id="video-grid" data-meeting-code="@(code)"></div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@7.0.5/dist/browser/signalr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const btn = document.getElementById('copy-code-btn');
+            const input = document.getElementById('meeting-code-input');
+            btn.addEventListener('click', () => {
+                input.select();
+                document.execCommand('copy');
+                btn.textContent = 'Đã copy!';
+                setTimeout(() => btn.textContent = 'Copy mã phòng', 2000);
+            });
+        });
+
+        // Thêm vào videocall.js
+        function updateVideoGridLayout() {
+            const videoGrid = document.getElementById('video-grid');
+            const videoCount = videoGrid.querySelectorAll('.video-container').length;
+
+            // Tạm thời tắt transition để layout thay đổi ngay lập tức
+            videoGrid.classList.add('immediate-layout');
+
+            // Cập nhật data-count
+            videoGrid.setAttribute('data-count', videoCount);
+
+            // Bật lại transition sau 50ms
+            setTimeout(() => {
+                videoGrid.classList.remove('immediate-layout');
+            }, 50);
+        }
+
+        // Gọi hàm này mỗi khi có video mới được thêm hoặc xóa
+        function addVideoToGrid(videoElement) {
+            const videoGrid = document.getElementById('video-grid');
+            videoGrid.appendChild(videoElement);
+            updateVideoGridLayout(); // Cập nhật ngay lập tức
+        }
+
+        function removeVideoFromGrid(videoElement) {
+            const videoGrid = document.getElementById('video-grid');
+            videoGrid.removeChild(videoElement);
+            updateVideoGridLayout(); // Cập nhật ngay lập tức
+        }
+
+        // Observer để theo dõi thay đổi trong video grid
+        const videoGridObserver = new MutationObserver(() => {
+            updateVideoGridLayout();
+        });
+
+        // Bắt đầu observe khi DOM loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            const videoGrid = document.getElementById('video-grid');
+            if (videoGrid) {
+                videoGridObserver.observe(videoGrid, {
+                    childList: true,
+                    subtree: true
+                });
+
+                // Cập nhật layout ban đầu
+                updateVideoGridLayout();
+            }
+        });
+    </script>
+    <script src="~/js/videocall.js" defer></script>
+}

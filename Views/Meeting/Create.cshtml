@@ -1,0 +1,20 @@
+@model Zela.Models.ViewModels.CreateMeetingViewModel
+@{
+    ViewData["Title"] = "Tạo cuộc họp mới";
+}
+<h2>@ViewData["Title"]</h2>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/create-meeting.css" />
+}
+
+<div class="create-meeting-container">
+    <form asp-action="Create" method="post" class="create-meeting-form">
+        <h2>@ViewData["Title"]</h2>
+        <div class="form-group">
+            <label asp-for="CreatorId"></label>
+            <input asp-for="CreatorId" class="form-control" readonly />
+        </div>
+        <button type="submit">Tạo</button>
+    </form>
+</div>

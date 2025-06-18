@@ -30,7 +30,7 @@
                     <a class="nav-link" asp-controller="Friendship" asp-action="Index"><i class="bi bi-camera-video"></i><span>Friendship</span></a>
                 </li>
                 <li>
-                    <a class="nav-link" asp-controller="Video" asp-action="Index"><i class="bi bi-camera-video"></i><span>Video Call</span></a>
+                    <a class="nav-link" asp-controller="Meeting" asp-action="Index"><i class="bi bi-camera-video"></i><span>Video Call</span></a>
                 </li>
                 <li>
                     <a class="nav-link" asp-controller="Whiteboard" asp-action="Index"><i class="bi bi-easel"></i><span>Whiteboard</span></a>
@@ -78,8 +78,6 @@
     <!-- 2. Microsoft SignalR (CDN CHUẨN, import đầu tiên) -->
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@7.0.5/dist/browser/signalr.min.js"></script>
     
-    <script src="~/js/video-call-popup.js"></script>
-
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>
