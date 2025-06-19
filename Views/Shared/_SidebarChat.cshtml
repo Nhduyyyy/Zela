@@ -5,7 +5,7 @@
 
     <div class="sidebar-search">
         <div class="search-input d-flex align-items-center">
-            <input type="text" class="form-control" placeholder="Tìm kiếm bạn bè, nhóm...">
+            <input id="searchBox" type="text" class="form-control" placeholder="Tìm kiếm bạn bè, nhóm...">
                 <i class="bi bi-search"></i>
         </div>
     </div>
@@ -32,16 +32,15 @@
         </div>
     </div>
 </div>
-
-<script>
+    <script>
 $(document).ready(function() {
     // Xử lý chuyển đổi tab
-    $('#friends-tab-btn').on('click', function() {
+        $('#friends-tab-btn').on('click', function() {
         // Load trang Chat/Index
         window.location.href = '/Chat/Index';
     });
     
-    $('#groups-tab-btn').on('click', function() {
+        $('#groups-tab-btn').on('click', function() {
         // Load trang GroupChat/Index
         window.location.href = '/GroupChat/Index';
     });
@@ -59,5 +58,5 @@ $(document).ready(function() {
         $('#groups-tab').removeClass('show active');
         $('#friends-tab').addClass('show active');
     }
-});
+        });
 </script>

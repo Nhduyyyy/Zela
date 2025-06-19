@@ -17,7 +17,13 @@
         <div class="alert alert-danger">@TempData["Error"]</div>
     }
 
-    <div class="table-responsive">
+    <!-- 🔍 Form tìm kiếm -->
+    <div class="mb-3">
+        <input type="text" id="searchInput" class="form-control" placeholder="Tìm bạn..." />
+    </div>
+
+    <!-- 🔽 Kết quả tìm kiếm -->
+    <div class="table-responsive" id="searchResults">
         <table class="table table-striped mt-4">
             <thead>
                 <tr>
@@ -27,7 +33,7 @@
                     <th>Hành động</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody id="resultsBody">
                 @foreach (var user in Model)
                 {
                     <tr>
@@ -55,6 +61,7 @@
                             {
                                 case FriendshipRole.None:
                                     <form asp-action="SendRequest" method="post" class="mb-0">
+                                        @Html.AntiForgeryToken()
                                         <input type="hidden" name="userId2" value="@user.UserId" />
                                         <button type="submit" class="btn btn-sm btn-primary">Kết bạn</button>
                                     </form>
@@ -67,6 +74,7 @@
                                     break;
                                 case FriendshipRole.Accepted:
                                     <form asp-action="RemoveFriend" method="post" class="mb-0">
+                                        @Html.AntiForgeryToken()
                                         <input type="hidden" name="friendId" value="@user.UserId" />
                                         <button type="submit" class="btn btn-sm btn-danger">Hủy bạn</button>
                                     </form>
@@ -83,3 +91,7 @@
         <a asp-action="Index" class="btn btn-secondary">Quay về</a>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/friend-search.js"></script>
+}

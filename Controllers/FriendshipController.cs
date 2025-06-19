@@ -120,15 +120,15 @@ namespace Zela.Controllers
         // ---------------------------------------------
         // Author : A–DUY
         // Date   : 2025-05-31
-        // Task   : Hiển thị trang “Find” - danh sách tất cả user trừ currentUser
+        // Task   : Hiển thị trang "Find" - danh sách tất cả user trừ currentUser
         // ---------------------------------------------
         /// <summary>
-        /// Hiển thị trang “Find” để user có thể xem toàn bộ user khác (không bao gồm chính mình)
+        /// Hiển thị trang "Find" để user có thể xem toàn bộ user khác (không bao gồm chính mình)
         /// và biết ngay trạng thái quan hệ (RelationStatus) giữa họ hiện tại và currentUser:
-        ///   - Nếu chưa có quan hệ (None): hiển thị nút “Add Friend”.
-        ///   - Nếu đang chờ (Pending) do currentUser gửi: hiển thị “Đã gửi” hoặc nút Cancel.
-        ///   - Nếu đang chờ (Pending) do user khác gửi đến currentUser: hiển thị “Chờ phản hồi” hoặc nút Accept/Reject.
-        ///   - Nếu đã là bạn (Accepted): hiển thị “Đã là bạn” hoặc nút Unfriend.
+        ///   - Nếu chưa có quan hệ (None): hiển thị nút "Add Friend".
+        ///   - Nếu đang chờ (Pending) do currentUser gửi: hiển thị "Đã gửi" hoặc nút Cancel.
+        ///   - Nếu đang chờ (Pending) do user khác gửi đến currentUser: hiển thị "Chờ phản hồi" hoặc nút Accept/Reject.
+        ///   - Nếu đã là bạn (Accepted): hiển thị "Đã là bạn" hoặc nút Unfriend.
         /// </summary>
         /// <returns>
         ///    View với model là IEnumerable<UserWithFriendshipStatus/>,
@@ -154,7 +154,7 @@ namespace Zela.Controllers
         // Task   : Gửi lời mời kết bạn (Send Request)
         // ---------------------------------------------
         /// <summary>
-        /// Khi user nhấn nút “Add Friend” trên trang Find.cshtml.
+        /// Khi user nhấn nút "Add Friend" trên trang Find.cshtml.
         /// Thao tác này chỉ có thể thực hiện khi user đã đăng nhập.
         /// Gọi service để lưu record mới trong bảng Friendship với:
         ///    RequesterId = currentUserId, AddresseeId = userId2, Status = "Pending".
@@ -180,11 +180,19 @@ namespace Zela.Controllers
             //   - Tạo record mới với Status = "Pending"
             var success = await _friendshipService.SendFriendRequestAsync(userId1, userId2);
             
-            // Nếu service trả về false (thất bại), lưu lỗi vào TempData
+            // Kiểm tra nếu request là AJAX
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                if (!success)
+                    return Json(new { success = false, message = "Không thể gửi lời mời (đã gửi hoặc đã là bạn)." });
+                
+                return Json(new { success = true });
+            }
+            
+            // Nếu không phải AJAX request, xử lý như cũ
             if (!success)
                 TempData["Error"] = "Không thể gửi lời mời (đã gửi hoặc đã là bạn).";
             
-            // Sau khi xử lý (dù success hay fail), redirect về Find để user thấy kết quả
             return RedirectToAction(nameof(Find));
         }
         
@@ -194,7 +202,7 @@ namespace Zela.Controllers
         // Task   : Hủy lời mời đã gửi (Cancel Outgoing Request)
         // ---------------------------------------------
         /// <summary>
-        /// Khi user nhấn “Cancel” trên danh sách lời mời đã gửi (OutgoingRequests)
+        /// Khi user nhấn "Cancel" trên danh sách lời mời đã gửi (OutgoingRequests)
         /// trong trang Index.cshtml.
         /// Gọi service để cập nhật Status của record Friendship thành "Cancelled"
         /// (hoặc xóa luôn record, tùy thiết kế).
@@ -232,7 +240,7 @@ namespace Zela.Controllers
         // Task   : Chấp nhận lời mời đến (Accept Incoming Request)
         // ---------------------------------------------
         /// <summary>
-        /// Khi user nhấn “Accept” trên danh sách lời mời đến (IncomingRequests)
+        /// Khi user nhấn "Accept" trên danh sách lời mời đến (IncomingRequests)
         /// trong trang Index.cshtml.
         /// Gọi service để update Status của record Friendship thành "Accepted".
         /// </summary>
@@ -269,7 +277,7 @@ namespace Zela.Controllers
         // Task   : Từ chối lời mời đến (Reject Incoming Request)
         // ---------------------------------------------
         /// <summary>
-        /// Khi user nhấn “Reject” trên danh sách lời mời đến (IncomingRequests)
+        /// Khi user nhấn "Reject" trên danh sách lời mời đến (IncomingRequests)
         /// trong trang Index.cshtml.
         /// Gọi service để update Status của record Friendship thành "Removed" (hoặc "Rejected").
         /// </summary>
@@ -305,7 +313,7 @@ namespace Zela.Controllers
         // Task   : Hủy kết bạn (Remove Friend)
         // ---------------------------------------------
         /// <summary>
-        /// Khi user nhấn “Unfriend” trong danh sách bạn bè (Friends)
+        /// Khi user nhấn "Unfriend" trong danh sách bạn bè (Friends)
         /// trên trang Index.cshtml.
         /// Gọi service để update Status của record Friendship thành "Removed".
         /// Nếu không tìm thấy record hoặc status != "Accepted", service trả false.
@@ -335,6 +343,34 @@ namespace Zela.Controllers
             
             // Quay lại Index để cập nhật lại danh sách
             return RedirectToAction(nameof(Index));
+        }
+        
+        [HttpGet]
+        public async Task<IActionResult> FilterFriends(string keyword)
+        {
+            // Check đăng nhập và Identity
+            if (User.Identity == null || !User.Identity.IsAuthenticated)
+            {
+                return Unauthorized(); // 401 nếu chưa đăng nhập
+            }
+
+            // Lấy UserId từ claim (nếu có)
+            var userIdClaim = User.Claims.FirstOrDefault(c => c.Type == "UserId");
+            if (userIdClaim == null || !int.TryParse(userIdClaim.Value, out int currentUserId))
+            {
+                return Unauthorized(); // hoặc return Forbid(); tùy bạn
+            }
+
+            // Nếu không nhập keyword (xóa hết chữ), trả về toàn bộ bạn bè
+            if (string.IsNullOrWhiteSpace(keyword))
+            {
+                var allFriends = await _friendshipService.GetFriendListAsync(currentUserId);
+                return PartialView("_FriendListPartial", allFriends);
+            }
+
+            // Có keyword -> tìm bạn theo keyword
+            var filteredFriends = await _friendshipService.SearchFriendsAsync(currentUserId, keyword);
+            return PartialView("_FriendListPartial", filteredFriends);
         }
     }
 }
