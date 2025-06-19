@@ -117,8 +117,10 @@
         let textHtml = '';
         if (msg.stickerUrl && msg.stickerUrl.length > 0) {
             stickerHtml = `<img src="${msg.stickerUrl}" class="sticker-message" alt="Sticker" draggable="false">`;
+        } else if (msg.content && msg.content.trim().length > 0) {
+            textHtml = `<span class="message-bubble">${msg.content}</span>`;
         } else {
-            textHtml = `<span class="message-bubble">${msg.content}</span>`
+            textHtml = ""; // Không render bubble nếu không có nội dung
         }
 
         if (isMine) {
