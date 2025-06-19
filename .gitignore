@@ -36,3 +36,4 @@ npm-debug.log*
 # Log & temp
 *.log
 *.tmp
+appsettings.json
