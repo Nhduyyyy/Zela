@@ -1,6 +1,8 @@
 (() => {
     // ID của friend đang chat
     let currentFriendId = null;
+    let stickerPanelVisible = false;
+    let availableStickers = [];
 
     // Tham chiếu các phần tử DOM
     const chatContentEl = document.querySelector('.chat-content');
@@ -28,6 +30,18 @@
                 previewEl.innerHTML = '';
                 previewEl.style.display = 'none';
             }
+        }
+    });
+
+    // Nhận sticker mới
+    connection.on("ReceiveSticker", function (msg) {
+        console.log("SignalR nhận được sticker:", msg);
+
+        let currentId = Number(currentFriendId);
+
+        if (currentId && (msg.senderId === currentId || msg.recipientId === currentId)) {
+            chatContentEl.insertAdjacentHTML('beforeend', renderMessage(msg));
+            scrollToBottom();
         }
     });
 
@@ -97,10 +111,14 @@
                 }
             }
         }
-        // Render text nếu có
+
+        // Nếu là Sticker hoặc Text
+        let stickerHtml ='';
         let textHtml = '';
-        if (msg.content && msg.content.trim() !== '') {
-            textHtml = `<span class="message-bubble">${msg.content}</span>`;
+        if (msg.stickerUrl && msg.stickerUrl.length > 0) {
+            stickerHtml = `<img src="${msg.stickerUrl}" class="sticker-message" alt="Sticker" draggable="false">`;
+        } else {
+            textHtml = `<span class="message-bubble">${msg.content}</span>`
         }
 
         if (isMine) {
@@ -109,6 +127,7 @@
           <div class="message-content">
             <span class="message-time">${time}</span>
             ${mediaHtml}
+            ${stickerHtml}
             ${textHtml}
           </div>
         </div>`;
@@ -119,6 +138,7 @@
           <div class="message-content">
             <span class="message-time">${time}</span>
             ${mediaHtml}
+            ${stickerHtml}
             ${textHtml}
           </div>
         </div>`;
@@ -128,6 +148,59 @@
     // Cuộn xuống cuối chat
     function scrollToBottom() {
         chatContentEl.scrollTop = chatContentEl.scrollHeight;
+    }
+
+    // Load danh sách sticker từ server
+    async function loadStickers() {
+        try {
+            const response = await fetch('/Chat/GetStickers');
+            const stickers = await response.json();
+            console.log('Loaded stickers:', stickers);
+            availableStickers = stickers;
+            renderStickerPanel(stickers);
+        } catch (error) {
+            console.error('Failed to load stickers:', error);
+        }
+    }
+
+    // Render sticker panel
+    function renderStickerPanel(stickers) {
+        const grid = document.querySelector('.sticker-grid');
+        if (!grid) return;
+
+        grid.innerHTML = '';
+
+        console.log('Rendering sticker panel with', stickers.length, 'stickers');
+
+        stickers.forEach(sticker => {
+            console.log('Adding sticker:', sticker);
+            const img = document.createElement('img');
+            img.src = sticker.stickerUrl;
+            img.className = 'sticker-img';
+            img.dataset.url = sticker.stickerUrl;
+            img.alt = sticker.stickerName;
+            img.onerror = function() {
+                console.error('Failed to load sticker image:', this.src);
+            };
+            grid.appendChild(img);
+        });
+    }
+
+    // Khởi tạo sticker panel khi DOM ready
+    function initializeStickerPanel() {
+        const stickerPanelHtml = `
+            <div class="sticker-panel">
+                <div class="sticker-header">
+                    <h6>Stickers</h6>
+                    <button class="sticker-close">&times;</button>
+                </div>
+                <div class="sticker-grid"></div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', stickerPanelHtml);
+
+        // Load stickers khi khởi tạo
+        loadStickers();
     }
 
     // Event delegation cho click
@@ -176,7 +249,6 @@
                     scrollToBottom();
                 })
                 .catch(err => console.error('Load history error:', err));
-
             return;
         }
 
@@ -193,6 +265,46 @@
             if (peerId) {
                 window.location.href = '/VideoCall/Room?userId=' + peerId;
             }
+            return;
+        }
+
+        // Toggle sticker panel
+        if (e.target.matches('.sticker-btn')) {
+            stickerPanelVisible = !stickerPanelVisible;
+            const stickerPanel = document.querySelector('.sticker-panel');
+            if (stickerPanel) {
+                stickerPanel.style.display = stickerPanelVisible ? 'block' : 'none';
+            }
+            return;
+        }
+
+        // Đóng sticker panel
+        if (e.target.matches('.sticker-close')) {
+            stickerPanelVisible = false;
+            const stickerPanel = document.querySelector('.sticker-panel');
+            if (stickerPanel) {
+                stickerPanel.style.display = 'none';
+            }
+            return;
+        }
+
+        // Chọn và gửi sticker
+        if (e.target.matches('.sticker-img')) {
+            if (!currentFriendId) return;
+
+            const stickerUrl = e.target.dataset.url;
+
+            connection.invoke("SendSticker", currentFriendId, stickerUrl)
+                .then(() => {
+                    console.log("Sticker đã gửi thành công");
+                    // Ẩn panel sau khi gửi
+                    stickerPanelVisible = false;
+                    const stickerPanel = document.querySelector('.sticker-panel');
+                    if (stickerPanel) {
+                        stickerPanel.style.display = 'none';
+                    }
+                })
+                .catch(err => console.error(err.toString()));
             return;
         }
     });
@@ -269,4 +381,19 @@
             }
         });
     }
+
+    // Khởi tạo khi DOM đã sẵn sàng
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeStickerPanel);
+    } else {
+        initializeStickerPanel();
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.querySelector('.chat-content').addEventListener('dragstart', function (e) {
+            if (e.target.classList.contains('sticker-message')) {
+                e.preventDefault();
+            }
+        });
+    });
 })();

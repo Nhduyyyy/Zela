@@ -107,6 +107,7 @@ public class ChatService : IChatService
             .Include(m => m.Sender)
             .Include(m => m.Recipient)
             .Include(m => m.Media)
+            .Include(m => m.Sticker)
             .Where(m =>
                 (m.SenderId == userId && m.RecipientId == friendId) ||
                 (m.SenderId == friendId && m.RecipientId == userId))
@@ -126,7 +127,10 @@ public class ChatService : IChatService
                 {
                     Url = md.Url,
                     MediaType = md.MediaType
-                }).ToList()
+                }).ToList(),
+                // thêm các trường cho sticker
+                StickerUrl = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerUrl : null,
+                StickerType = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerType : null
             })
             .ToListAsync();
     }

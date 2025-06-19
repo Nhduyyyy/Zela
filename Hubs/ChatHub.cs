@@ -6,9 +6,11 @@ using ZelaTestDemo.ViewModels;
 public class ChatHub : Hub
 {
     private readonly IChatService _chatService;
-    public ChatHub(IChatService chatService)
+    private readonly IStickerService _stickerService;
+    public ChatHub(IChatService chatService, IStickerService stickerService)
     {
         _chatService = chatService;
+        _stickerService = stickerService;
     }
 
     // Gửi tin nhắn 1-1
@@ -26,6 +28,20 @@ public class ChatHub : Hub
         // Gửi message cho người nhận (nếu khác người gửi)
         if (senderId != recipientId)
             await Clients.User(recipientId.ToString()).SendAsync("ReceiveMessage", msgVm);
+    }
+    
+    // Send sticker 1-1
+    public async Task SendSticker(int recipientId, string url)
+    {
+        // Lấy userId từ Claims hoặc Context.UserIdentifier
+        int senderId = int.Parse(Context.UserIdentifier);
+        
+        // Lưu vào DB và trả về sticker mới
+        var stickerVm = await _stickerService.SendStickerAsync(senderId, recipientId, url);
+        
+        // Gửi sticker cho người gửi và người nhận
+        await Clients.Users(senderId.ToString(), recipientId.ToString())
+            .SendAsync("ReceiveSticker", stickerVm);
     }
     
     // Gửi tin nhắn nhóm
