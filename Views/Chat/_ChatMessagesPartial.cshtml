@@ -29,7 +29,11 @@
                         }
                     }
                 }
-                @if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
+                @if (!string.IsNullOrEmpty(msg.StickerUrl))
+                {
+                    <img src="@msg.StickerUrl" class="sticker-message" alt="Sticker"/>
+                }
+                else if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
                 {
                     <span class="message-bubble">@msg.Content</span>
                 }
@@ -63,7 +67,11 @@
                         }
                     }
                 }
-                @if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
+                @if (!string.IsNullOrEmpty(msg.StickerUrl))
+                {
+                    <img src="@msg.StickerUrl" class="sticker-message" alt="Sticker" draggable="false" />
+                }
+                else if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
                 {
                     <span class="message-bubble">@msg.Content</span>
                 }

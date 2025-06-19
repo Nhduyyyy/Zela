@@ -28,4 +28,5 @@ public class Message
     public ChatGroup Group { get; set; }
 
     public ICollection<Media> Media { get; set; }
+    public ICollection<Sticker> Sticker { get; set; }
 }

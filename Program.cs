@@ -113,6 +113,9 @@ builder.Services.AddSingleton<IFileUploadService, FileUploadService>();
 
 builder.Services.AddScoped<IProfileService, ProfileService>();
 
+// add Sticker
+builder.Services.AddScoped<IStickerService, StickerService>();
+
 // ---------------------------------------------
 // 6) Build WebApplication
 //    - Sau khi đăng ký hết services, gọi Build() để tạo đối tượng app.

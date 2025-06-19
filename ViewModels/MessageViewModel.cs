@@ -15,6 +15,9 @@ public class MessageViewModel
 
     // Thêm thuộc tính này:
     public List<MediaViewModel> Media { get; set; } = new();
+    // sticker
+    public string StickerUrl { get; set; }
+    public string StickerType { get; set; }
 }
 
 public class MediaViewModel

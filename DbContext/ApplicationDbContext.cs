@@ -26,6 +26,8 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<GroupMember> GroupMembers { get; set; }
     public DbSet<Message> Messages { get; set; }
     public DbSet<Media> Media { get; set; }
+    //Sticker
+    public DbSet<Sticker> Stickers { get; set; }
 
     // ------------ Scheduling & Notifications ------------
     public DbSet<CalendarEvent> CalendarEvents { get; set; }
@@ -305,6 +307,20 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
             .HasForeignKey(da => da.UserId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        #endregion
+        
+        // -------------------------
+        // 8. Sticker $ Message
+        // -------------------------
+        
+        #region Sticker ↔ Message
+        
+        modelBuilder.Entity<Sticker>()
+            .HasOne(md => md.Message)
+            .WithMany(m => m.Sticker)
+            .HasForeignKey(md => md.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
+        
         #endregion
     }
 }
