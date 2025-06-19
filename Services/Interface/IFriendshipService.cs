@@ -53,5 +53,12 @@ namespace Zela.Services
         /// Lấy tất cả user (trừ currentUser), kèm quan hệ hiện tại giữa currentUser và mỗi user đó.
         /// </summary>
         Task<IEnumerable<UserWithFriendshipStatus>> GetAllUsersExceptCurrentAsync(int currentUserId);
+        
+        
+        
+        
+        Task<List<FriendViewModel>> SearchFriendsAsync(int currentUserId, string keyword);
+        
+        Task<List<FriendViewModel>> GetFriendListAsync(int userId);
     }
 }

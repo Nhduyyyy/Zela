@@ -95,6 +95,7 @@
         const currentUserId = @(User.Identity.IsAuthenticated ? User.FindFirst("UserId")?.Value ?? "0" : "0");
     </script>
     <script src="~/js/chat-window.js"></script>
+    <script src="~/js/chat-search.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const toggleBtn = document.querySelector(".toggle-sidebar-btn");

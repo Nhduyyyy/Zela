@@ -585,5 +585,79 @@ namespace Zela.Services
             // IEnumerable<UserWithFriendshipStatus> sẽ được controller nhận và đẩy lên View
             return result;
         }
+
+        public async Task<List<FriendViewModel>> SearchFriendsAsync(int currentUserId, string keyword)
+        {
+            // Bước 1: Lấy tất cả mối quan hệ bạn bè đã được chấp nhận của người dùng hiện tại
+            var acceptedFriendships = await _dbContext.Friendships
+                .Include(f => f.Status)
+                .Where(f =>
+                    f.Status.StatuName == "Accepted" &&
+                    (f.UserId1 == currentUserId || f.UserId2 == currentUserId))
+                .ToListAsync();
+
+            // Bước 2: Tìm ra danh sách các UserId là bạn bè (bỏ chính người hiện tại ra)
+            var friendIds = acceptedFriendships
+                .Select(f => f.UserId1 == currentUserId ? f.UserId2 : f.UserId1)
+                .Distinct()
+                .ToList();
+
+            // Bước 3: Lấy danh sách người dùng có tên khớp với từ khóa tìm kiếm
+            var friendUsers = await _dbContext.Users
+                .Where(u => friendIds.Contains(u.UserId) && u.FullName.Contains(keyword))
+                .ToListAsync();
+
+            // Bước 4: Chuyển từng User thành FriendViewModel
+            var result = friendUsers.Select(u => new FriendViewModel
+            {
+                UserId = u.UserId,
+                FullName = u.FullName,
+                AvatarUrl = u.AvatarUrl,
+
+                // ✅ Tính trạng thái online dựa vào LastLoginAt (VD: đăng nhập trong 3 phút qua được xem là online)
+                IsOnline = u.LastLoginAt != null && u.LastLoginAt > DateTime.Now.AddMinutes(-3),
+
+                LastMessage = "",  // nếu muốn, bạn có thể truy vấn thêm Messages table
+                LastTime = ""
+            }).ToList();
+
+            return result;
+        }
+
+        public async Task<List<FriendViewModel>> GetFriendListAsync(int userId)
+        {
+            //  bảng Friendships (UserId1, UserId2, StatusId)
+            var friendIds = await _dbContext.Friendships
+                .Where(f => (f.UserId1 == userId || f.UserId2 == userId) && f.StatusId == 2) // 2 = Accepted
+                .Select(f => f.UserId1 == userId ? f.UserId2 : f.UserId1)
+                .ToListAsync();
+
+            var friends = await _dbContext.Users
+                .Where(u => friendIds.Contains(u.UserId))
+                .Select(u => new FriendViewModel
+                {
+                    UserId = u.UserId,
+                    FullName = u.FullName,
+                    AvatarUrl = u.AvatarUrl,
+                    IsOnline = u.LastLoginAt > DateTime.Now.AddMinutes(-3),
+                    LastMessage = _dbContext.Messages
+                        .Where(m =>
+                            (m.SenderId == userId && m.RecipientId == u.UserId) ||
+                            (m.SenderId == u.UserId && m.RecipientId == userId))
+                        .OrderByDescending(m => m.SentAt)
+                        .Select(m => m.Content)
+                        .FirstOrDefault(),
+                    LastTime = _dbContext.Messages
+                        .Where(m =>
+                            (m.SenderId == userId && m.RecipientId == u.UserId) ||
+                            (m.SenderId == u.UserId && m.RecipientId == userId))
+                        .OrderByDescending(m => m.SentAt)
+                        .Select(m => m.SentAt.ToString("HH:mm"))
+                        .FirstOrDefault()
+                })
+                .ToListAsync();
+
+            return friends;
+        }
     }
 }
