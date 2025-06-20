@@ -20,9 +20,6 @@ function openProfileDialog() {
     // Hiển thị dialog
     $('#profileDialog').modal('show');
 
-    // Thêm loading overlay
-    $('.modal-body').prepend('<div id="loadingOverlay" class="position-absolute w-100 h-100 bg-white bg-opacity-75 d-flex align-items-center justify-content-center" style="z-index: 1050;"><div class="text-center"><div class="spinner-border" role="status"><span class="visually-hidden">Đang tải...</span></div><p class="mt-2">Đang tải thông tin profile...</p></div></div>');
-
     // Lấy thông tin profile từ server
     $.ajax({
         url: '/Profile/GetProfileData',
@@ -30,8 +27,6 @@ function openProfileDialog() {
         dataType: 'json',
         success: function(response) {
             console.log('Profile data received:', response);
-            // Ẩn loading overlay
-            $('#loadingOverlay').remove();
 
             if (response.success && response.data) {
                 // Cập nhật form với dữ liệu mới
@@ -47,8 +42,6 @@ function openProfileDialog() {
                 error: error,
                 response: xhr.responseText
             });
-            // Ẩn loading overlay
-            $('#loadingOverlay').remove();
             $('.modal-body').prepend('<div class="alert alert-danger">Không thể tải thông tin profile. Vui lòng thử lại sau.</div>');
         }
     });
@@ -56,7 +49,6 @@ function openProfileDialog() {
 
 function clearProfileAlerts() {
     $('.modal-body .alert').remove();
-    $('#loadingOverlay').remove();
 }
 
 // Thêm event handler cho khi modal được đóng

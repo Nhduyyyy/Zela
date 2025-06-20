@@ -6,6 +6,7 @@ using System;
 using System.Threading.Tasks;
 using Zela.Services;
 using Zela.Hubs;
+using Zela.ViewModels;
 
 namespace Zela.Controllers
 {
@@ -72,6 +73,35 @@ namespace Zela.Controllers
         {
             var stickers = await _stickerService.GetAvailableStickersAsync();
             return Json(stickers);
+        }
+        
+        [HttpGet]
+        public async Task<IActionResult> GetFriendSidebar(int friendId)
+        {
+            int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            if (currentUserId == 0)
+            {
+                return BadRequest();
+            }
+
+            var friend = await _chatService.FindUserByIdAsync(friendId);
+            if (friend == null)
+            {
+                return NotFound();
+            }
+
+            var friendViewModel = new FriendViewModel()
+            {
+                UserId = friend.UserId,
+                FullName = friend.FullName,
+                AvatarUrl = friend.AvatarUrl,
+                Email = friend.Email,
+                IsOnline = friend.LastLoginAt > DateTime.UtcNow.AddMinutes(-5),
+                LastMessage = "", // Có thể lấy từ service
+                LastTime = friend.LastLoginAt.ToString("HH:mm")
+            };
+
+            return PartialView("_SidebarRight", friendViewModel);
         }
     }
 }

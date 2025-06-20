@@ -58,7 +58,7 @@
                 <i class="bi bi-telephone"></i>
                 <i class="bi bi-camera-video"></i>
                 <i class="bi bi-search"></i>
-                <i class="bi bi-three-dots-vertical"></i>
+                <i class="bi bi-three-dots-vertical toggle-sidebar-btn" style="cursor: pointer;"></i>
             </div>
         </div>
 
@@ -85,9 +85,12 @@
     </div>
 
     <div id="sidebar-right" class="sidebar-right d-none">
-        @Html.Partial("_SidebarRight")
+        <!-- Sidebar content will be loaded dynamically -->
     </div>
 </section>
+
+<!-- Include Create Group Modal -->
+@Html.Partial("_CreateGroup")
 
 @section Scripts {
     <script>
@@ -106,5 +109,9 @@
                 sidebar.classList.toggle("show");
             });
         });
+        
+        function selectFriend(userId) {
+            document
+        }
     </script>
 }

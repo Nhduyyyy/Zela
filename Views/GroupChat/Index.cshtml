@@ -81,12 +81,15 @@
     </div>
 
     <div id="sidebar-right" class="sidebar-right d-none">
-        @Html.Partial("~/Views/Chat/_SidebarRight.cshtml")
+        <!-- Sidebar content will be loaded dynamically -->
     </div>
 </section>
 
 <!-- Hidden element to store current user ID -->
-<div data-current-user-id="@(User.Identity.IsAuthenticated ? (User.FindFirst("UserId") != null ? User.FindFirst("UserId").Value : "0") : "0")" style="display: none;"></div>
+<div data-current-user-id="@(Context.Session.GetInt32("UserId") ?? 0)" style="display: none;"></div>
+
+<!-- Include Create Group Modal -->
+@Html.Partial("_CreateGroup")
 
 @section Scripts {
     <script src="~/js/group-chat-window.js"></script>

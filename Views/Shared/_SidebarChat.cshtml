@@ -1,3 +1,5 @@
+<link rel="stylesheet" href="~/css/create-group.css"/>
+
 <div class="sidebar">
     <div class="sidebar-header">
         <h4><i class="bi bi-chat-dots me-2"></i>Zela Chat</h4>
@@ -29,18 +31,41 @@
         </div>
         <div class="tab-pane fade" id="groups-tab" role="tabpanel">
             <!-- Nội dung nhóm sẽ được load từ GroupChat/Index -->
+            <div class="groups-header d-flex justify-content-between align-items-center p-2">
+                <span class="text-muted small">Nhóm của bạn</span>
+                <button class="btn btn-sm btn-primary" id="createGroupBtn" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                    <i class="bi bi-plus-circle me-1"></i>Tạo nhóm
+                </button>
+            </div>
         </div>
     </div>
 </div>
-    <script>
+
+<!-- Toast thông báo -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="groupToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong class="me-auto">Thông báo</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+        </div>
+    </div>
+</div>
+
+<!-- Hidden element to store current user ID -->
+<div data-current-user-id="@(Context.Session.GetInt32("UserId") ?? 0)" style="display: none;"></div>
+
+<script>
 $(document).ready(function() {
     // Xử lý chuyển đổi tab
-        $('#friends-tab-btn').on('click', function() {
+    $('#friends-tab-btn').on('click', function() {
         // Load trang Chat/Index
         window.location.href = '/Chat/Index';
     });
     
-        $('#groups-tab-btn').on('click', function() {
+    $('#groups-tab-btn').on('click', function() {
         // Load trang GroupChat/Index
         window.location.href = '/GroupChat/Index';
     });
@@ -58,5 +83,8 @@ $(document).ready(function() {
         $('#groups-tab').removeClass('show active');
         $('#friends-tab').addClass('show active');
     }
-        });
+});
 </script>
+
+<!-- Load create group JavaScript -->
+<script src="~/js/create-group.js"></script>
