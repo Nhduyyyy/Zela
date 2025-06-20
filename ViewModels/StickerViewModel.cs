@@ -6,4 +6,6 @@ public class StickerViewModel
     public int RecipientId { get; set; }
     public string StickerName { get; set; }
     public string StickerUrl { get; set; }
+    // sticker type là tên thư mục chứa loại sticker đó
+    public string StickerType { get; set; }
 }
