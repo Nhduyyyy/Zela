@@ -43,33 +43,38 @@ public class StickerService : IStickerService
     }
     public async Task<List<StickerViewModel>> GetAvailableStickersAsync()
     {
-        // Đọc tất cả file sticker từ thư mục /sticker
         var stickerPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "sticker");
         var stickerFiles = new List<StickerViewModel>();
-        
+
         if (Directory.Exists(stickerPath))
         {
             var files = Directory.GetFiles(stickerPath, "*.*", SearchOption.AllDirectories)
-                .Where(file => file.ToLower().EndsWith(".png") || 
-                               file.ToLower().EndsWith(".jpg") || 
-                               file.ToLower().EndsWith(".jpeg") || 
-                               file.ToLower().EndsWith(".gif") ||
-                               file.ToLower().EndsWith(".webp"))
+                .Where(file => file.EndsWith(".png", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".jpg", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".jpeg", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".gif", StringComparison.OrdinalIgnoreCase) ||
+                               file.EndsWith(".webp", StringComparison.OrdinalIgnoreCase))
                 .ToArray();
 
             for (int i = 0; i < files.Length; i++)
             {
-                var fileName = Path.GetFileNameWithoutExtension(files[i]);
                 var relativePath = "/" + files[i]
                     .Replace(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "")
                     .Replace("\\", "/")
                     .TrimStart('/');
-                
+
+                var fileName = Path.GetFileNameWithoutExtension(files[i]);
+
+                // Lấy folder sau "sticker"
+                var parts = relativePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
+                var stickerType = (parts.Length >= 2) ? parts[1] : "Unknown";
+
                 stickerFiles.Add(new StickerViewModel
                 {
                     StickerId = i + 1,
                     StickerName = fileName,
-                    StickerUrl = relativePath
+                    StickerUrl = relativePath,
+                    StickerType = stickerType
                 });
             }
         }
@@ -79,13 +84,19 @@ public class StickerService : IStickerService
 
     public async Task<MessageViewModel> SendStickerAsync(int senderId, int recipientId, string stickerUrl)
     {
-        // Validate input
         if (string.IsNullOrEmpty(stickerUrl))
+            throw new ArgumentException("Sticker URL cannot be empty");
+
+        // VD: /sticker/stickerType_1/sticker1.gif
+        var parts = stickerUrl.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var stickerIndex = Array.IndexOf(parts, "sticker");
+
+        string stickerType = "Unknown";
+        if (stickerIndex != -1 && parts.Length > stickerIndex + 1)
         {
-            throw new ArgumentException("Sticker URL and name cannot be empty");
+            stickerType = parts[stickerIndex + 1]; // lấy folder sau "sticker"
         }
 
-        // 1. Tạo message với content đặc biệt cho sticker
         var message = new Message
         {
             SenderId = senderId,
@@ -94,43 +105,34 @@ public class StickerService : IStickerService
             SentAt = DateTime.Now,
             IsEdited = false
         };
-
         _dbContext.Messages.Add(message);
         await _dbContext.SaveChangesAsync();
 
-        // 2. Tạo sticker
         var sticker = new Sticker
         {
             MessageId = message.MessageId,
             StickerUrl = stickerUrl,
-            StickerType = "Sticker",
+            StickerType = stickerType,
             SentAt = DateTime.Now
         };
-
         _dbContext.Stickers.Add(sticker);
         await _dbContext.SaveChangesAsync();
 
-        // 3. Lấy thông tin sender
         var sender = await _dbContext.Users.FindAsync(senderId);
-        if (sender == null)
-        {
-            throw new InvalidOperationException($"Sender with ID {senderId} not found");
-        }
 
-        // 4. Trả về MessageViewModel thay vì StickerViewModel để phù hợp với giao diện chat
         return new MessageViewModel
         {
             MessageId = message.MessageId,
             SenderId = senderId,
             RecipientId = recipientId,
-            SenderName = sender.FullName,
-            AvatarUrl = sender.AvatarUrl,
+            SenderName = sender?.FullName ?? "",
+            AvatarUrl = sender?.AvatarUrl ?? "",
             Content = "Sticker",
             SentAt = message.SentAt,
             IsMine = true,
             IsEdited = false,
             StickerUrl = stickerUrl,
-            StickerType = "Sticker"
+            StickerType = stickerType
         };
     }
 }
