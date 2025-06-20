@@ -8,6 +8,12 @@ namespace Zela.Models;
 /// </summary>
 public class ChatGroup
 {
+    public ChatGroup()
+    {
+        Members = new List<GroupMember>();
+        Messages = new List<Message>();
+    }
+
     [Key]
     public int GroupId { get; set; }               // PK: GroupId INT IDENTITY(1,1)
 
@@ -20,6 +26,9 @@ public class ChatGroup
 
     [MaxLength(50)]
     public string Description { get; set; }        // NVARCHAR(50) NULL
+
+    [MaxLength(500)]
+    public string AvatarUrl { get; set; }          // NVARCHAR(500) NULL
 
     [ForeignKey(nameof(CreatorId))]
     public User Creator { get; set; }              // Navigation về User

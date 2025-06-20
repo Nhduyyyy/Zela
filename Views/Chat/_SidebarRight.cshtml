@@ -1,11 +1,27 @@
+@model Zela.ViewModels.FriendViewModel
 <div class="chat-info-panel">
     <div class="info-header">
-        <h4><i class="bi bi-info-circle me-2"></i>Thông tin</h4>
+        <h4><i class="bi bi-info-circle me-2"></i>Thông tin hội thoại</h4>
     </div>
 
     <div class="group-meta">
-        <h5>Trình là gì mà trính....</h5>
-        <p><i class="bi bi-people me-1"></i>4 thành viên</p>
+        <div class="user-info">
+            <div class="user-avatar-container text-center mb-3">
+                <img class="user-avatar rounded-circle" src="@Model.AvatarUrl" alt="Avatar" style="width: 80px; height: 80px; object-fit: cover;"/>
+            </div>
+            <div class="user-details text-center">
+                <h5 class="user-name">@Model.FullName</h5>
+                <p class="user-email text-muted">@Model.Email</p>
+                <span class="user-status @(Model.IsOnline ? "online" : "offline")">
+                    <i class="bi bi-circle-fill"></i>
+                    @(Model.IsOnline ? "Online" : "Offline")
+                </span>
+                @if (!string.IsNullOrEmpty(Model.LastTime))
+                {
+                    <p class="user-last-seen text-muted small">Hoạt động lúc @Model.LastTime</p>
+                }
+            </div>
+        </div>
 
         <div class="group-actions">
             <button class="btn">
@@ -15,16 +31,16 @@
                 <i class="bi bi-pin me-1"></i>Ghim hội thoại
             </button>
             <button class="btn">
-                <i class="bi bi-person-plus me-1"></i>Thêm thành viên
+                <i class="bi bi-telephone me-1"></i>Gọi điện
             </button>
             <button class="btn">
-                <i class="bi bi-gear me-1"></i>Quản lý nhóm
+                <i class="bi bi-camera-video me-1"></i>Gọi video
             </button>
         </div>
     </div>
 
     <div class="info-section">
-        <h6><i class="bi bi-newspaper me-2"></i>Bảng tin nhóm</h6>
+        <h6><i class="bi bi-newspaper me-2"></i>Bảng tin</h6>
         <ul class="list-unstyled">
             <li class="mb-2">
                 <i class="bi bi-bell text-warning me-2"></i>
@@ -77,50 +93,5 @@
                 </div>
             </li>
         </ul>
-    </div>
-
-    <div class="info-section">
-        <h6><i class="bi bi-people me-2"></i>Thành viên nhóm</h6>
-        <div class="member-list">
-            <div class="member-item d-flex align-items-center mb-3">
-                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                     class="rounded-circle me-3" width="40" height="40" alt="Member">
-                <div class="member-info flex-fill">
-                    <div class="member-name fw-semibold">Nguyễn Văn A</div>
-                    <div class="member-status text-muted small">Quản trị viên</div>
-                </div>
-                <span class="badge bg-success">Online</span>
-            </div>
-
-            <div class="member-item d-flex align-items-center mb-3">
-                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face"
-                     class="rounded-circle me-3" width="40" height="40" alt="Member">
-                <div class="member-info flex-fill">
-                    <div class="member-name fw-semibold">Nguyễn Thị B</div>
-                    <div class="member-status text-muted small">Thành viên</div>
-                </div>
-                <span class="badge bg-secondary">Offline</span>
-            </div>
-
-            <div class="member-item d-flex align-items-center mb-3">
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face"
-                     class="rounded-circle me-3" width="40" height="40" alt="Member">
-                <div class="member-info flex-fill">
-                    <div class="member-name fw-semibold">Trần Văn C</div>
-                    <div class="member-status text-muted small">Thành viên</div>
-                </div>
-                <span class="badge bg-success">Online</span>
-            </div>
-
-            <div class="member-item d-flex align-items-center mb-3">
-                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face"
-                     class="rounded-circle me-3" width="40" height="40" alt="Member">
-                <div class="member-info flex-fill">
-                    <div class="member-name fw-semibold">Lê Văn D</div>
-                    <div class="member-status text-muted small">Thành viên</div>
-                </div>
-                <span class="badge bg-warning">Away</span>
-            </div>
-        </div>
     </div>
 </div>

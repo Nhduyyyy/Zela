@@ -17,9 +17,11 @@ function initializeCurrentUserId() {
     }
 }
 
-// Kết nối SignalR
+// Kết nối SignalR với UserId
 const connection = new signalR.HubConnectionBuilder()
-    .withUrl("/chatHub")
+    .withUrl("/chatHub", {
+        accessTokenFactory: () => currentUserId
+    })
     .build();
 
 // Nhận message mới từ nhóm (realtime)
@@ -35,9 +37,9 @@ connection.on("ReceiveGroupMessage", function (msg) {
         const senderIdNum = Number(msg.senderId);
         const currentUserIdNum = Number(currentUserId);
         msg.isMine = senderIdNum === currentUserIdNum;
-        
+
         console.log("senderIdNum:", senderIdNum, "currentUserIdNum:", currentUserIdNum, "isMine:", msg.isMine);
-        
+
         // Check if we're on the details page or index page
         if (document.getElementById('chatMessages')) {
             // Details page - append to chatMessages
@@ -62,7 +64,11 @@ connection.on("MemberRemoved", function (userId) {
     // Có thể cập nhật UI nếu cần
 });
 
-connection.start().catch(err => console.error(err.toString()));
+// Start connection after initializing currentUserId
+function startSignalRConnection() {
+    initializeCurrentUserId();
+    connection.start().catch(err => console.error(err.toString()));
+}
 
 // ===== INDEX PAGE FUNCTIONALITY =====
 
@@ -84,6 +90,9 @@ $(document).on('click', '.friend-item[data-type="group"]', function () {
     // Ẩn placeholder nếu có
     $('.chat-content .no-chat-placeholder').hide();
 
+    // Load thông tin sidebar cho group
+    loadGroupSidebar(currentGroupId);
+
     // Tham gia vào nhóm SignalR
     connection.invoke("JoinGroup", currentGroupId)
         .then(() => {
@@ -94,6 +103,24 @@ $(document).on('click', '.friend-item[data-type="group"]', function () {
     // Load tin nhắn
     loadGroupMessages();
 });
+
+// Load thông tin sidebar cho group
+async function loadGroupSidebar(groupId) {
+    try {
+        const response = await fetch(`/GroupChat/GetGroupSidebar?groupId=${groupId}`);
+        if (response.ok) {
+            const html = await response.text();
+            const sidebarRight = document.getElementById('sidebar-right');
+            if (sidebarRight) {
+                sidebarRight.innerHTML = html;
+            }
+        } else {
+            console.error('Failed to load group sidebar info');
+        }
+    } catch (error) {
+        console.error('Error loading group sidebar:', error);
+    }
+}
 
 // Load tin nhắn nhóm
 function loadGroupMessages() {
@@ -125,7 +152,7 @@ function initializeDetailsPage() {
     const groupIdElement = document.querySelector('[data-group-id]');
     if (groupIdElement) {
         currentGroupId = Number(groupIdElement.dataset.groupId);
-        
+
         // Tham gia vào nhóm
         connection.start().then(function() {
             connection.invoke("JoinGroup", currentGroupId);
@@ -150,7 +177,7 @@ function initializeDetailsPage() {
 function loadMessages() {
     const groupId = currentGroupId;
     if (!groupId) return;
-    
+
     $.get(`/GroupChat/GetGroupMessages?groupId=${groupId}`, function(data) {
         $("#chatMessages").html(data);
         scrollToBottom();
@@ -247,17 +274,18 @@ $(document).on('click', '.btn-video-call', function() {
 
 // Sidebar toggle functionality
 $(document).ready(function() {
-    initializeCurrentUserId();
-    
+    // Start SignalR connection
+    startSignalRConnection();
+
     // Check if we're on details page
     if (document.getElementById('chatMessages')) {
         initializeDetailsPage();
     }
-    
+
     // Sidebar toggle
     const toggleBtn = document.querySelector(".toggle-sidebar-btn");
     const sidebar = document.getElementById("sidebar-right");
-    
+
     if (toggleBtn && sidebar) {
         toggleBtn.addEventListener("click", function () {
             sidebar.classList.toggle("d-none");

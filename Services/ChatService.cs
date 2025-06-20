@@ -164,6 +164,14 @@ public class ChatService : IChatService
             IsEdited = false
         };
     }
+    // Tìm user theo ID
+    public async Task<User?> FindUserByIdAsync(int userId)
+    {
+        var user = await _dbContext.Users
+            .FirstOrDefaultAsync(u => u.UserId == userId);
+
+        return user;
+    }
     
     // Group chat methods
     public async Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content)
@@ -223,10 +231,13 @@ public class ChatService : IChatService
         var group = new ChatGroup
         {
             Name = name,
-            Description = description,
+            Description = description ?? "",
             CreatorId = creatorId,
             CreatedAt = DateTime.Now,
-            IsOpen = true
+            IsOpen = true,
+            AvatarUrl = "/images/default-group-avatar.png",
+            Members = new List<GroupMember>(),
+            Messages = new List<Message>()
         };
 
         try
@@ -251,6 +262,7 @@ public class ChatService : IChatService
         catch (Exception ex)
         {
             // Log the error
+            Console.WriteLine($"Error in CreateGroupAsync: {ex.Message}");
             throw new Exception("Không thể tạo nhóm: " + ex.Message);
         }
     }
@@ -329,6 +341,7 @@ public class ChatService : IChatService
             CreatedAt = gm.ChatGroup.CreatedAt,
             CreatorName = gm.ChatGroup.Creator?.FullName ?? "Unknown",
             MemberCount = gm.ChatGroup.Members?.Count ?? 0,
+            AvatarUrl = gm.ChatGroup.AvatarUrl ?? "/images/default-group-avatar.png",
             LastMessage = gm.ChatGroup.Messages?.FirstOrDefault()?.Content ?? "Chưa có tin nhắn nào",
             LastTime = gm.ChatGroup.Messages?.FirstOrDefault()?.SentAt.ToString("HH:mm") ?? ""
         }).ToList();

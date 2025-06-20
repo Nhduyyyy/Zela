@@ -13,4 +13,4 @@ public class GroupMessageViewModel
     public DateTime SentAt { get; set; }
     public bool IsMine { get; set; }
     public bool IsEdited { get; set; }
-} 
+}

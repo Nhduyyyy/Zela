@@ -10,6 +10,8 @@ public interface IChatService
     Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content, IFormFile? file = null);
     Task<MessageViewModel> SaveMessageAsync(int senderId, int recipientId, string content);
     
+    Task<User> FindUserByIdAsync(int userId);
+    
     // Group chat methods
     Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content);
     Task<ChatGroup> CreateGroupAsync(int creatorId, string name, string description);

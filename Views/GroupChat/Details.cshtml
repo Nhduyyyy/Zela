@@ -1,4 +1,4 @@
-@model Zela.Models.ChatGroup
+    @model Zela.Models.ChatGroup
 
 @{
     ViewData["Title"] = Model.Name;
@@ -63,7 +63,7 @@
 
 <!-- Hidden elements to store data -->
 <div data-group-id="@Model.GroupId" style="display: none;"></div>
-<div data-current-user-id="@(User.Identity.IsAuthenticated ? (User.FindFirst("UserId") != null ? User.FindFirst("UserId").Value : "0") : "0")" style="display: none;"></div>
+<div data-current-user-id="@(Context.Session.GetInt32("UserId") ?? 0)" style="display: none;"></div>
 
 @section Scripts {
     <script src="~/lib/microsoft/signalr/dist/browser/signalr.js"></script>

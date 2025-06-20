@@ -236,6 +236,9 @@
             // Ẩn placeholder nếu chưa có tin nhắn
             const ph = chatContentEl.querySelector('.no-chat-placeholder');
             if (ph) ph.style.display = 'none';
+            
+            // Load thông tin sidebar cho friend
+            loadFriendSidebar(currentFriendId);
 
             // Load lịch sử chat
             fetch(`/Chat/GetMessages?friendId=${currentFriendId}`)
@@ -398,4 +401,22 @@
             }
         });
     });
+
+    // Load thông tin sidebar cho friend
+    async function loadFriendSidebar(friendId) {
+        try {
+            const response = await fetch(`/Chat/GetFriendSidebar?friendId=${friendId}`);
+            if (response.ok) {
+                const html = await response.text();
+                const sidebarRight = document.getElementById('sidebar-right');
+                if (sidebarRight) {
+                    sidebarRight.innerHTML = html;
+                }
+            } else {
+                console.error('Failed to load friend sidebar info');
+            }
+        } catch (error) {
+            console.error('Error loading friend sidebar:', error);
+        }
+    }
 })();

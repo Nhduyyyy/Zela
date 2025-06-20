@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Zela.Services;
 using Zela.Models;
 using Zela.ViewModels;
@@ -19,7 +20,7 @@ namespace Zela.Controllers
         // Trang danh sách nhóm
         public async Task<IActionResult> Index()
         {
-            int userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
             var groups = await _chatService.GetUserGroupsAsync(userId);
             return View(groups);
         }
@@ -28,7 +29,7 @@ namespace Zela.Controllers
         [HttpGet]
         public async Task<IActionResult> GetGroupMessages(int groupId)
         {
-            int userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
             var messages = await _chatService.GetGroupMessagesAsync(groupId);
             
             // Set IsMine for each message
@@ -44,9 +45,32 @@ namespace Zela.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateGroup(string name, string description)
         {
-            int userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
-            var group = await _chatService.CreateGroupAsync(userId, name, description);
-            return Json(group);
+            try
+            {
+                if (string.IsNullOrEmpty(name?.Trim()))
+                {
+                    return BadRequest(new { message = "Tên nhóm không được để trống" });
+                }
+
+                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                if (userId == 0)
+                {
+                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
+                }
+
+                var group = await _chatService.CreateGroupAsync(userId, name.Trim(), description?.Trim());
+                return Json(new { success = true, group = group });
+            }
+            catch (ArgumentException ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                // Log the error here
+                Console.WriteLine($"Error creating group: {ex.Message}");
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi tạo nhóm. Vui lòng thử lại." });
+            }
         }
 
         // Thêm thành viên vào nhóm
@@ -93,9 +117,32 @@ namespace Zela.Controllers
         [HttpGet]
         public async Task<IActionResult> SearchUsers(string searchTerm)
         {
-            int currentUserId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
             var users = await _chatService.SearchUsersAsync(searchTerm, currentUserId);
             return Json(users);
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetGroupSidebar(int groupId)
+        {
+            var group = await _chatService.GetGroupDetailsAsync(groupId);
+            if (group == null)
+            {
+                return NotFound();
+            }
+
+            var groupViewModel = new GroupViewModel()
+            {
+                GroupId = (int)group.GroupId,
+                Name = group.Name,
+                Description = group.Description,
+                AvatarUrl = group.AvatarUrl ?? "/images/default-group-avatar.png",
+                MemberCount = group.Members?.Count ?? 0,
+                CreatedAt = group.CreatedAt,
+                CreatorName = group.Creator?.FullName ?? "Unknown"
+            };
+
+            return PartialView("_SidebarRight", groupViewModel);
         }
     }
 } 
