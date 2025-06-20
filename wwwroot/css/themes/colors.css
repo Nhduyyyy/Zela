@@ -1,0 +1,41 @@
+:root {
+    /* =================================
+       SWEET & SOFT THEME (Gradient 1)
+       ================================= */
+
+    /* Palette chính - Dựa trên dải màu hồng và đỏ cam */
+    --primary-color: #FF5A57;       /* Đỏ cam rực rỡ */
+    --secondary-color: #FCCBF0;     /* Hồng ngọt ngào */
+    --primary-gradient: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+
+    /* Palette phụ */
+    --success-color: #28a745;       /* Giữ nguyên màu xanh lá cây */
+    --danger-color: var(--primary-color); /* Dùng màu chính cho cảnh báo */
+    --warning-color: #ffc107;
+    --info-color: #17a2b8;
+
+    /* Màu chữ */
+    --text-primary: #2c2c2c;        /* Màu chữ tối để dễ đọc */
+    --text-secondary: #5e5e5e;
+    --text-white: #ffffff;
+    --text-light: #f8f9fa;
+
+    /* Màu nền */
+    --bg-primary: #ffffff;
+    --bg-secondary: #FFF8FA;       /* Nền phụ màu hồng rất nhạt */
+    --bg-light-gray: #f3f4f6;
+    --bg-dark: #343a40;
+    
+    /* Viền và đường kẻ */
+    --border-color: #FBEFF5;       /* Viền màu hồng nhạt */
+    --border-color-light: #fcf4f8;
+
+    /* Trạng thái */
+    --online-status-color: #28a745;
+    --offline-status-color: #6c757d;
+    
+    /*Sticker*/
+    --neon-green: #008866;      /* Xanh neon cho highlight */
+    --neon-green-alt: #22E3AC;  /* Xanh neon thay thế */
+
+} 

@@ -1,7 +1,7 @@
 /* Background và typography chính */
 body {
-    background: linear-gradient(135deg, #0B1D34 0%, #08192C 100%);
-    color: #FFFFFF;
+    background: var(--theme-bg-gradient);
+    color: var(--theme-text-primary);
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
 }
@@ -13,7 +13,7 @@ body {
 
 /* Header styling */
 h2 {
-    color: #00F0B5;
+    color: var(--theme-accent-green);
     font-weight: 700;
     text-align: center;
     margin-bottom: 2rem;
@@ -21,18 +21,18 @@ h2 {
 }
 
 h4 {
-    color: #D3E0F1;
+    color: var(--theme-text-secondary);
     font-weight: 600;
     margin-bottom: 1rem;
-    border-bottom: 2px solid #29B6F6;
+    border-bottom: 2px solid var(--theme-accent-sky-blue);
     padding-bottom: 0.5rem;
 }
 
 /* Alert styling */
 .alert-danger {
     background: rgba(255, 94, 91, 0.1);
-    border: 1px solid #FF5E5B;
-    color: #FF7A59;
+    border: 1px solid var(--theme-accent-red);
+    color: var(--theme-accent-red);
     border-radius: 10px;
 }
 
@@ -45,9 +45,9 @@ h4 {
 }
 
 .list-group-item {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--theme-bg-glass);
     border: 1px solid rgba(41, 182, 246, 0.2);
-    color: #D3E0F1;
+    color: var(--theme-text-secondary);
     margin-bottom: 0.5rem;
     border-radius: 10px !important;
     backdrop-filter: blur(10px);
@@ -55,14 +55,14 @@ h4 {
 }
 
 .list-group-item:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: #29B6F6;
+    background: var(--theme-bg-glass-light);
+    border-color: var(--theme-accent-sky-blue);
     transform: translateY(-2px);
     box-shadow: 0 4px 20px rgba(41, 182, 246, 0.2);
 }
 
 .list-group-item.text-muted {
-    color: #D3E0F1 !important;
+    color: var(--theme-text-secondary) !important;
     font-style: italic;
     text-align: center;
     padding: 2rem;
@@ -77,53 +77,53 @@ h4 {
 }
 
 .btn-primary {
-    background: linear-gradient(45deg, #41D7A7, #00F0B5);
+    background: var(--theme-btn-success-gradient);
     border: none;
-    color: #0B1D34;
+    color: var(--theme-text-dark);
     box-shadow: 0 4px 15px rgba(65, 215, 167, 0.3);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(45deg, #00F0B5, #22E3AC);
+    background: linear-gradient(45deg, var(--theme-accent-green), var(--theme-accent-green-alt));
     transform: translateY(-2px);
     box-shadow: 0 6px 20px rgba(65, 215, 167, 0.4);
-    color: #0B1D34;
+    color: var(--theme-text-dark);
 }
 
 .btn-success {
-    background: linear-gradient(45deg, #41D7A7, #22E3AC);
+    background: var(--theme-btn-success-gradient);
     border: none;
-    color: #0B1D34;
+    color: var(--theme-text-dark);
 }
 
 .btn-success:hover {
-    background: linear-gradient(45deg, #22E3AC, #00F0B5);
+    background: linear-gradient(45deg, var(--theme-accent-green-alt), var(--theme-accent-green));
     transform: translateY(-1px);
-    color: #0B1D34;
+    color: var(--theme-text-dark);
 }
 
 .btn-danger {
-    background: linear-gradient(45deg, #FF5E5B, #FF7A59);
+    background: var(--theme-btn-danger-gradient);
     border: none;
-    color: #FFFFFF;
+    color: var(--theme-text-primary);
 }
 
 .btn-danger:hover {
-    background: linear-gradient(45deg, #FF7A59, #FF5E5B);
+    background: linear-gradient(45deg, #FF7A59, var(--theme-accent-red));
     transform: translateY(-1px);
-    color: #FFFFFF;
+    color: var(--theme-text-primary);
 }
 
 .btn-warning {
-    background: linear-gradient(45deg, #29B6F6, #64B5F6);
+    background: var(--theme-btn-warning-gradient);
     border: none;
-    color: #0B1D34;
+    color: var(--theme-text-dark);
 }
 
 .btn-warning:hover {
-    background: linear-gradient(45deg, #64B5F6, #29B6F6);
+    background: linear-gradient(45deg, #64B5F6, var(--theme-accent-sky-blue));
     transform: translateY(-1px);
-    color: #0B1D34;
+    color: var(--theme-text-dark);
 }
 
 .btn-sm {
@@ -146,7 +146,7 @@ form {
 
 /* Small text styling */
 small.text-muted {
-    color: #D3E0F1 !important;
+    color: var(--theme-text-secondary) !important;
     opacity: 0.7;
 }
 
@@ -194,8 +194,9 @@ small.text-muted {
     border-radius: 20px;
     padding: 2rem;
     backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--theme-bg-glass-light);
 }
+
 /* Zela Theme CSS - Chỉ cần thêm vào file CSS hiện tại */
 
 /* Background chính */
