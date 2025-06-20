@@ -217,7 +217,7 @@
                 .forEach(el => el.classList.remove('active'));
             friendItem.classList.add('active');
 
-            // Set friend name
+            // Set friend names
             const friendNameEl = friendItem.querySelector('.friend-name');
             if (chatFriendNameEl && friendNameEl) {
                 chatFriendNameEl.textContent = friendNameEl.textContent;
