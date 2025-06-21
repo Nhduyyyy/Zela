@@ -199,7 +199,12 @@
                 <div class="sticker-grid"></div>
             </div>
         `;
-        document.body.insertAdjacentHTML('beforeend', stickerPanelHtml);
+        // document.body.insertAdjacentHTML('beforeend', stickerPanelHtml);
+
+        const inputBar = document.querySelector('.chat-input-bar');
+        if (inputBar) {
+            inputBar.insertAdjacentHTML('beforeend', stickerPanelHtml);
+        }
 
         // Load stickers khi khởi tạo
         loadStickers();
@@ -311,6 +316,12 @@
                 })
                 .catch(err => console.error(err.toString()));
             return;
+        }
+
+        const stickerPanel = document.querySelector('.sticker-panel');
+        if (stickerPanel && !stickerPanel.contains(e.target) && !e.target.closest('.sticker-btn')) {
+            stickerPanel.style.display = 'none';
+            stickerPanelVisible = false;
         }
     });
 

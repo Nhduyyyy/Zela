@@ -3,19 +3,18 @@
 /*=======================================================================================*/
 
 .sticker-panel {
-    display: none; /* Mặc định ẩn */
     position: absolute;
-    bottom: 70px;
-    right: 20px;
-    width: 320px;
+    bottom: 100%;
+    right: 95px;
+    width: 340px;
     max-height: 400px;
-    background-color: #fff;
-    border-radius: 12px;
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
-    overflow: hidden;
-    z-index: 999;
-    border: 1px solid #e0e0e0;
-    animation: fadeIn 0.3s ease;
+    background: #fff;
+    border: 1px solid #ddd;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    padding: 10px;
+    z-index: 99;
+    display: none; /* Mặc định ẩn */
 }
 
 .sticker-header {
@@ -23,6 +22,7 @@
     justify-content: space-between;
     align-items: center;
     padding: 10px 14px;
+    margin-bottom: 8px;
     background-color: #f5f5f5;
     border-bottom: 1px solid #ddd;
 }
