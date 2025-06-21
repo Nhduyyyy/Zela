@@ -1,0 +1,293 @@
+/*=======================================================================================*/
+/*                                 2. FRIEND LIST SIDEBAR                               */
+/*=======================================================================================*/
+
+/* 2.1 Friend List Container */
+.friend-list {
+    width: 280px;
+    border-right: 1px solid var(--theme-border-color);
+    overflow-y: auto;
+    height: 100vh;
+    background: var(--theme-bg-secondary);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--theme-shadow-md);
+}
+
+/* 2.2 Sidebar Header */
+.sidebar-header {
+    padding: 23px 20px;
+    border-bottom: 1px solid var(--theme-border-accent);
+    background: linear-gradient(135deg, var(--theme-primary-dark), var(--theme-primary-darker));
+    color: var(--theme-text-primary);
+    backdrop-filter: blur(15px);
+    position: relative;
+}
+
+.sidebar-header::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, var(--theme-accent-green), var(--theme-accent-sky-blue));
+}
+
+.sidebar-header h4 {
+    font-weight: 600;
+    margin: 0;
+    font-size: 1.2rem;
+    color: var(--theme-accent-green);
+    text-shadow: 0 0 10px rgba(0, 240, 181, 0.5);
+}
+
+/* 2.3 Sidebar Search */
+.sidebar-search {
+    padding: 15px 20px;
+    background: var(--theme-bg-secondary);
+}
+
+.search-input {
+    position: relative;
+}
+
+.search-input input {
+    width: 100%;
+    padding: 12px 20px 12px 45px;
+    border: 1px solid var(--theme-border-color);
+    border-radius: 25px;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    background: var(--theme-bg-glass-light);
+    color: var(--theme-text-primary);
+    backdrop-filter: blur(10px);
+}
+
+.search-input input::placeholder {
+    color: var(--theme-text-muted);
+}
+
+.search-input input:focus {
+    outline: none;
+    border-color: var(--theme-accent-green);
+    box-shadow: 0 0 0 3px rgba(0, 240, 181, 0.2);
+    background: rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+    box-shadow: var(--theme-shadow-neon);
+}
+
+.search-input i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--theme-accent-green);
+}
+
+/* 2.4 Navigation Tabs */
+.nav-tabs {
+    display: flex;
+    border: none;
+    padding: 0 20px;
+    background: var(--theme-bg-secondary);
+    flex-wrap: nowrap;
+    justify-content: center;
+}
+
+.nav-tabs .nav-link {
+    border: none;
+    color: var(--theme-text-secondary);
+    font-weight: 500;
+    padding: 15px 20px;
+    border-radius: 0;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--theme-accent-green);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--theme-accent-green);
+    background: none;
+}
+
+.nav-tabs .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 30px;
+    height: 3px;
+    background: linear-gradient(90deg, var(--theme-accent-green), var(--theme-accent-sky-blue));
+    border-radius: 2px;
+    box-shadow: 0 0 10px rgba(0, 240, 181, 0.5);
+}
+
+/* 2.5 Friend Items Container */
+.friend-items {
+    list-style: none;
+    padding: 8px;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* 2.6 Individual Friend Item */
+.friend-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: 0.3s ease;
+    position: relative;
+    background: var(--theme-bg-glass);
+    border: 1px solid transparent;
+    backdrop-filter: blur(5px);
+}
+
+.friend-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(180deg, var(--theme-accent-green) 0%, var(--theme-accent-sky-blue) 100%);
+    border-radius: 0 2px 2px 0;
+    opacity: 0;
+    transition: 0.3s ease;
+}
+
+.friend-item:hover {
+    background: var(--theme-bg-hover);
+    border-color: var(--theme-accent-green);
+    transform: translateX(2px);
+    box-shadow: 0 4px 20px rgba(0, 240, 181, 0.2);
+}
+
+.friend-item.active {
+    background: var(--theme-bg-active);
+    border-color: var(--theme-accent-green);
+    box-shadow: var(--theme-shadow-neon);
+}
+
+.friend-item.active::before {
+    opacity: 1;
+}
+
+/* 2.7 Friend Avatar */
+.friend-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--theme-accent-sky-blue);
+    transition: 0.3s ease;
+    position: relative;
+    flex-shrink: 0;
+}
+
+.friend-item:hover .friend-avatar {
+    border-color: var(--theme-accent-green);
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(0, 240, 181, 0.4);
+}
+
+.friend-item.active .friend-avatar {
+    border-color: var(--theme-accent-green);
+    box-shadow: 0 0 20px rgba(0, 240, 181, 0.5);
+}
+
+/* 2.8 Friend Information */
+.friend-info {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.friend-name {
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--theme-text-primary);
+    line-height: 1.4;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.friend-item:hover .friend-name {
+    color: var(--theme-text-accent);
+}
+
+.friend-last-msg {
+    font-size: 13px;
+    color: var(--theme-text-secondary);
+    line-height: 1.3;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.friend-item:hover .friend-last-msg {
+    color: var(--theme-text-primary);
+}
+
+/* 2.9 Friend Meta (Time & Status) */
+.friend-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+}
+
+.friend-time {
+    font-size: 12px;
+    color: var(--theme-text-muted);
+    font-weight: 500;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.friend-item:hover .friend-time {
+    color: var(--theme-text-secondary);
+}
+
+.friend-status {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+}
+
+.friend-status i {
+    font-size: 10px;
+}
+
+.friend-status.online i {
+    color: var(--theme-status-online);
+    text-shadow: 0 0 8px var(--theme-status-online);
+}
+
+.friend-status.offline i {
+    color: var(--theme-status-offline);
+}
+
+/* 2.10 Online Status Animation */
+@keyframes pulse-online {
+    0% {
+        box-shadow: 0 0 0 0 rgba(0, 240, 181, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 8px rgba(0, 240, 181, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(0, 240, 181, 0);
+    }
+} 

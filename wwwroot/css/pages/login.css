@@ -5,6 +5,12 @@
     --accent-color: #90D1CA;
     --text-primary: #096B68;
     --text-secondary: #129990;
+    
+    /* Social Colors */
+    --google-color: #ea4335;
+    --github-color: #333;
+    --facebook-color: #1877f2;
+    --bg-white: #fff;
 }
 
 * {
@@ -107,37 +113,37 @@ body {
 /* Google */
 .btn-google {
     width: 90%;
-    color: #ea4335;
-    border-color: #ea4335;
-    background: white;
+    color: var(--google-color);
+    border-color: var(--google-color);
+    background: var(--bg-white);
 }
 .btn-google:hover {
-    background: #ea4335;
-    color: white;
+    background: var(--google-color);
+    color: var(--bg-white);
 }
 
 /* GitHub */
 .btn-github {
     width: 90%;
-    color: #333;
-    border-color: #333;
-    background: white;
+    color: var(--github-color);
+    border-color: var(--github-color);
+    background: var(--bg-white);
 }
 .btn-github:hover {
-    background: #333;
-    color: white;
+    background: var(--github-color);
+    color: var(--bg-white);
 }
 
 /* Facebook */
 .btn-facebook {
     width: 90%;
-    color: #1877f2;
-    border-color: #1877f2;
-    background: white;
+    color: var(--facebook-color);
+    border-color: var(--facebook-color);
+    background: var(--bg-white);
 }
 .btn-facebook:hover {
-    background: #1877f2;
-    color: white;
+    background: var(--facebook-color);
+    color: var(--bg-white);
 }
 
 /* Responsive */
