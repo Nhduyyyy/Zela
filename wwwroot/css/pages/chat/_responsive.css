@@ -80,6 +80,37 @@
         max-width: 95vw;
         max-height: 80vh;
     }
+    .message-content {
+        max-width: 85%;
+    }
+
+    .message-bubble:not(:empty) {
+        max-width: 85vw;
+    }
+}
+
+@media (max-width: 480px) {
+    .message-content {
+        max-width: 90%;
+    }
+
+    .message-bubble:not(:empty) {
+        max-width: 90vw;
+    }
+
+    .message-bubble {
+        padding: 10px 14px;
+        font-size: 14px;
+    }
+}
+
+/* Đảm bảo text dài được wrap đúng cách trên mobile */
+@media (max-width: 768px) {
+    .message-bubble {
+        word-break: break-word;
+        overflow-wrap: break-word;
+        hyphens: auto;
+    }
 }
 
 /* 8.2 Tablet Styles */
