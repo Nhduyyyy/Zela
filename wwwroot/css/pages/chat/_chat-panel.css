@@ -142,6 +142,7 @@ div.chat-actions i:hover {
     padding: 20px;
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 
 /* 3.4 Message Styling */
@@ -149,6 +150,7 @@ div.chat-actions i:hover {
     display: flex;
     margin-bottom: 20px;
     animation: fadeInUp 0.5s ease-out;
+    width: 100%;
 }
 
 .message.left {
@@ -166,12 +168,19 @@ img.message-avatar {
     border-radius: 50%;
     margin: 0 10px;
     align-self: flex-end;
+    flex-shrink: 0;
 }
 
 .message-content {
     max-width: 70%;
     display: flex;
     flex-direction: column;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
 }
 
 /* Cho người GỬI (right): thời gian trên, tin nhắn dưới */
@@ -190,6 +199,52 @@ img.message-avatar {
     color: var(--theme-text-dark);
     line-height: 1.5;
     word-wrap: break-word;
+    overflow-wrap: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
+    min-width: 0;
+    /* Đảm bảo text tự động xuống dòng khi đạt max-width */
+    word-break: break-word;
+    hyphens: auto;
+    /* Tối ưu cho việc hiển thị text dài */
+    text-overflow: ellipsis;
+    display: inline-block;
+    /* Đảm bảo bubble không vượt quá 70% của container */
+    box-sizing: border-box;
+}
+
+/* Xử lý text dài không có space */
+.message-bubble:not(:empty) {
+    max-width: 70vw;
+    width: fit-content;
+}
+
+/* Đảm bảo text ngắn không bị stretch */
+.message-bubble:empty::before {
+    content: '';
+    display: inline-block;
+    min-width: 1px;
+}
+
+/* Tối ưu cho text rất dài */
+.message-bubble br {
+    display: block;
+    content: "";
+    margin-top: 0;
+}
+
+/* Tối ưu cho tin nhắn có media */
+.message-content img,
+.message-content video {
+    max-width: 100%;
+    height: auto;
+}
+
+/* Đảm bảo sticker không bị stretch */
+.sticker-message {
+    max-width: 150px;
+    height: auto;
+    object-fit: contain;
 }
 
 .message.left .message-bubble {
@@ -209,6 +264,7 @@ img.message-avatar {
     color: var(--theme-text-muted);
     margin-top: 5px;
     padding: 0 5px;
+    white-space: nowrap;
 }
 
 @keyframes fadeInUp {

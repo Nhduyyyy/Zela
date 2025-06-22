@@ -118,7 +118,15 @@
         if (msg.stickerUrl && msg.stickerUrl.length > 0) {
             stickerHtml = `<img src="${msg.stickerUrl}" class="sticker-message" alt="Sticker" draggable="false">`;
         } else if (msg.content && msg.content.trim().length > 0) {
-            textHtml = `<span class="message-bubble">${msg.content}</span>`;
+            // Xử lý text để đảm bảo tự động xuống dòng đúng cách
+            const processedContent = msg.content
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/\n/g, '<br>'); // Giữ nguyên line breaks
+            textHtml = `<span class="message-bubble">${processedContent}</span>`;
         } else {
             textHtml = ""; // Không render bubble nếu không có nội dung
         }
@@ -236,7 +244,7 @@
             // Ẩn placeholder nếu chưa có tin nhắn
             const ph = chatContentEl.querySelector('.no-chat-placeholder');
             if (ph) ph.style.display = 'none';
-            
+
             // Load thông tin sidebar cho friend
             loadFriendSidebar(currentFriendId);
 
