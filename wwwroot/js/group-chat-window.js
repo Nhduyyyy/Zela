@@ -1,6 +1,7 @@
 // Global variables
 let currentGroupId = null;
 let currentUserId = null;
+let selectedFiles = [];
 
 // Initialize current user ID from the page
 function initializeCurrentUserId() {
@@ -164,11 +165,7 @@ function initializeDetailsPage() {
         // Xử lý gửi tin nhắn
         $("#messageForm").submit(function(e) {
             e.preventDefault();
-            const message = $("#messageInput").val();
-            if (message) {
-                connection.invoke("SendGroupMessage", currentGroupId, message);
-                $("#messageInput").val("");
-            }
+            sendMessageWithFiles();
         });
     }
 }
@@ -186,13 +183,35 @@ function loadMessages() {
 
 // Thêm tin nhắn mới - Details page
 function appendMessage(message) {
+    let mediaHtml = '';
+
+    // Render media nếu có
+    if (message.media && message.media.length > 0) {
+        for (const media of message.media) {
+            if (media.mediaType && media.mediaType.startsWith('image/')) {
+                mediaHtml += `<img src="${media.url}" class="message-media-img" alt="Ảnh gửi" />`;
+            } else if (media.mediaType && media.mediaType.startsWith('video/')) {
+                mediaHtml += `<video src="${media.url}" class="message-media-video" controls></video>`;
+            } else {
+                const fileName = media.fileName || media.url.split('/').pop();
+                mediaHtml += `
+                <div class="chat-file-attachment">
+                    <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                    <span class="file-name">${fileName}</span>
+                    <a href="${media.url}" download="${fileName}" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                </div>`;
+            }
+        }
+    }
+
     const messageHtml = `
         <div class="message ${message.isMine ? 'right' : 'left'}">
             ${!message.isMine ? `<img src="${message.avatarUrl}" class="message-avatar" />` : ''}
             <div class="message-content">
                 ${!message.isMine ? `<div class="message-sender">${message.senderName}</div>` : ''}
-                <span class="message-bubble">${message.content}</span>
                 <span class="message-time">${new Date(message.sentAt).toLocaleTimeString()}</span>
+                ${mediaHtml}
+                ${message.content && message.content !== "[Đã gửi file]" ? `<span class="message-bubble">${message.content}</span>` : ''}
             </div>
         </div>
     `;
@@ -202,7 +221,50 @@ function appendMessage(message) {
 
 // ===== COMMON FUNCTIONALITY =====
 
-// Gửi tin nhắn nhóm
+// Gửi tin nhắn nhóm với file support - Details page
+async function sendMessageWithFiles() {
+    const content = $("#messageInput").val().trim();
+    const files = selectedFiles.length > 0 ? selectedFiles : null;
+
+    if (!content && !files) return;
+
+    try {
+        if (files && files.length > 0) {
+            // Gửi files qua HTTP POST
+            const formData = new FormData();
+            formData.append('content', content);
+            formData.append('groupId', currentGroupId);
+
+            files.forEach(file => {
+                formData.append('files', file);
+            });
+
+            const response = await fetch('/GroupChat/SendGroupMessage', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                $("#messageInput").val('');
+                selectedFiles = [];
+                clearFilePreview();
+                console.log("Files sent successfully");
+            } else {
+                console.error('Error sending files:', response.status);
+                alert('Có lỗi xảy ra khi gửi file!');
+            }
+        } else {
+            // Gửi text qua SignalR
+            await connection.invoke("SendGroupMessage", currentGroupId, content);
+            $("#messageInput").val("");
+        }
+    } catch (error) {
+        console.error('Send message error:', error);
+        alert('Có lỗi xảy ra khi gửi tin nhắn!');
+    }
+}
+
+// Gửi tin nhắn nhóm - Index page
 function sendGroupMessage() {
     let content = $('.chat-input-bar input').val();
     if (!content.trim() || !currentGroupId) return;
@@ -218,19 +280,38 @@ function sendGroupMessage() {
 
 // Render tin nhắn nhóm mới - Index page
 function renderGroupMessage(msg) {
-    // Ensure consistent comparison - convert both to numbers
     const senderIdNum = Number(msg.senderId);
     const currentUserIdNum = Number(currentUserId);
     let isMine = senderIdNum === currentUserIdNum;
     let side = isMine ? 'right' : 'left';
 
-    console.log("renderGroupMessage - senderIdNum:", senderIdNum, "currentUserIdNum:", currentUserIdNum, "isMine:", isMine);
+    let mediaHtml = '';
+
+    // Render media nếu có
+    if (msg.media && msg.media.length > 0) {
+        for (const media of msg.media) {
+            if (media.mediaType && media.mediaType.startsWith('image/')) {
+                mediaHtml += `<img src="${media.url}" class="message-media-img" alt="Ảnh gửi" />`;
+            } else if (media.mediaType && media.mediaType.startsWith('video/')) {
+                mediaHtml += `<video src="${media.url}" class="message-media-video" controls></video>`;
+            } else {
+                const fileName = media.fileName || media.url.split('/').pop();
+                mediaHtml += `
+                <div class="chat-file-attachment">
+                    <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                    <span class="file-name">${fileName}</span>
+                    <a href="${media.url}" download="${fileName}" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                </div>`;
+            }
+        }
+    }
 
     if (isMine) {
         return `<div class="message ${side}">
             <div class="message-content">
                 <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
-                <span class="message-bubble">${msg.content}</span>
+                ${mediaHtml}
+                ${msg.content && msg.content !== "[Đã gửi file]" ? `<span class="message-bubble">${msg.content}</span>` : ''}
             </div>
         </div>`;
     } else {
@@ -239,7 +320,8 @@ function renderGroupMessage(msg) {
             <div class="message-content">
                 <div class="message-sender">${msg.senderName}</div>
                 <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
-                <span class="message-bubble">${msg.content}</span>
+                ${mediaHtml}
+                ${msg.content && msg.content !== "[Đã gửi file]" ? `<span class="message-bubble">${msg.content}</span>` : ''}
             </div>
         </div>`;
     }
@@ -255,6 +337,243 @@ function scrollToBottom() {
         // Index page
         let chatContent = $('.chat-content');
         chatContent.scrollTop(chatContent[0].scrollHeight);
+    }
+}
+
+// File handling functions
+function clearFilePreview() {
+    const previewEl = document.getElementById('file-preview');
+    if (previewEl) {
+        previewEl.innerHTML = '';
+        previewEl.style.display = 'none';
+    }
+}
+
+// Global function for HTML onclick
+function openFileDialog(type) {
+    console.log("openFileDialog called with type:", type);
+
+    const fileInput = document.getElementById('groupFileInput');
+    if (!fileInput) {
+        console.error("File input not found!");
+        alert("File input not found! Please refresh the page.");
+        return;
+    }
+
+    if (type === 'image') {
+        fileInput.accept = 'image/*';
+        console.log("Opening file dialog for images only");
+    } else {
+        fileInput.accept = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt';
+        console.log("Opening file dialog for all file types");
+    }
+
+    fileInput.click();
+}
+
+// Make function globally available
+window.openFileDialog = openFileDialog;
+
+// Debug function to check buttons
+function debugButtons() {
+    console.log("=== Debugging buttons ===");
+
+    // Check all possible selectors
+    const selectors = [
+        '.btn-file',
+        '.bi-image',
+        '.bi-paperclip',
+        '.btn-file.bi-image',
+        '.btn-file.bi-paperclip',
+        'button[title="Chọn ảnh"]',
+        'button[title="Chọn file"]'
+    ];
+
+    selectors.forEach(selector => {
+        const elements = document.querySelectorAll(selector);
+        console.log(`Selector "${selector}": found ${elements.length} elements`);
+        elements.forEach((el, index) => {
+            console.log(`  Element ${index}:`, el.className, el.outerHTML);
+        });
+    });
+
+    // Check messageForm
+    const messageForm = document.getElementById('messageForm');
+    console.log('messageForm:', messageForm);
+    if (messageForm) {
+        console.log('messageForm HTML:', messageForm.outerHTML);
+    }
+
+    console.log("=== End debugging ===");
+}
+
+function setupFileInput() {
+    console.log("Setting up file input...");
+
+    // Debug buttons first
+    debugButtons();
+
+    // Add file input if not exists
+    if (!document.getElementById('groupFileInput')) {
+        console.log("Creating file input element...");
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.id = 'groupFileInput';
+        fileInput.multiple = true;
+        fileInput.style.display = 'none';
+        fileInput.accept = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt';
+        document.body.appendChild(fileInput);
+
+        fileInput.addEventListener('change', function(e) {
+            console.log("File input changed, files:", e.target.files.length);
+            if (e.target.files.length > 0) {
+                selectedFiles = Array.from(e.target.files);
+                showFilePreview();
+            }
+        });
+        console.log("File input created and added to body");
+    } else {
+        console.log("File input already exists");
+    }
+
+    // Add test button handler
+    const testBtn = document.getElementById('testFileBtn');
+    if (testBtn) {
+        testBtn.addEventListener('click', function() {
+            console.log("Test button clicked!");
+            alert('Test button works!');
+            const fileInput = document.getElementById('groupFileInput');
+            if (fileInput) {
+                fileInput.click();
+            } else {
+                alert('File input not found!');
+            }
+        });
+        console.log("Test button handler added");
+    }
+
+    // Remove old event handlers and add new ones
+    $(document).off('click', '.btn-file');
+
+    // Try using different approaches
+
+    // Approach 1: Event delegation
+    $(document).on('click', '.btn-file', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log("Button file clicked via delegation");
+
+        const fileInput = document.getElementById('groupFileInput');
+        if (fileInput) {
+            if ($(this).hasClass('bi-image')) {
+                fileInput.accept = 'image/*';
+                console.log("Setting accept to images only");
+            } else {
+                fileInput.accept = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt';
+                console.log("Setting accept to all file types");
+            }
+            fileInput.click();
+        } else {
+            console.error("File input not found!");
+        }
+    });
+
+    // Approach 2: Wait for DOM and try direct binding
+    setTimeout(() => {
+        const imageBtn = document.querySelector('.btn-file.bi-image');
+        const paperclipBtn = document.querySelector('.btn-file.bi-paperclip');
+
+        if (imageBtn) {
+            console.log("Found image button after timeout, adding click handler");
+            imageBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log("Direct image button clicked (onclick)");
+                const fileInput = document.getElementById('groupFileInput');
+                if (fileInput) {
+                    fileInput.accept = 'image/*';
+                    fileInput.click();
+                }
+            };
+        } else {
+            console.warn("Image button still not found after timeout");
+        }
+
+        if (paperclipBtn) {
+            console.log("Found paperclip button after timeout, adding click handler");
+            paperclipBtn.onclick = function(e) {
+                e.preventDefault();
+                console.log("Direct paperclip button clicked (onclick)");
+                const fileInput = document.getElementById('groupFileInput');
+                if (fileInput) {
+                    fileInput.accept = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt';
+                    fileInput.click();
+                }
+            };
+        } else {
+            console.warn("Paperclip button still not found after timeout");
+        }
+    }, 1000);
+
+    console.log("File input setup completed");
+}
+
+function showFilePreview() {
+    let previewEl = document.getElementById('file-preview');
+    if (!previewEl) {
+        previewEl = document.createElement('div');
+        previewEl.id = 'file-preview';
+        previewEl.className = 'file-preview';
+        const messageForm = document.getElementById('messageForm');
+        if (messageForm) {
+            messageForm.insertBefore(previewEl, messageForm.firstChild);
+        }
+    }
+
+    previewEl.innerHTML = '';
+    previewEl.style.display = 'flex';
+
+    selectedFiles.forEach((file, index) => {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'file-preview-item';
+
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '×';
+        removeBtn.className = 'file-remove-btn';
+        removeBtn.onclick = () => removeFile(index);
+
+        const fileName = document.createElement('div');
+        fileName.className = 'file-name';
+        fileName.textContent = file.name;
+
+        if (file.type.startsWith('image/')) {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.cssText = `width: 60px; height: 60px; object-fit: cover; border-radius: 8px;`;
+            previewItem.appendChild(img);
+        } else if (file.type.startsWith('video/')) {
+            const video = document.createElement('video');
+            video.src = URL.createObjectURL(file);
+            video.style.cssText = `width: 60px; height: 60px; object-fit: cover; border-radius: 8px;`;
+            previewItem.appendChild(video);
+        } else {
+            const fileIcon = document.createElement('div');
+            fileIcon.innerHTML = '<i class="bi bi-file-earmark-text"></i>';
+            fileIcon.style.cssText = `width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; background: rgba(255,255,255,0.1); border-radius: 8px; font-size: 24px;`;
+            previewItem.appendChild(fileIcon);
+        }
+
+        previewItem.appendChild(removeBtn);
+        previewItem.appendChild(fileName);
+        previewEl.appendChild(previewItem);
+    });
+}
+
+function removeFile(index) {
+    selectedFiles.splice(index, 1);
+    if (selectedFiles.length === 0) {
+        clearFilePreview();
+    } else {
+        showFilePreview();
     }
 }
 
@@ -280,6 +599,7 @@ $(document).ready(function() {
     // Check if we're on details page
     if (document.getElementById('chatMessages')) {
         initializeDetailsPage();
+        setupFileInput();
     }
 
     // Sidebar toggle
@@ -292,4 +612,77 @@ $(document).ready(function() {
             sidebar.classList.toggle("show");
         });
     }
-}); 
+
+    // Initialize drag and drop
+    initializeDragAndDrop();
+});
+
+// ===== DRAG & DROP FUNCTIONALITY =====
+
+function initializeDragAndDrop() {
+    const dragDropOverlay = document.getElementById('drag-drop-overlay');
+
+    if (!dragDropOverlay) return;
+
+    let dragCounter = 0;
+    let isDragging = false;
+
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        document.addEventListener(eventName, preventDefaults, false);
+    });
+
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+
+    // Handle drag enter - only show overlay when dragging files from outside
+    document.addEventListener('dragenter', function(e) {
+        // Check if dragging files (not internal elements)
+        if (e.dataTransfer && e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+            dragCounter++;
+            if (dragCounter === 1) {
+                isDragging = true;
+                dragDropOverlay.classList.add('active');
+            }
+        }
+    });
+
+    // Handle drag leave
+    document.addEventListener('dragleave', function(e) {
+        if (isDragging) {
+            dragCounter--;
+            if (dragCounter <= 0) {
+                dragCounter = 0;
+                isDragging = false;
+                dragDropOverlay.classList.remove('active');
+            }
+        }
+    });
+
+    // Handle drop
+    document.addEventListener('drop', function(e) {
+        if (isDragging) {
+            dragCounter = 0;
+            isDragging = false;
+            dragDropOverlay.classList.remove('active');
+
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && document.getElementById('chatMessages')) {
+                // Only handle file drop in Details page
+                selectedFiles = Array.from(files);
+                showFilePreview();
+            }
+        }
+    });
+
+    // Handle window focus to reset state
+    window.addEventListener('focus', function() {
+        if (isDragging) {
+            dragCounter = 0;
+            isDragging = false;
+            dragDropOverlay.classList.remove('active');
+        }
+    });
+} 

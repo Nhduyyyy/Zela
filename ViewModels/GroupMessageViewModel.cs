@@ -13,4 +13,7 @@ public class GroupMessageViewModel
     public DateTime SentAt { get; set; }
     public bool IsMine { get; set; }
     public bool IsEdited { get; set; }
+    
+    // Thêm thuộc tính Media để hỗ trợ file và ảnh
+    public List<MediaViewModel> Media { get; set; } = new();
 }

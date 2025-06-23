@@ -18,7 +18,10 @@ public class Media
     public string Url { get; set; }                // NVARCHAR(500)
 
     [MaxLength(255)]
-    public string MediaType { get; set; }          // NVARCHAR(50)
+    public string MediaType { get; set; }          // NVARCHAR(255)
+
+    [MaxLength(255)]
+    public string? FileName { get; set; }          // NVARCHAR(255) - Tên file gốc
 
     [ForeignKey(nameof(MessageId))]
     public Message Message { get; set; }

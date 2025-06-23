@@ -41,6 +41,34 @@ namespace Zela.Controllers
             return PartialView("_GroupMessagesPartial", messages);
         }
 
+        // Gửi tin nhắn nhóm với file
+        [HttpPost]
+        public async Task<IActionResult> SendGroupMessage(int groupId, string content, List<IFormFile> files)
+        {
+            try
+            {
+                int senderId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                if (senderId == 0)
+                {
+                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
+                }
+
+                // Validate input
+                if (string.IsNullOrWhiteSpace(content) && (files == null || files.Count == 0))
+                {
+                    return BadRequest(new { message = "Vui lòng nhập nội dung tin nhắn hoặc chọn file" });
+                }
+
+                var message = await _chatService.SendGroupMessageAsync(senderId, groupId, content, files);
+                return Ok(new { success = true, message = message });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending group message: {ex.Message}");
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại." });
+            }
+        }
+
         // Tạo nhóm chat mới
         [HttpPost]
         public async Task<IActionResult> CreateGroup(string name, string description)

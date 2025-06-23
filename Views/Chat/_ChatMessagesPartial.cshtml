@@ -23,8 +23,8 @@
                         {
                             <div class="chat-file-attachment">
                                 <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
-                                <span class="file-name">@System.IO.Path.GetFileName(media.Url)</span>
-                                <a href="@media.Url" download class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                                <span class="file-name">@(media.FileName ?? System.IO.Path.GetFileName(media.Url))</span>
+                                <a href="@media.Url" download="@(media.FileName ?? System.IO.Path.GetFileName(media.Url))" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
                             </div>
                         }
                     }
@@ -61,8 +61,8 @@
                         {
                             <div class="chat-file-attachment">
                                 <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
-                                <span class="file-name">@System.IO.Path.GetFileName(media.Url)</span>
-                                <a href="@media.Url" download class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                                <span class="file-name">@(media.FileName ?? System.IO.Path.GetFileName(media.Url))</span>
+                                <a href="@media.Url" download="@(media.FileName ?? System.IO.Path.GetFileName(media.Url))" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
                             </div>
                         }
                     }

@@ -1,0 +1,164 @@
+:root {
+    --primary-color: #FF8558;
+    --primary-dark: #096B68;
+    --secondary-color: #FFFBDE;
+    --accent-color: #90D1CA;
+    --text-primary: #096B68;
+    --text-secondary: #129990;
+    
+    /* Social Colors */
+    --google-color: #ea4335;
+    --github-color: #333;
+    --facebook-color: #1877f2;
+    --bg-white: #fff;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(168deg, #0B68AB, #041C35);
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-wrapper {
+    width: 100%;
+    max-width: 480px; /* to hơn */
+    background: #d7ebff;
+    padding: 50px 40px;
+    border-radius: 25px;
+    box-shadow: 0 12px 50px rgba(0, 0, 0, 0.08);
+    text-align: center;
+}
+
+/* Logo Circle với animation */
+.logo-circle {
+    width: 90px;
+    height: 90px;
+    background: var(--primary-color);
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0 auto 25px;
+    box-shadow: 0 4px 20px rgba(18, 153, 144, 0.3);
+}
+
+.logo-circle i {
+    font-size: 36px;
+    color: white;
+}
+
+/* Bounce animation */
+.animated-logo {
+    animation: bounceUpDown 2.5s infinite ease-in-out;
+}
+
+@keyframes bounceUpDown {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Heading & Subtext */
+.login-box h2 {
+    color: var(--primary-dark);
+    font-weight: 600;
+    margin-bottom: 10px;
+    font-size: 24px;
+}
+
+.login-box p {
+    color: var(--text-secondary);
+    font-size: 15px;
+    margin-bottom: 30px;
+}
+
+/* OAuth Buttons */
+.oauth-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.btn-oauth {
+    /*display: flex;*/
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 20px 100px;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 15px;
+    border: 1px solid;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.btn-oauth i {
+    font-size: 20px;
+}
+
+/* Google */
+.btn-google {
+    width: 90%;
+    color: var(--google-color);
+    border-color: var(--google-color);
+    background: var(--bg-white);
+}
+.btn-google:hover {
+    background: var(--google-color);
+    color: var(--bg-white);
+}
+
+/* GitHub */
+.btn-github {
+    width: 90%;
+    color: var(--github-color);
+    border-color: var(--github-color);
+    background: var(--bg-white);
+}
+.btn-github:hover {
+    background: var(--github-color);
+    color: var(--bg-white);
+}
+
+/* Facebook */
+.btn-facebook {
+    width: 90%;
+    color: var(--facebook-color);
+    border-color: var(--facebook-color);
+    background: var(--bg-white);
+}
+.btn-facebook:hover {
+    background: var(--facebook-color);
+    color: var(--bg-white);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .login-wrapper {
+        padding: 30px 20px;
+    }
+
+    .btn-oauth {
+        font-size: 14px;
+        padding: 12px;
+    }
+
+    .logo-circle {
+        width: 70px;
+        height: 70px;
+    }
+}

@@ -1,0 +1,66 @@
+/* video-call-index.css
+   Styling cho trang Video Call (Index)
+*/
+
+:root {
+    --bg-gradient:   linear-gradient(135deg, #0B1D34 0%, #08192C 100%);
+    --accent:        #41D7A7;    /* nút Tạo */
+    --highlight:     #22E3AC;    /* nút Tham gia */
+    --text-light:    #FFFFFF;
+    --radius:        0.5rem;
+    --gap:           1.5rem;
+    --transition:    0.3s ease;
+}
+
+.video-call-index-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: var(--bg-gradient);
+    color: var(--text-light);
+    font-family: "Segoe UI", Roboto, sans-serif;
+    text-align: center;
+    padding: var(--gap);
+}
+
+.video-call-index-container h1 {
+    font-size: 2.5rem;
+    margin-bottom: var(--gap);
+    text-shadow: 0 2px 6px rgba(0,0,0,0.5);
+}
+
+.video-call-index-container .action-buttons {
+    display: flex;
+    gap: var(--gap);
+}
+
+.video-call-index-container .action-buttons a {
+    display: inline-block;
+    min-width: 180px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    border: none;
+    border-radius: var(--radius);
+    color: var(--text-light);
+    text-decoration: none;
+    transition: background var(--transition), transform var(--transition);
+}
+
+.video-call-index-container .action-buttons a.btn-create {
+    background: var(--accent);
+}
+.video-call-index-container .action-buttons a.btn-create:hover {
+    background: var(--highlight);
+    transform: translateY(-2px);
+}
+
+.video-call-index-container .action-buttons a.btn-join {
+    background: var(--highlight);
+}
+.video-call-index-container .action-buttons a.btn-join:hover {
+    background: var(--accent);
+    transform: translateY(-2px);
+}
