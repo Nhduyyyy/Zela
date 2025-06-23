@@ -1,35 +1,36 @@
 @model Zela.ViewModels.GroupViewModel
-<div class="chat-info-panel">
+<div class="chat-info-panel" data-group-id="@Model.GroupId">
     <div class="info-header">
-        <h4><i class="bi bi-info-circle me-2"></i>Thông tin nhóm</h4>
+        <h4><i class="bi bi-info-circle me-2" aria-hidden="true"></i>Thông tin nhóm</h4>
     </div>
 
     <div class="group-meta">
         <div class="group-info">
             <div class="group-avatar-container text-center mb-3">
-                <img class="group-avatar rounded-circle" src="@Model.AvatarUrl" alt="Group Avatar" style="width: 80px; height: 80px; object-fit: cover;"/>
+                <img class="group-avatar rounded-circle" src="@Model.AvatarUrl" alt="Ảnh đại diện nhóm @Model.Name"
+                     style="width: 80px; height: 80px; object-fit: cover;"/>
             </div>
             <div class="group-details text-center">
                 <h5 class="group-name">@Model.Name</h5>
                 <p class="group-description text-muted">@Model.Description</p>
                 <p class="group-member-count">
-                    <i class="bi bi-people me-1"></i>@Model.MemberCount thành viên
+                    <i class="bi bi-people me-1" aria-hidden="true"></i>@Model.MemberCount thành viên
                 </p>
             </div>
         </div>
 
         <div class="group-actions">
-            <button class="btn">
-                <i class="bi bi-bell-slash me-1"></i>Tắt thông báo
+            <button class="btn" type="button" title="Tắt thông báo nhóm" aria-label="Tắt thông báo nhóm">
+                <i class="bi bi-bell-slash me-1" aria-hidden="true"></i>Tắt thông báo
             </button>
-            <button class="btn">
-                <i class="bi bi-pin me-1"></i>Ghim hội thoại
+            <button class="btn" type="button" title="Ghim hội thoại" aria-label="Ghim hội thoại">
+                <i class="bi bi-pin me-1" aria-hidden="true"></i>Ghim hội thoại
             </button>
-            <button class="btn">
-                <i class="bi bi-person-plus me-1"></i>Thêm thành viên
+            <button class="btn" type="button" id="btnAddMember" title="Thêm thành viên vào nhóm" aria-label="Thêm thành viên vào nhóm">
+                <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Thêm thành viên
             </button>
-            <button class="btn">
-                <i class="bi bi-gear me-1"></i>Quản lý nhóm
+            <button class="btn" type="button" title="Quản lý nhóm" aria-label="Quản lý nhóm"> 
+                <i class="bi bi-gear me-1" aria-hidden="true"></i>Quản lý nhóm
             </button>
         </div>
     </div>
@@ -51,12 +52,12 @@
     <div class="info-section">
         <h6><i class="bi bi-images me-2"></i>Ảnh/Video</h6>
         <div class="media-grid">
-            <img src="https://images.unsplash.com/photo-1551033406-611cf9a28f67?w=150&h=150&fit=crop" alt="Media">
-            <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=150&h=150&fit=crop" alt="Media">
-            <img src="https://images.unsplash.com/photo-1484417894907-623942c8ee29?w=150&h=150&fit=crop" alt="Media">
-            <img src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=150&h=150&fit=crop" alt="Media">
-            <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop" alt="Media">
-            <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=150&h=150&fit=crop" alt="Media">
+            <img src="https://images.unsplash.com/photo-1551033406-611cf9a28f67?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
+            <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
+            <img src="https://images.unsplash.com/photo-1484417894907-623942c8ee29?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
+            <img src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
+            <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
+            <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
         </div>
         <a href="#" class="view-all-link">
             <i class="bi bi-arrow-right me-1"></i>Xem tất cả
@@ -91,47 +92,38 @@
     </div>
 
     <div class="info-section">
-        <h6><i class="bi bi-people me-2"></i>Thành viên nhóm</h6>
+        <h6><i class="bi bi-people me-2" aria-hidden="true"></i>Thành viên nhóm</h6>
         <div class="member-list">
-            <div class="member-item d-flex align-items-center mb-3">
-                <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=40&h=40&fit=crop&crop=face"
-                     class="rounded-circle me-3" width="40" height="40" alt="Member">
-                <div class="member-info flex-fill">
-                    <div class="member-name fw-semibold">Nguyễn Văn A</div>
-                    <div class="member-status text-muted small">Quản trị viên</div>
-                </div>
-                <span class="badge bg-success">Online</span>
-            </div>
-
-            <div class="member-item d-flex align-items-center mb-3">
-                <img src="https://images.unsplash.com/photo-1494790108755-2616b612b786?w=40&h=40&fit=crop&crop=face"
-                     class="rounded-circle me-3" width="40" height="40" alt="Member">
-                <div class="member-info flex-fill">
-                    <div class="member-name fw-semibold">Nguyễn Thị B</div>
-                    <div class="member-status text-muted small">Thành viên</div>
-                </div>
-                <span class="badge bg-secondary">Offline</span>
-            </div>
-
-            <div class="member-item d-flex align-items-center mb-3">
-                <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=40&h=40&fit=crop&crop=face"
-                     class="rounded-circle me-3" width="40" height="40" alt="Member">
-                <div class="member-info flex-fill">
-                    <div class="member-name fw-semibold">Trần Văn C</div>
-                    <div class="member-status text-muted small">Thành viên</div>
-                </div>
-                <span class="badge bg-success">Online</span>
-            </div>
-
-            <div class="member-item d-flex align-items-center mb-3">
-                <img src="https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=40&h=40&fit=crop&crop=face"
-                     class="rounded-circle me-3" width="40" height="40" alt="Member">
-                <div class="member-info flex-fill">
-                    <div class="member-name fw-semibold">Lê Văn D</div>
-                    <div class="member-status text-muted small">Thành viên</div>
-                </div>
-                <span class="badge bg-warning">Away</span>
-            </div>
+            @if (Model.Members != null && Model.Members.Count > 0)
+            {
+                foreach (var member in Model.Members)
+                {
+                    <div class="member-item d-flex align-items-center mb-3">
+                        <img src="@(member.AvatarUrl ?? "/images/default-avatar.jpeg")"
+                             class="rounded-circle me-3" width="40" height="40" alt="Ảnh đại diện @member.FullName">
+                        <div class="member-info flex-fill">
+                            <div class="member-name fw-semibold">@member.FullName</div>
+                            <div class="member-status text-muted small">
+                                @if (member.UserId == Model.CreatorId)
+                                {
+                                    <span class="text-primary fw-bold">Chủ nhóm</span>
+                                }
+                                else
+                                {
+                                    <span>Thành viên</span>
+                                }
+                            </div>
+                        </div>
+                        <span class="badge @(member.IsOnline ? "bg-success" : "bg-secondary")" aria-label="@(member.IsOnline ? "Đang online" : "Đang offline")">
+                            @(member.IsOnline ? "Online" : "Offline")
+                        </span>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-muted">Chưa có thành viên nào.</div>
+            }
         </div>
     </div>
 </div>

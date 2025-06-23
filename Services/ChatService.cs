@@ -516,4 +516,104 @@ public class ChatService : IChatService
         member.IsModerator = !member.IsModerator;
         await _dbContext.SaveChangesAsync();
     }
+    
+    public async Task<MessageReactionViewModel> AddReactionAsync(long messageId, int userId, string reactionType)
+    {
+        // Kiểm tra xem user đã reaction chưa
+        var existingReaction = await _dbContext.MessageReactions
+            .FirstOrDefaultAsync(r => r.MessageId == messageId && r.UserId == userId);
+
+        if (existingReaction != null)
+        {
+            // Nếu đã reaction cùng loại, xóa reaction
+            if (existingReaction.ReactionType == reactionType)
+            {
+                _dbContext.MessageReactions.Remove(existingReaction);
+                await _dbContext.SaveChangesAsync();
+                return null; // Trả về null để client biết đã xóa
+            }
+            else
+            {
+                // Nếu reaction khác loại, cập nhật
+                existingReaction.ReactionType = reactionType;
+                existingReaction.CreatedAt = DateTime.Now;
+                await _dbContext.SaveChangesAsync();
+                
+                var user = await _dbContext.Users.FindAsync(userId);
+                return new MessageReactionViewModel
+                {
+                    ReactionId = existingReaction.ReactionId,
+                    MessageId = existingReaction.MessageId,
+                    UserId = existingReaction.UserId,
+                    UserName = user?.FullName ?? "Unknown",
+                    ReactionType = existingReaction.ReactionType,
+                    CreatedAt = existingReaction.CreatedAt
+                };
+            }
+        }
+        else
+        {
+            // Tạo reaction mới
+            var reaction = new MessageReaction
+            {
+                MessageId = messageId,
+                UserId = userId,
+                ReactionType = reactionType,
+                CreatedAt = DateTime.Now
+            };
+
+            _dbContext.MessageReactions.Add(reaction);
+            await _dbContext.SaveChangesAsync();
+
+            var user = await _dbContext.Users.FindAsync(userId);
+            return new MessageReactionViewModel
+            {
+                ReactionId = reaction.ReactionId,
+                MessageId = reaction.MessageId,
+                UserId = reaction.UserId,
+                UserName = user?.FullName ?? "Unknown",
+                ReactionType = reaction.ReactionType,
+                CreatedAt = reaction.CreatedAt
+            };
+        }
+    }
+
+    public async Task<List<MessageReactionSummaryViewModel>> GetMessageReactionsAsync(long messageId, int currentUserId)
+    {
+        var reactions = await _dbContext.MessageReactions
+            .Include(r => r.User)
+            .Where(r => r.MessageId == messageId)
+            .ToListAsync();
+
+        var groupedReactions = reactions
+            .GroupBy(r => r.ReactionType)
+            .Select(g => new MessageReactionSummaryViewModel
+            {
+                ReactionType = g.Key,
+                Count = g.Count(),
+                UserNames = g.Select(r => r.User?.FullName ?? "Unknown").ToList(),
+                HasUserReaction = g.Any(r => r.UserId == currentUserId)
+            })
+            .ToList();
+
+        return groupedReactions;
+    }
+
+    public async Task RemoveReactionAsync(long messageId, int userId)
+    {
+        var reaction = await _dbContext.MessageReactions
+            .FirstOrDefaultAsync(r => r.MessageId == messageId && r.UserId == userId);
+
+        if (reaction != null)
+        {
+            _dbContext.MessageReactions.Remove(reaction);
+            await _dbContext.SaveChangesAsync();
+        }
+    }
+
+    public async Task<bool> HasUserReactionAsync(long messageId, int userId, string reactionType)
+    {
+        return await _dbContext.MessageReactions
+            .AnyAsync(r => r.MessageId == messageId && r.UserId == userId && r.ReactionType == reactionType);
+    }
 }

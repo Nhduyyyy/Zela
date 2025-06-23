@@ -29,4 +29,5 @@ public class Message
 
     public ICollection<Media> Media { get; set; }
     public ICollection<Sticker> Sticker { get; set; }
+    public ICollection<MessageReaction> Reactions { get; set; }
 }

@@ -134,6 +134,11 @@ function loadGroupMessages() {
             $('.chat-content').html(html);
         }
         scrollToBottom();
+
+        // Initialize reaction functionality for new messages
+        if (window.messageReactions && window.messageReactions.updateAllMessageReactions) {
+            window.messageReactions.updateAllMessageReactions();
+        }
     });
 }
 
@@ -165,6 +170,11 @@ function initializeDetailsPage() {
         // Xử lý gửi tin nhắn
         $("#messageForm").submit(function(e) {
             e.preventDefault();
+            const message = $("#messageInput").val();
+            if (message) {
+                connection.invoke("SendGroupMessage", currentGroupId, message);
+                $("#messageInput").val("");
+            }
             sendMessageWithFiles();
         });
     }
@@ -284,7 +294,9 @@ function renderGroupMessage(msg) {
     const currentUserIdNum = Number(currentUserId);
     let isMine = senderIdNum === currentUserIdNum;
     let side = isMine ? 'right' : 'left';
-
+    
+    console.log("renderGroupMessage - senderIdNum:", senderIdNum, "currentUserIdNum:", currentUserIdNum, "isMine:", isMine);
+    
     let mediaHtml = '';
 
     // Render media nếu có
@@ -307,21 +319,27 @@ function renderGroupMessage(msg) {
     }
 
     if (isMine) {
-        return `<div class="message ${side}">
+        return `<div class="message ${side}" data-message-id="${msg.messageId}>
             <div class="message-content">
                 <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
                 ${mediaHtml}
                 ${msg.content && msg.content !== "[Đã gửi file]" ? `<span class="message-bubble">${msg.content}</span>` : ''}
+                <div class="message-reaction-btn" onclick="showReactionMenu(${msg.messageId})">
+                    <i class="fas fa-smile"></i>
+                </div>
             </div>
         </div>`;
     } else {
-        return `<div class="message ${side}">
+        return `<div class="message ${side}" data-message-id="${msg.messageId}">
             <img src="${msg.avatarUrl}" class="message-avatar" />
             <div class="message-content">
                 <div class="message-sender">${msg.senderName}</div>
                 <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
                 ${mediaHtml}
                 ${msg.content && msg.content !== "[Đã gửi file]" ? `<span class="message-bubble">${msg.content}</span>` : ''}
+                <div class="message-reaction-btn" onclick="showReactionMenu(${msg.messageId})">
+                    <i class="fas fa-smile"></i>
+                </div>
             </div>
         </div>`;
     }

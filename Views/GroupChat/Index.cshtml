@@ -7,6 +7,7 @@
 @section Styles {
     <link rel="stylesheet" href="~/css/themes/chat-theme.css"/>
     <link rel="stylesheet" href="~/css/pages/chat.css"/>
+    <link rel="stylesheet" href="~/css/pages/chat/_reactions.css"/>
 }
 
 <section class="chat-window">
@@ -37,7 +38,7 @@
             <button class="mobile-menu-btn d-md-none">
                 <i class="bi bi-list"></i>
             </button>
-            
+
             <div class="chat-user-info d-none">
                 @foreach (var group in Model)
                 {
@@ -79,9 +80,11 @@
                 </div>
             </div>
             <!-- File preview area -->
-            <div id="indexFilePreview" style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;"></div>
+            <div id="indexFilePreview"
+                 style="display: none; margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.1); border-radius: 5px;"></div>
             <!-- Hidden file input -->
-            <input type="file" id="indexGroupFileInput" multiple style="display: none;" accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
+            <input type="file" id="indexGroupFileInput" multiple style="display: none;"
+                   accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
         </div>
     </div>
 
@@ -89,196 +92,200 @@
         <!-- Sidebar content will be loaded dynamically -->
     </div>
 </section>
-
 <!-- Hidden element to store current user ID -->
 <div data-current-user-id="@(Context.Session.GetInt32("UserId") ?? 0)" style="display: none;"></div>
 
 <!-- Include Create Group Modal -->
 @Html.Partial("_CreateGroup")
 
+<!-- Include Add Member Modal -->
+@Html.Partial("_AddMemberModal")
+
 @section Scripts {
     <script src="~/js/group-chat-window.js"></script>
+    <script src="~/js/add-member.js"></script>
+    <script src="~/js/message-reactions.js"></script>
     <script>
-    // File upload functionality for Index page
-    let indexSelectedFiles = [];
-    let indexCurrentGroupId = null;
-    
-    $(document).ready(function() {
-        console.log('Index page: Setting up file upload...');
-        
-        const fileInput = document.getElementById('indexGroupFileInput');
-        const imageBtn = document.getElementById('indexImageBtn');
-        const fileBtn = document.getElementById('indexFileBtn');
-        const preview = document.getElementById('indexFilePreview');
-        
-        console.log('Index elements found:', {
-            fileInput: !!fileInput,
-            imageBtn: !!imageBtn,
-            fileBtn: !!fileBtn,
-            preview: !!preview
-        });
-        
-        // Image button click
-        if (imageBtn) {
-            imageBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log('Index: Image button clicked');
-                
-                if (!indexCurrentGroupId) {
-                    alert('Vui lòng chọn một nhóm trước!');
-                    return;
-                }
-                
-                if (fileInput) {
-                    fileInput.accept = 'image/*';
-                    fileInput.click();
-                } else {
-                    alert('Lỗi: Không tìm thấy file input!');
-                }
+        // File upload functionality for Index page
+        let indexSelectedFiles = [];
+        let indexCurrentGroupId = null;
+
+        $(document).ready(function () {
+            console.log('Index page: Setting up file upload...');
+
+            const fileInput = document.getElementById('indexGroupFileInput');
+            const imageBtn = document.getElementById('indexImageBtn');
+            const fileBtn = document.getElementById('indexFileBtn');
+            const preview = document.getElementById('indexFilePreview');
+
+            console.log('Index elements found:', {
+                fileInput: !!fileInput,
+                imageBtn: !!imageBtn,
+                fileBtn: !!fileBtn,
+                preview: !!preview
             });
-        }
-        
-        // File button click  
-        if (fileBtn) {
-            fileBtn.addEventListener('click', function(e) {
-                e.preventDefault();
-                console.log('Index: File button clicked');
-                
-                if (!indexCurrentGroupId) {
-                    alert('Vui lòng chọn một nhóm trước!');
-                    return;
-                }
-                
-                if (fileInput) {
-                    fileInput.accept = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt';
-                    fileInput.click();
-                } else {
-                    alert('Lỗi: Không tìm thấy file input!');
-                }
-            });
-        }
-        
-        // File input change
-        if (fileInput) {
-            fileInput.addEventListener('change', function(e) {
-                console.log('Index: Files selected:', e.target.files.length);
-                
-                if (e.target.files.length > 0) {
-                    indexSelectedFiles = Array.from(e.target.files);
-                    showIndexFilePreview();
-                } else {
-                    clearIndexFilePreview();
-                }
-            });
-        }
-        
-        // Update currentGroupId when group is selected
-        $(document).on('click', '.friend-item[data-type="group"]', function() {
-            indexCurrentGroupId = Number($(this).data('id'));
-            console.log('Index: Group selected:', indexCurrentGroupId);
-        });
-        
-        // Override send message function to handle files
-        window.sendIndexGroupMessage = async function() {
-            const content = $('#groupChatInput').val().trim();
-            const files = indexSelectedFiles.length > 0 ? indexSelectedFiles : null;
-            
-            if (!content && !files) return;
-            if (!indexCurrentGroupId) {
-                alert('Vui lòng chọn một nhóm!');
-                return;
+
+            // Image button click
+            if (imageBtn) {
+                imageBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    console.log('Index: Image button clicked');
+
+                    if (!indexCurrentGroupId) {
+                        alert('Vui lòng chọn một nhóm trước!');
+                        return;
+                    }
+
+                    if (fileInput) {
+                        fileInput.accept = 'image/*';
+                        fileInput.click();
+                    } else {
+                        alert('Lỗi: Không tìm thấy file input!');
+                    }
+                });
             }
-            
-            try {
-                if (files && files.length > 0) {
-                    console.log('Index: Sending files via HTTP...');
-                    // Send files via HTTP POST
-                    const formData = new FormData();
-                    formData.append('content', content);
-                    formData.append('groupId', indexCurrentGroupId);
-                    
-                    files.forEach(file => {
-                        formData.append('files', file);
-                    });
-                    
-                    const response = await fetch('/GroupChat/SendGroupMessage', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    
-                    if (response.ok) {
-                        console.log('Index: Files sent successfully');
-                        $('#groupChatInput').val('');
-                        indexSelectedFiles = [];
+
+            // File button click  
+            if (fileBtn) {
+                fileBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    console.log('Index: File button clicked');
+
+                    if (!indexCurrentGroupId) {
+                        alert('Vui lòng chọn một nhóm trước!');
+                        return;
+                    }
+
+                    if (fileInput) {
+                        fileInput.accept = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt';
+                        fileInput.click();
+                    } else {
+                        alert('Lỗi: Không tìm thấy file input!');
+                    }
+                });
+            }
+
+            // File input change
+            if (fileInput) {
+                fileInput.addEventListener('change', function (e) {
+                    console.log('Index: Files selected:', e.target.files.length);
+
+                    if (e.target.files.length > 0) {
+                        indexSelectedFiles = Array.from(e.target.files);
+                        showIndexFilePreview();
+                    } else {
                         clearIndexFilePreview();
-                        fileInput.value = '';
-                        alert('Gửi file thành công!');
-                    } else {
-                        console.error('Index: Error sending files:', response.status);
-                        alert('Có lỗi xảy ra khi gửi file!');
                     }
-                } else {
-                    // Send text via SignalR (existing functionality)
-                    if (typeof connection !== 'undefined' && connection.invoke) {
-                        await connection.invoke("SendGroupMessage", indexCurrentGroupId, content);
-                        $('#groupChatInput').val('');
-                        console.log('Index: Text message sent via SignalR');
-                    } else {
-                        alert('Lỗi kết nối SignalR!');
-                    }
+                });
+            }
+
+            // Update currentGroupId when group is selected
+            $(document).on('click', '.friend-item[data-type="group"]', function () {
+                indexCurrentGroupId = Number($(this).data('id'));
+                console.log('Index: Group selected:', indexCurrentGroupId);
+            });
+
+            // Override send message function to handle files
+            window.sendIndexGroupMessage = async function () {
+                const content = $('#groupChatInput').val().trim();
+                const files = indexSelectedFiles.length > 0 ? indexSelectedFiles : null;
+
+                if (!content && !files) return;
+                if (!indexCurrentGroupId) {
+                    alert('Vui lòng chọn một nhóm!');
+                    return;
                 }
-            } catch (error) {
-                console.error('Index: Send message error:', error);
-                alert('Có lỗi xảy ra khi gửi tin nhắn!');
-            }
-        };
-        
-        // Bind send button
-        $('.btn-send').off('click').on('click', function() {
-            sendIndexGroupMessage();
-        });
-        
-        // Bind Enter key
-        $('#groupChatInput').off('keypress').on('keypress', function(e) {
-            if (e.which === 13) {
-                e.preventDefault();
+
+                try {
+                    if (files && files.length > 0) {
+                        console.log('Index: Sending files via HTTP...');
+                        // Send files via HTTP POST
+                        const formData = new FormData();
+                        formData.append('content', content);
+                        formData.append('groupId', indexCurrentGroupId);
+
+                        files.forEach(file => {
+                            formData.append('files', file);
+                        });
+
+                        const response = await fetch('/GroupChat/SendGroupMessage', {
+                            method: 'POST',
+                            body: formData
+                        });
+
+                        if (response.ok) {
+                            console.log('Index: Files sent successfully');
+                            $('#groupChatInput').val('');
+                            indexSelectedFiles = [];
+                            clearIndexFilePreview();
+                            fileInput.value = '';
+                            alert('Gửi file thành công!');
+                        } else {
+                            console.error('Index: Error sending files:', response.status);
+                            alert('Có lỗi xảy ra khi gửi file!');
+                        }
+                    } else {
+                        // Send text via SignalR (existing functionality)
+                        if (typeof connection !== 'undefined' && connection.invoke) {
+                            await connection.invoke("SendGroupMessage", indexCurrentGroupId, content);
+                            $('#groupChatInput').val('');
+                            console.log('Index: Text message sent via SignalR');
+                        } else {
+                            alert('Lỗi kết nối SignalR!');
+                        }
+                    }
+                } catch (error) {
+                    console.error('Index: Send message error:', error);
+                    alert('Có lỗi xảy ra khi gửi tin nhắn!');
+                }
+            };
+
+            // Bind send button
+            $('.btn-send').off('click').on('click', function () {
                 sendIndexGroupMessage();
+            });
+
+            // Bind Enter key
+            $('#groupChatInput').off('keypress').on('keypress', function (e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    sendIndexGroupMessage();
+                }
+            });
+
+            console.log('Index: File upload setup completed');
+        });
+
+        function showIndexFilePreview() {
+            const preview = document.getElementById('indexFilePreview');
+            if (!preview) return;
+
+            let html = '<div style="color: white;"><strong>Files đã chọn:</strong><br>';
+            indexSelectedFiles.forEach((file, index) => {
+                html += `• ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)<br>`;
+            });
+            html += '<br><button type="button" onclick="clearIndexFiles()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Xóa files</button></div>';
+
+            preview.innerHTML = html;
+            preview.style.display = 'block';
+        }
+
+        function clearIndexFilePreview() {
+            const preview = document.getElementById('indexFilePreview');
+            if (preview) {
+                preview.style.display = 'none';
+                preview.innerHTML = '';
             }
-        });
-        
-        console.log('Index: File upload setup completed');
-    });
-    
-    function showIndexFilePreview() {
-        const preview = document.getElementById('indexFilePreview');
-        if (!preview) return;
-        
-        let html = '<div style="color: white;"><strong>Files đã chọn:</strong><br>';
-        indexSelectedFiles.forEach((file, index) => {
-            html += `• ${file.name} (${(file.size/1024/1024).toFixed(2)}MB)<br>`;
-        });
-        html += '<br><button type="button" onclick="clearIndexFiles()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Xóa files</button></div>';
-        
-        preview.innerHTML = html;
-        preview.style.display = 'block';
-    }
-    
-    function clearIndexFilePreview() {
-        const preview = document.getElementById('indexFilePreview');
-        if (preview) {
-            preview.style.display = 'none';
-            preview.innerHTML = '';
         }
-    }
-    
-    window.clearIndexFiles = function() {
-        indexSelectedFiles = [];
-        const fileInput = document.getElementById('indexGroupFileInput');
-        if (fileInput) {
-            fileInput.value = '';
-        }
-        clearIndexFilePreview();
-        console.log('Index: Files cleared');
-    };
+
+        window.clearIndexFiles = function () {
+            indexSelectedFiles = [];
+            const fileInput = document.getElementById('indexGroupFileInput');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+            clearIndexFilePreview();
+            console.log('Index: Files cleared');
+        };
     </script>
 } 

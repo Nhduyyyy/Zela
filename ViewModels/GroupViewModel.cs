@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Collections.Generic;
 
 namespace Zela.ViewModels;
 
@@ -13,5 +14,7 @@ public class GroupViewModel
     public string AvatarUrl { get; set; } = "/images/default-group-avatar.png";
     public bool IsOnline { get; set; } = true; // Groups luôn online
     public DateTime CreatedAt { get; set; }
+    public int CreatorId { get; set; } // ID của người tạo nhóm
     public string CreatorName { get; set; }
+    public List<UserViewModel> Members { get; set; } = new List<UserViewModel>();
 }

@@ -19,6 +19,7 @@
     <link rel="stylesheet" href="~/css/layout/sidebar.css"/>
     <link rel="stylesheet" href="~/css/components/profile-dialog.css"/>
     <link rel="stylesheet" href="~/css/video-call-popup.css"/>
+    <link rel="stylesheet" href="~/css/pages/chat/_reactions.css"/>
     @RenderSection("Styles", required: false)
 
     <!-- Scripts -->
@@ -143,6 +144,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@7.0.5/dist/browser/signalr.min.js"></script>
 <script src="~/js/profile-dialog.js"></script>
 <script src="~/js/video-call-popup.js"></script>
+<script src="~/js/message-reactions.js"></script>
 
 @await RenderSectionAsync("Scripts", required: false)
 <script>
@@ -164,5 +166,35 @@
 {
     @await Html.PartialAsync("_ProfileDialog", new Zela.ViewModels.ProfileViewModel())
 }
+
+<!-- Reaction Menu Modal -->
+<div id="reactionMenu" class="reaction-menu" style="display: none;">
+    <div class="reaction-menu-content">
+        <div class="reaction-option" data-reaction="Like">
+            <span class="reaction-emoji">👍</span>
+            <span class="reaction-label">Like</span>
+        </div>
+        <div class="reaction-option" data-reaction="Love">
+            <span class="reaction-emoji">❤️</span>
+            <span class="reaction-label">Love</span>
+        </div>
+        <div class="reaction-option" data-reaction="Haha">
+            <span class="reaction-emoji">😂</span>
+            <span class="reaction-label">Haha</span>
+        </div>
+        <div class="reaction-option" data-reaction="Wow">
+            <span class="reaction-emoji">😮</span>
+            <span class="reaction-label">Wow</span>
+        </div>
+        <div class="reaction-option" data-reaction="Sad">
+            <span class="reaction-emoji">😢</span>
+            <span class="reaction-label">Sad</span>
+        </div>
+        <div class="reaction-option" data-reaction="Angry">
+            <span class="reaction-emoji">😠</span>
+            <span class="reaction-label">Angry</span>
+        </div>
+    </div>
+</div>
 </body>
 </html>
