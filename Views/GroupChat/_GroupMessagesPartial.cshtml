@@ -1,13 +1,16 @@
 @model List<Zela.ViewModels.GroupMessageViewModel>
 
+@Html.AntiForgeryToken()
+
 @foreach (var msg in Model)
 {
-    <div class="message @(msg.IsMine ? "right" : "left")">
+    <div class="message @(msg.IsMine ? "right" : "left")" data-message-id="@msg.MessageId">
         @if (msg.IsMine)
         {
             <!-- Người GỬI: thời gian -> media -> tin nhắn -> avatar -->
             <div class="message-content">
                 <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
+                
                 @if (msg.Media != null && msg.Media.Count > 0)
                 {
                     foreach (var media in msg.Media)
@@ -32,7 +35,27 @@
                 }
                 @if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
                 {
-                    <span class="message-bubble">@msg.Content</span>
+                    <div class="bubble-row" style="display: flex; align-items: center; gap: 6px;">
+                        <div class="message-reaction-btn" onclick="showReactionMenu(@msg.MessageId)">
+                            😀
+                        </div>
+                        <span class="message-bubble">@msg.Content</span>
+                    </div>
+                }
+                
+                <!-- Reactions display -->
+                @if (msg.Reactions.Any())
+                {
+                    <div class="message-reactions">
+                        @foreach (var reaction in msg.Reactions)
+                        {
+                            <span class="reaction-badge @(reaction.HasUserReaction ? "user-reaction" : "")" 
+                                  data-reaction-type="@reaction.ReactionType"
+                                  title="@string.Join(", ", reaction.UserNames)">
+                                @GetReactionEmoji(reaction.ReactionType) @reaction.Count
+                            </span>
+                        }
+                    </div>
                 }
             </div>
         }
@@ -67,9 +90,44 @@
                 }
                 @if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
                 {
-                    <span class="message-bubble">@msg.Content</span>
+                    <div class="bubble-row" style="display: flex; align-items: center; gap: 6px;">
+                        <span class="message-bubble">@msg.Content</span>
+                        <div class="message-reaction-btn" onclick="showReactionMenu(@msg.MessageId)">
+                            😀
+                        </div>
+                    </div>
+                }
+                <!-- Reactions display -->
+                @if (msg.Reactions.Any())
+                {
+                    <div class="message-reactions">
+                        @foreach (var reaction in msg.Reactions)
+                        {
+                            <span class="reaction-badge @(reaction.HasUserReaction ? "user-reaction" : "")" 
+                                  data-reaction-type="@reaction.ReactionType"
+                                  title="@string.Join(", ", reaction.UserNames)">
+                                @GetReactionEmoji(reaction.ReactionType) @reaction.Count
+                            </span>
+                        }
+                    </div>
                 }
             </div>
         }
     </div>
+}
+
+@functions {
+    private string GetReactionEmoji(string reactionType)
+    {
+        return reactionType switch
+        {
+            "Like" => "👍",
+            "Love" => "❤️",
+            "Haha" => "😂",
+            "Wow" => "😮",
+            "Sad" => "😢",
+            "Angry" => "😠",
+            _ => "👍"
+        };
+    }
 }

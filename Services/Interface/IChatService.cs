@@ -24,4 +24,10 @@ public interface IChatService
     Task DeleteGroupAsync(int groupId);
     Task<List<UserViewModel>> SearchUsersAsync(string searchTerm, int currentUserId);
     Task ToggleModeratorAsync(int groupId, int userId);
+    
+    // Message reaction methods
+    Task<MessageReactionViewModel> AddReactionAsync(long messageId, int userId, string reactionType);
+    Task<List<MessageReactionSummaryViewModel>> GetMessageReactionsAsync(long messageId, int currentUserId);
+    Task RemoveReactionAsync(long messageId, int userId);
+    Task<bool> HasUserReactionAsync(long messageId, int userId, string reactionType);
 }

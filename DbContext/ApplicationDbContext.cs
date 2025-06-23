@@ -28,6 +28,8 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<Media> Media { get; set; }
     //Sticker
     public DbSet<Sticker> Stickers { get; set; }
+    //Reactions
+    public DbSet<MessageReaction> MessageReactions { get; set; }
 
     // ------------ Scheduling & Notifications ------------
     public DbSet<CalendarEvent> CalendarEvents { get; set; }
@@ -320,6 +322,31 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
             .WithMany(m => m.Sticker)
             .HasForeignKey(md => md.MessageId)
             .OnDelete(DeleteBehavior.Cascade);
+        
+        #endregion
+        
+        // -------------------------
+        // 9. Message Reactions
+        // -------------------------
+        
+        #region Message ↔ MessageReaction
+        
+        modelBuilder.Entity<MessageReaction>()
+            .HasOne(mr => mr.Message)
+            .WithMany(m => m.Reactions)
+            .HasForeignKey(mr => mr.MessageId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<MessageReaction>()
+            .HasOne(mr => mr.User)
+            .WithMany()
+            .HasForeignKey(mr => mr.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Đảm bảo mỗi user chỉ có thể reaction một lần cho mỗi message
+        modelBuilder.Entity<MessageReaction>()
+            .HasIndex(mr => new { mr.MessageId, mr.UserId })
+            .IsUnique();
         
         #endregion
     }

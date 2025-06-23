@@ -134,6 +134,11 @@ function loadGroupMessages() {
             $('.chat-content').html(html);
         }
         scrollToBottom();
+
+        // Initialize reaction functionality for new messages
+        if (window.messageReactions && window.messageReactions.updateAllMessageReactions) {
+            window.messageReactions.updateAllMessageReactions();
+        }
     });
 }
 
@@ -165,6 +170,11 @@ function initializeDetailsPage() {
         // Xử lý gửi tin nhắn
         $("#messageForm").submit(function(e) {
             e.preventDefault();
+            const message = $("#messageInput").val();
+            if (message) {
+                connection.invoke("SendGroupMessage", currentGroupId, message);
+                $("#messageInput").val("");
+            }
             sendMessageWithFiles();
         });
     }
@@ -285,45 +295,94 @@ function renderGroupMessage(msg) {
     let isMine = senderIdNum === currentUserIdNum;
     let side = isMine ? 'right' : 'left';
 
-    let mediaHtml = '';
+    // Format time HH:mm
+    let sentTime = '';
+    if (msg.sentAt) {
+        const date = new Date(msg.sentAt);
+        sentTime = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
+    }
 
-    // Render media nếu có
+    // Render media
+    let mediaHtml = '';
     if (msg.media && msg.media.length > 0) {
         for (const media of msg.media) {
             if (media.mediaType && media.mediaType.startsWith('image/')) {
-                mediaHtml += `<img src="${media.url}" class="message-media-img" alt="Ảnh gửi" />`;
+                mediaHtml += `<img src="${media.url}" class="message-media-img" alt="Ảnh gửi"/>`;
             } else if (media.mediaType && media.mediaType.startsWith('video/')) {
                 mediaHtml += `<video src="${media.url}" class="message-media-video" controls></video>`;
             } else {
                 const fileName = media.fileName || media.url.split('/').pop();
                 mediaHtml += `
-                <div class="chat-file-attachment">
-                    <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
-                    <span class="file-name">${fileName}</span>
-                    <a href="${media.url}" download="${fileName}" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
-                </div>`;
+                    <div class="chat-file-attachment">
+                        <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                        <span class="file-name">${fileName}</span>
+                        <a href="${media.url}" download="${fileName}" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                    </div>`;
             }
         }
     }
 
+    // Render reactions
+    let reactionsHtml = '';
+    if (msg.reactions && msg.reactions.length > 0) {
+        reactionsHtml = `<div class="message-reactions">`;
+        for (const reaction of msg.reactions) {
+            const userClass = reaction.hasUserReaction ? "user-reaction" : "";
+            const emoji = getReactionEmoji(reaction.reactionType);
+            const userNames = (reaction.userNames || []).join(', ');
+            reactionsHtml += `
+                <span class="reaction-badge ${userClass}" data-reaction-type="${reaction.reactionType}" title="${userNames}">
+                    ${emoji} ${reaction.count}
+                </span>`;
+        }
+        reactionsHtml += `</div>`;
+    }
+
+    // Bubble row (bubble + reaction button)
+    let bubbleRow = '';
+    if (msg.content && msg.content !== "[Đã gửi file]") {
+        if (isMine) {
+            bubbleRow = `
+                <div class="bubble-row" style="display: flex; align-items: center; gap: 6px;">
+                    <div class="message-reaction-btn" onclick="showReactionMenu(${msg.messageId})">😀</div>
+                    <span class="message-bubble">${msg.content}</span>
+                </div>
+            `;
+        } else {
+            bubbleRow = `
+                <div class="bubble-row" style="display: flex; align-items: center; gap: 6px;">
+                    <span class="message-bubble">${msg.content}</span>
+                    <div class="message-reaction-btn" onclick="showReactionMenu(${msg.messageId})">😀</div>
+                </div>
+            `;
+        }
+    }
+
+    // Main HTML
     if (isMine) {
-        return `<div class="message ${side}">
-            <div class="message-content">
-                <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
-                ${mediaHtml}
-                ${msg.content && msg.content !== "[Đã gửi file]" ? `<span class="message-bubble">${msg.content}</span>` : ''}
+        return `
+            <div class="message right" data-message-id="${msg.messageId}">
+                <div class="message-content">
+                    <span class="message-time">${sentTime}</span>
+                    ${mediaHtml}
+                    ${bubbleRow}
+                    ${reactionsHtml}
+                </div>
             </div>
-        </div>`;
+        `;
     } else {
-        return `<div class="message ${side}">
-            <img src="${msg.avatarUrl}" class="message-avatar" />
-            <div class="message-content">
-                <div class="message-sender">${msg.senderName}</div>
-                <span class="message-time">${msg.sentAt.substring(11, 16)}</span>
-                ${mediaHtml}
-                ${msg.content && msg.content !== "[Đã gửi file]" ? `<span class="message-bubble">${msg.content}</span>` : ''}
+        return `
+            <div class="message left" data-message-id="${msg.messageId}">
+                <img src="${msg.avatarUrl}" class="message-avatar" />
+                <div class="message-content">
+                    <div class="message-sender">${msg.senderName}</div>
+                    <span class="message-time">${sentTime}</span>
+                    ${mediaHtml}
+                    ${bubbleRow}
+                    ${reactionsHtml}
+                </div>
             </div>
-        </div>`;
+        `;
     }
 }
 

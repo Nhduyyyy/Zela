@@ -36,6 +36,12 @@ namespace Zela.Controllers
             foreach (var msg in messages)
             {
                 msg.IsMine = msg.SenderId == userId;
+                
+                // Update reactions to show if current user has reacted
+                foreach (var reaction in msg.Reactions)
+                {
+                    reaction.HasUserReaction = await _chatService.HasUserReactionAsync(msg.MessageId, userId, reaction.ReactionType);
+                }
             }
             
             return PartialView("_GroupMessagesPartial", messages);
@@ -105,8 +111,42 @@ namespace Zela.Controllers
         [HttpPost]
         public async Task<IActionResult> AddMember(int groupId, int userId)
         {
-            await _chatService.AddMemberToGroupAsync(groupId, userId);
-            return Ok();
+            try
+            {
+                int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                if (currentUserId == 0)
+                {
+                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
+                }
+
+                // Kiểm tra xem người dùng hiện tại có phải là thành viên của nhóm không
+                var group = await _chatService.GetGroupDetailsAsync(groupId);
+                if (group == null)
+                {
+                    return NotFound(new { message = "Không tìm thấy nhóm" });
+                }
+
+                var isMember = group.Members.Any(m => m.UserId == currentUserId);
+                if (!isMember)
+                {
+                    return BadRequest(new { message = "Bạn không phải thành viên của nhóm này" });
+                }
+
+                // Kiểm tra xem người dùng đã là thành viên chưa
+                var existingMember = group.Members.FirstOrDefault(m => m.UserId == userId);
+                if (existingMember != null)
+                {
+                    return BadRequest(new { message = "Người dùng đã là thành viên của nhóm" });
+                }
+
+                await _chatService.AddMemberToGroupAsync(groupId, userId);
+                return Ok(new { message = "Thêm thành viên thành công" });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding member to group: {ex.Message}");
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi thêm thành viên. Vui lòng thử lại." });
+            }
         }
 
         // Xóa thành viên khỏi nhóm
@@ -143,11 +183,36 @@ namespace Zela.Controllers
 
         // Tìm kiếm người dùng để thêm vào nhóm
         [HttpGet]
-        public async Task<IActionResult> SearchUsers(string searchTerm)
+        public async Task<IActionResult> SearchUsers(string searchTerm, int? groupId = null)
         {
-            int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
-            var users = await _chatService.SearchUsersAsync(searchTerm, currentUserId);
-            return Json(users);
+            try
+            {
+                int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                if (currentUserId == 0)
+                {
+                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
+                }
+
+                var users = await _chatService.SearchUsersAsync(searchTerm, currentUserId);
+                
+                // Nếu có groupId, loại bỏ những người dùng đã là thành viên
+                if (groupId.HasValue)
+                {
+                    var group = await _chatService.GetGroupDetailsAsync(groupId.Value);
+                    if (group != null)
+                    {
+                        var existingMemberIds = group.Members.Select(m => m.UserId).ToHashSet();
+                        users = users.Where(u => !existingMemberIds.Contains(u.UserId)).ToList();
+                    }
+                }
+                
+                return Json(users);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error searching users: {ex.Message}");
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi tìm kiếm người dùng" });
+            }
         }
 
         [HttpGet]
@@ -159,6 +224,16 @@ namespace Zela.Controllers
                 return NotFound();
             }
 
+            var members = group.Members?.Select(m => new UserViewModel
+            {
+                UserId = m.UserId,
+                FullName = m.User?.FullName ?? "Unknown",
+                Email = m.User?.Email ?? "",
+                AvatarUrl = m.User?.AvatarUrl ?? "/images/default-avatar.jpeg",
+                IsOnline = m.User != null && m.User.LastLoginAt > DateTime.Now.AddMinutes(-3),
+                LastLoginAt = m.User?.LastLoginAt
+            }).ToList() ?? new List<UserViewModel>();
+
             var groupViewModel = new GroupViewModel()
             {
                 GroupId = (int)group.GroupId,
@@ -167,10 +242,86 @@ namespace Zela.Controllers
                 AvatarUrl = group.AvatarUrl ?? "/images/default-group-avatar.png",
                 MemberCount = group.Members?.Count ?? 0,
                 CreatedAt = group.CreatedAt,
-                CreatorName = group.Creator?.FullName ?? "Unknown"
+                CreatorId = group.CreatorId,
+                CreatorName = group.Creator?.FullName ?? "Unknown",
+                Members = members
             };
 
             return PartialView("_SidebarRight", groupViewModel);
+        }
+
+        // Message Reaction Endpoints
+        [HttpPost]
+        public async Task<IActionResult> AddReaction([FromBody] AddReactionRequest request)
+        {
+            try
+            {
+                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                if (userId == 0)
+                {
+                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
+                }
+
+                var reaction = await _chatService.AddReactionAsync(request.MessageId, userId, request.ReactionType);
+                
+                if (reaction == null)
+                {
+                    // Reaction đã bị xóa
+                    return Json(new { success = true, action = "removed" });
+                }
+                else
+                {
+                    // Reaction đã được thêm hoặc cập nhật
+                    return Json(new { success = true, action = "added", reaction = reaction });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error adding reaction: {ex.Message}");
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi thêm biểu tượng cảm xúc" });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetMessageReactions(long messageId)
+        {
+            try
+            {
+                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                if (userId == 0)
+                {
+                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
+                }
+
+                var reactions = await _chatService.GetMessageReactionsAsync(messageId, userId);
+                return Json(new { success = true, reactions = reactions });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error getting reactions: {ex.Message}");
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi lấy biểu tượng cảm xúc" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> RemoveReaction([FromBody] RemoveReactionRequest request)
+        {
+            try
+            {
+                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                if (userId == 0)
+                {
+                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
+                }
+
+                await _chatService.RemoveReactionAsync(request.MessageId, userId);
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error removing reaction: {ex.Message}");
+                return StatusCode(500, new { message = "Có lỗi xảy ra khi xóa biểu tượng cảm xúc" });
+            }
         }
     }
 } 

@@ -16,4 +16,6 @@ public class GroupMessageViewModel
     
     // Thêm thuộc tính Media để hỗ trợ file và ảnh
     public List<MediaViewModel> Media { get; set; } = new();
+    //Reactions
+    public List<MessageReactionSummaryViewModel> Reactions { get; set; } = new List<MessageReactionSummaryViewModel>();
 }
