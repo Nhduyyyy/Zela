@@ -7,13 +7,13 @@ public interface IChatService
 {
     Task<List<FriendViewModel>> GetFriendListAsync(int userId);
     Task<List<MessageViewModel>> GetMessagesAsync(int userId, int friendId);
-    Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content, IFormFile? file = null);
+    Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content, List<IFormFile>? files = null);
     Task<MessageViewModel> SaveMessageAsync(int senderId, int recipientId, string content);
     
     Task<User> FindUserByIdAsync(int userId);
     
     // Group chat methods
-    Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content);
+    Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content, List<IFormFile>? files = null);
     Task<ChatGroup> CreateGroupAsync(int creatorId, string name, string description);
     Task AddMemberToGroupAsync(int groupId, int userId);
     Task RemoveMemberFromGroupAsync(int groupId, int userId);

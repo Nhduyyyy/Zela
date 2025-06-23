@@ -5,20 +5,70 @@
     <div class="message @(msg.IsMine ? "right" : "left")">
         @if (msg.IsMine)
         {
-            <!-- Người GỬI: thời gian -> tin nhắn -> avatar -->
+            <!-- Người GỬI: thời gian -> media -> tin nhắn -> avatar -->
             <div class="message-content">
                 <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
-                <span class="message-bubble">@msg.Content</span>
+                @if (msg.Media != null && msg.Media.Count > 0)
+                {
+                    foreach (var media in msg.Media)
+                    {
+                        if (media.MediaType != null && media.MediaType.StartsWith("image/"))
+                        {
+                            <img src="@media.Url" class="message-media-img" alt="Ảnh gửi"/>
+                        }
+                        else if (media.MediaType != null && media.MediaType.StartsWith("video/"))
+                        {
+                            <video src="@media.Url" class="message-media-video" controls></video>
+                        }
+                        else
+                        {
+                            <div class="chat-file-attachment">
+                                <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                                <span class="file-name">@(media.FileName ?? System.IO.Path.GetFileName(media.Url))</span>
+                                <a href="@media.Url" download="@(media.FileName ?? System.IO.Path.GetFileName(media.Url))" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                            </div>
+                        }
+                    }
+                }
+                @if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
+                {
+                    <span class="message-bubble">@msg.Content</span>
+                }
             </div>
         }
         else
         {
-            <!-- Người NHẬN: avatar -> tin nhắn -> thời gian -->
+            <!-- Người NHẬN: avatar -> media -> tin nhắn -> thời gian -->
             <img src="@msg.AvatarUrl" class="message-avatar" />
             <div class="message-content">
                 <div class="message-sender">@msg.SenderName</div>
                 <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
-                <span class="message-bubble">@msg.Content</span>
+                @if (msg.Media != null && msg.Media.Count > 0)
+                {
+                    foreach (var media in msg.Media)
+                    {
+                        if (media.MediaType != null && media.MediaType.StartsWith("image/"))
+                        {
+                            <img src="@media.Url" class="message-media-img" alt="Ảnh gửi"/>
+                        }
+                        else if (media.MediaType != null && media.MediaType.StartsWith("video/"))
+                        {
+                            <video src="@media.Url" class="message-media-video" controls></video>
+                        }
+                        else
+                        {
+                            <div class="chat-file-attachment">
+                                <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                                <span class="file-name">@(media.FileName ?? System.IO.Path.GetFileName(media.Url))</span>
+                                <a href="@media.Url" download="@(media.FileName ?? System.IO.Path.GetFileName(media.Url))" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                            </div>
+                        }
+                    }
+                }
+                @if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
+                {
+                    <span class="message-bubble">@msg.Content</span>
+                }
             </div>
         }
     </div>

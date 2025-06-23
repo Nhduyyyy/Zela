@@ -1,0 +1,349 @@
+@model IEnumerable<Zela.Models.User>
+
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout="~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .admin-welcome-card {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%);
+            color: white;
+            border-radius: var(--admin-radius-xl);
+            padding: var(--admin-spacing-2xl);
+            margin-bottom: var(--admin-spacing-2xl);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .admin-welcome-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: float 6s ease-in-out infinite;
+        }
+        
+        @@keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(180deg); }
+        }
+        
+        .admin-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--admin-spacing-lg);
+            margin-top: var(--admin-spacing-2xl);
+        }
+        
+        .admin-quick-action {
+            background: var(--admin-bg-secondary);
+            border-radius: var(--admin-radius-lg);
+            padding: var(--admin-spacing-lg);
+            text-align: center;
+            text-decoration: none;
+            color: var(--admin-text-primary);
+            transition: var(--admin-transition);
+            border: 1px solid var(--admin-border-light);
+            box-shadow: var(--admin-shadow-sm);
+        }
+        
+        .admin-quick-action:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--admin-shadow-lg);
+            color: var(--admin-text-primary);
+        }
+        
+        .admin-quick-action i {
+            font-size: 2rem;
+            margin-bottom: var(--admin-spacing-sm);
+            color: var(--admin-primary);
+        }
+        
+        .admin-system-status {
+            background: var(--admin-bg-secondary);
+            border-radius: var(--admin-radius-xl);
+            padding: var(--admin-spacing-xl);
+            box-shadow: var(--admin-shadow-md);
+            border: 1px solid var(--admin-border-light);
+        }
+        
+        .admin-status-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--admin-spacing-md) 0;
+            border-bottom: 1px solid var(--admin-border-light);
+        }
+        
+        .admin-status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .admin-status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: var(--admin-spacing-sm);
+        }
+        
+        .admin-status-indicator.online {
+            background: var(--admin-success);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
+        }
+        
+        .admin-status-indicator.warning {
+            background: var(--admin-warning);
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+        }
+    </style>
+}
+
+<!-- Welcome Card -->
+<div class="admin-welcome-card admin-animate-fade-in">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h2 class="mb-3">Chào mừng trở lại, @(Context.Session.GetString("FullName") ?? "Admin")! 👋</h2>
+            <p class="mb-0 opacity-90">Hôm nay là @DateTime.Now.ToString("dddd, dd/MM/yyyy"). Đây là tổng quan về hệ thống Zela của bạn.</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <i class="bi bi-graph-up-arrow" style="font-size: 4rem; opacity: 0.3;"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Grid -->
+<div class="admin-stats-grid admin-animate-slide-in">
+    <!-- Users Card -->
+    <div class="admin-stat-card primary">
+        <div class="admin-stat-header">
+            <div class="admin-stat-icon">
+                <i class="bi bi-people-fill"></i>
+            </div>
+        </div>
+        <div class="admin-stat-value">@ViewBag.UserCount</div>
+        <div class="admin-stat-label">Tổng số người dùng</div>
+        <div class="admin-stat-change positive">
+            <i class="bi bi-arrow-up"></i>
+            <span>+12% so với tháng trước</span>
+        </div>
+    </div>
+
+    <!-- Groups Card -->
+    <div class="admin-stat-card success">
+        <div class="admin-stat-header">
+            <div class="admin-stat-icon">
+                <i class="bi bi-chat-dots-fill"></i>
+            </div>
+        </div>
+        <div class="admin-stat-value">@ViewBag.GroupCount</div>
+        <div class="admin-stat-label">Nhóm chat hoạt động</div>
+        <div class="admin-stat-change positive">
+            <i class="bi bi-arrow-up"></i>
+            <span>+8% so với tuần trước</span>
+        </div>
+    </div>
+
+    <!-- Video Rooms Card -->
+    <div class="admin-stat-card warning">
+        <div class="admin-stat-header">
+            <div class="admin-stat-icon">
+                <i class="bi bi-camera-video-fill"></i>
+            </div>
+        </div>
+        <div class="admin-stat-value">@ViewBag.RoomCount</div>
+        <div class="admin-stat-label">Phòng họp trực tuyến</div>
+        <div class="admin-stat-change positive">
+            <i class="bi bi-arrow-up"></i>
+            <span>+25% so với hôm qua</span>
+        </div>
+    </div>
+
+    <!-- Messages Card -->
+    <div class="admin-stat-card info">
+        <div class="admin-stat-header">
+            <div class="admin-stat-icon">
+                <i class="bi bi-chat-text-fill"></i>
+            </div>
+        </div>
+        <div class="admin-stat-value">@ViewBag.MessageCount</div>
+        <div class="admin-stat-label">Tin nhắn đã gửi</div>
+        <div class="admin-stat-change positive">
+            <i class="bi bi-arrow-up"></i>
+            <span>+156 tin nhắn hôm nay</span>
+        </div>
+    </div>
+
+    <!-- Stickers Card -->
+    <div class="admin-stat-card secondary">
+        <div class="admin-stat-header">
+            <div class="admin-stat-icon">
+                <i class="bi bi-emoji-smile-fill"></i>
+            </div>
+        </div>
+        <div class="admin-stat-value">@ViewBag.StickerCount</div>
+        <div class="admin-stat-label">Sticker có sẵn</div>
+        <div class="admin-stat-change">
+            <i class="bi bi-dash"></i>
+            <span>Không thay đổi</span>
+        </div>
+    </div>
+</div>
+
+<!-- Content Row -->
+<div class="row mt-4">
+    <!-- System Status -->
+    <div class="col-md-6 mb-4">
+        <div class="admin-system-status">
+            <h4 class="admin-mb-lg">
+                <i class="bi bi-server text-primary me-2"></i>
+                Trạng thái hệ thống
+            </h4>
+            
+            <div class="admin-status-item">
+                <div class="admin-d-flex admin-align-center">
+                    <div class="admin-status-indicator online"></div>
+                    <span>Database Server</span>
+                </div>
+                <span class="admin-text-success fw-bold">Online</span>
+            </div>
+            
+            <div class="admin-status-item">
+                <div class="admin-d-flex admin-align-center">
+                    <div class="admin-status-indicator online"></div>
+                    <span>SignalR Hub</span>
+                </div>
+                <span class="admin-text-success fw-bold">Hoạt động</span>
+            </div>
+            
+            <div class="admin-status-item">
+                <div class="admin-d-flex admin-align-center">
+                    <div class="admin-status-indicator online"></div>
+                    <span>File Upload Service</span>
+                </div>
+                <span class="admin-text-success fw-bold">Bình thường</span>
+            </div>
+            
+            <div class="admin-status-item">
+                <div class="admin-d-flex admin-align-center">
+                    <div class="admin-status-indicator warning"></div>
+                    <span>Email Service</span>
+                </div>
+                <span class="admin-text-warning fw-bold">Chậm</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="col-md-6 mb-4">
+        <div class="admin-system-status">
+            <h4 class="admin-mb-lg">
+                <i class="bi bi-clock-history text-info me-2"></i>
+                Hoạt động gần đây
+            </h4>
+            
+            <div class="admin-status-item">
+                <div>
+                    <div class="fw-semibold">Người dùng mới đăng ký</div>
+                    <small class="admin-text-secondary">user@example.com</small>
+                </div>
+                <small class="admin-text-secondary">5 phút trước</small>
+            </div>
+            
+            <div class="admin-status-item">
+                <div>
+                    <div class="fw-semibold">Tạo phòng họp mới</div>
+                    <small class="admin-text-secondary">Meeting Room #123</small>
+                </div>
+                <small class="admin-text-secondary">15 phút trước</small>
+            </div>
+            
+            <div class="admin-status-item">
+                <div>
+                    <div class="fw-semibold">Nhóm chat mới</div>
+                    <small class="admin-text-secondary">Team Development</small>
+                </div>
+                <small class="admin-text-secondary">1 giờ trước</small>
+            </div>
+            
+            <div class="admin-status-item">
+                <div>
+                    <div class="fw-semibold">Cập nhật hệ thống</div>
+                    <small class="admin-text-secondary">Version 2.0.0</small>
+                </div>
+                <small class="admin-text-secondary">2 giờ trước</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="admin-quick-actions">
+    <a asp-action="Users" class="admin-quick-action">
+        <i class="bi bi-people-fill"></i>
+        <h5>Quản lý Users</h5>
+        <p class="admin-text-secondary mb-0">Xem và quản lý người dùng</p>
+    </a>
+    
+    <a href="#" class="admin-quick-action">
+        <i class="bi bi-chat-dots-fill"></i>
+        <h5>Chat Groups</h5>
+        <p class="admin-text-secondary mb-0">Quản lý nhóm chat</p>
+    </a>
+    
+    <a href="#" class="admin-quick-action">
+        <i class="bi bi-bar-chart-fill"></i>
+        <h5>Báo cáo</h5>
+        <p class="admin-text-secondary mb-0">Xem thống kê chi tiết</p>
+    </a>
+    
+    <a href="#" class="admin-quick-action">
+        <i class="bi bi-gear-fill"></i>
+        <h5>Cài đặt</h5>
+        <p class="admin-text-secondary mb-0">Cấu hình hệ thống</p>
+    </a>
+</div>
+
+@section Scripts {
+    <script>
+        // Real-time clock
+        function updateClock() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('vi-VN');
+            document.title = `Dashboard - ${timeString} - Zela Admin`;
+        }
+        
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // Animate numbers
+        function animateValue(element, start, end, duration) {
+            let startTimestamp = null;
+            const step = (timestamp) => {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                element.innerHTML = Math.floor(progress * (end - start) + start);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        // Animate stat values on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const statValues = document.querySelectorAll('.admin-stat-value');
+            statValues.forEach(element => {
+                const finalValue = parseInt(element.textContent);
+                element.textContent = '0';
+                setTimeout(() => {
+                    animateValue(element, 0, finalValue, 2000);
+                }, 500);
+            });
+        });
+    </script>
+} 

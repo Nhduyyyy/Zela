@@ -244,7 +244,7 @@
 .preview-loading .loading-spinner {
     width: 20px;
     height: 20px;
-    border: 2px solid var(--theme-bg-tertiary, rgba(255, 255, 255, 0.1));
+    border: 2px solid var(--theme-bg-tertiary);
     border-top: 2px solid var(--theme-accent-green);
     border-radius: 50%;
     animation: spin 1s linear infinite;

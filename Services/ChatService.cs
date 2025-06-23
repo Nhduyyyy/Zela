@@ -16,7 +16,8 @@ public class ChatService : IChatService
         _fileUploadService = fileUploadService;
     }
 
-    public async Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content, IFormFile? file = null)
+    public async Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content,
+        List<IFormFile>? files = null)
     {
         var msg = new Message
         {
@@ -28,16 +29,27 @@ public class ChatService : IChatService
             Media = new List<Media>()
         };
 
-        if (file != null && file.Length > 0)
+        if (files != null && files.Count > 0)
         {
-            Console.WriteLine($"[ChatService] Uploading file: {file.FileName}, type: {file.ContentType}, size: {file.Length}");
-            var url = await _fileUploadService.UploadAsync(file, "chat");
-            Console.WriteLine($"[ChatService] Uploaded file url: {url}");
-            msg.Media.Add(new Media
+            Console.WriteLine($"[ChatService] Uploading {files.Count} file(s)");
+            
+            foreach (var file in files)
             {
-                MediaType = file.ContentType,
-                Url = url
-            });
+                if (file != null && file.Length > 0)
+                {
+                    Console.WriteLine(
+                        $"[ChatService] Uploading file: {file.FileName}, type: {file.ContentType}, size: {file.Length}");
+                    var url = await _fileUploadService.UploadAsync(file, "chat");
+                    Console.WriteLine($"[ChatService] Uploaded file url: {url}");
+                    msg.Media.Add(new Media
+                    {
+                        MediaType = file.ContentType,
+                        Url = url,
+                        FileName = file.FileName,
+                        UploadedAt = DateTime.Now
+                    });
+                }
+            }
         }
 
         _dbContext.Messages.Add(msg);
@@ -58,80 +70,126 @@ public class ChatService : IChatService
             Media = msg.Media.Select(md => new MediaViewModel
             {
                 Url = md.Url,
-                MediaType = md.MediaType
+                MediaType = md.MediaType,
+                FileName = md.FileName
             }).ToList()
         };
     }
 
-    // Lấy bạn bè đã kết bạn (status = accepted)
+    /// <summary>
+    // /// Lấy danh sách bạn bè đã chấp nhận của user, kèm thông tin cơ bản và tin nhắn mới nhất.
+    // /// </summary>
     public async Task<List<FriendViewModel>> GetFriendListAsync(int userId)
     {
-        // Giả sử bạn có bảng Friendships (UserId1, UserId2, StatusId)
+        // Bước 1: Lấy danh sách ID của bạn bè (StatusId == 2 nghĩa là đã Accepted)
         var friendIds = await _dbContext.Friendships
+            // Lọc các mối quan hệ mà userId là một bên
             .Where(f => (f.UserId1 == userId || f.UserId2 == userId) && f.StatusId == 2) // 2 = Accepted
+            // Chọn ID của bên còn lại trong mỗi quan hệ
             .Select(f => f.UserId1 == userId ? f.UserId2 : f.UserId1)
+            // Thực thi truy vấn và lấy về List<int>
             .ToListAsync();
 
+        // Bước 2: Lấy thông tin chi tiết của các user trong danh sách friendIds
         var friends = await _dbContext.Users
+            // Chỉ lấy các User có UserId nằm trong friendIds
             .Where(u => friendIds.Contains(u.UserId))
+            // Map mỗi User thành FriendViewModel
             .Select(u => new FriendViewModel
             {
+                // Cột UserId của friend
                 UserId = u.UserId,
+                // Tên đầy đủ
                 FullName = u.FullName,
+                // URL avatar
                 AvatarUrl = u.AvatarUrl,
+                // Đánh dấu online nếu LastLoginAt trong vòng 3 phút gần nhất
                 IsOnline = u.LastLoginAt > DateTime.Now.AddMinutes(-3),
+
+                // Lấy nội dung tin nhắn mới nhất giữa userId và u.UserId
                 LastMessage = _dbContext.Messages
+                    // Chọn tin nhắn mà sender/recipient là cặp userId và friendId
                     .Where(m =>
+                        /* Case A: bạn gửi cho friend
+                       - SenderId phải đúng userId (bạn)
+                       - RecipientId phải đúng u.UserId (friend)
+                       Cả hai điều kiện trong dấu ngoặc đơn phải cùng đúng */
                         (m.SenderId == userId && m.RecipientId == u.UserId) ||
+                        /* Case B: friend gửi cho bạn
+                        - SenderId phải đúng u.UserId
+                        - RecipientId phải đúng userId
+                        Cả hai điều kiện trong dấu ngoặc đơn phải cùng đúng */
                         (m.SenderId == u.UserId && m.RecipientId == userId))
+                    // Sau khi lọc, sắp xếp giảm dần theo thời gian gửi (SentAt)
                     .OrderByDescending(m => m.SentAt)
+                    // Chỉ lấy phần nội dung tin nhắn
                     .Select(m => m.Content)
+                    // Lấy tin nhắn đầu tiên trong kết quả (mới nhất) hoặc null nếu không có
                     .FirstOrDefault(),
+
+                // Lấy thời gian gửi của tin nhắn mới nhất, format "HH:mm"
                 LastTime = _dbContext.Messages
                     .Where(m =>
                         (m.SenderId == userId && m.RecipientId == u.UserId) ||
                         (m.SenderId == u.UserId && m.RecipientId == userId))
                     .OrderByDescending(m => m.SentAt)
-                    .Select(m => m.SentAt.ToString("HH:mm"))
-                    .FirstOrDefault()
+                    .Select(m => m.SentAt.ToString("HH:mm")) // chuyển DateTime thành string giờ:phút
+                    .FirstOrDefault() // lấy giá trị đầu tiên hoặc null
             })
             .ToListAsync();
 
         return friends;
     }
 
-    // Lấy lịch sử chat 1-1
+    /// <summary>
+    /// Lấy lịch sử chat 1-1 giữa user và friend, bao gồm tin nhắn text, media và sticker.
+    /// </summary>
     public async Task<List<MessageViewModel>> GetMessagesAsync(int userId, int friendId)
     {
+        // Truy vấn bảng Messages với eager loading các navigation properties
         return await _dbContext.Messages
-            .Include(m => m.Sender)
-            .Include(m => m.Recipient)
-            .Include(m => m.Media)
-            .Include(m => m.Sticker)
+            // Eager-load các bảng ngoại liên quan (navigation properties) dựa trên khóa ngoại:
+            // - SenderId => bảng Users (đối tượng Sender)
+            // - RecipientId => bảng Users (đối tượng Recipient)
+            // - MessageId => bảng Media (collection Media)
+            // - MessageId => bảng Sticker (collection Sticker)
+            .Include(m => m.Sender)    // Tải kèm thông tin người gửi qua FK SenderId
+            .Include(m => m.Recipient) // Tải kèm thông tin người nhận qua FK RecipientId
+            .Include(m => m.Media)     // Tải kèm danh sách media đính kèm (qua FK MessageId)
+            .Include(m => m.Sticker)   // Tải kèm danh sách sticker gắn kèm (qua FK MessageId)
+            // Lọc tin nhắn giữa user và friend theo hai chiều:
+            // + Bạn gửi cho friend (SenderId == userId && RecipientId == friendId)
+            // + Friend gửi cho bạn (SenderId == friendId && RecipientId == userId)
             .Where(m =>
                 (m.SenderId == userId && m.RecipientId == friendId) ||
                 (m.SenderId == friendId && m.RecipientId == userId))
+            // Sắp xếp theo thời gian gửi tăng dần (cũ tới mới) để hiển thị hội thoại đúng thứ tự
             .OrderBy(m => m.SentAt)
+            // Ánh xạ Message entity thành MessageViewModel để trả về client
             .Select(m => new MessageViewModel
             {
                 MessageId = m.MessageId,
                 SenderId = m.SenderId,
                 RecipientId = m.RecipientId ?? 0,
-                SenderName = m.Sender.FullName,
-                AvatarUrl = m.Sender.AvatarUrl,
+                SenderName = m.Sender.FullName,  // Được load sẵn qua Include
+                AvatarUrl = m.Sender.AvatarUrl,  // Được load sẵn qua Include
                 Content = m.Content,
                 SentAt = m.SentAt,
                 IsMine = m.SenderId == userId,
                 IsEdited = m.IsEdited,
+                
+                // Chuyển từng Media entity thành MediaViewModel
                 Media = m.Media.Select(md => new MediaViewModel
                 {
                     Url = md.Url,
-                    MediaType = md.MediaType
+                    MediaType = md.MediaType,
+                    FileName = md.FileName
                 }).ToList(),
-                // thêm các trường cho sticker
+                // Lấy sticker đầu tiên nếu có, sử dụng navigation property đã include:
                 StickerUrl = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerUrl : null,
                 StickerType = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerType : null
             })
+            // Thực thi truy vấn bất đồng bộ, trả về danh sách MessageViewModel
             .ToListAsync();
     }
 
@@ -164,6 +222,7 @@ public class ChatService : IChatService
             IsEdited = false
         };
     }
+
     // Tìm user theo ID
     public async Task<User?> FindUserByIdAsync(int userId)
     {
@@ -172,9 +231,9 @@ public class ChatService : IChatService
 
         return user;
     }
-    
+
     // Group chat methods
-    public async Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content)
+    public async Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content, List<IFormFile>? files = null)
     {
         var sender = await _dbContext.Users.FindAsync(senderId);
         var group = await _dbContext.ChatGroups.FindAsync(groupId);
@@ -189,10 +248,35 @@ public class ChatService : IChatService
         {
             SenderId = senderId,
             GroupId = groupId,
-            Content = content,
+            Content = content ?? "",
             SentAt = DateTime.Now,
-            IsEdited = false
+            IsEdited = false,
+            Media = new List<Media>()
         };
+
+        // Handle file uploads if provided
+        if (files != null && files.Count > 0)
+        {
+            Console.WriteLine($"[ChatService] Uploading {files.Count} file(s) for group chat");
+            
+            foreach (var file in files)
+            {
+                if (file != null && file.Length > 0)
+                {
+                    Console.WriteLine(
+                        $"[ChatService] Uploading file: {file.FileName}, type: {file.ContentType}, size: {file.Length}");
+                    var url = await _fileUploadService.UploadAsync(file, "group-chat");
+                    Console.WriteLine($"[ChatService] Uploaded file url: {url}");
+                    message.Media.Add(new Media
+                    {
+                        MediaType = file.ContentType,
+                        Url = url,
+                        FileName = file.FileName,
+                        UploadedAt = DateTime.Now
+                    });
+                }
+            }
+        }
 
         _dbContext.Messages.Add(message);
         await _dbContext.SaveChangesAsync();
@@ -207,7 +291,13 @@ public class ChatService : IChatService
             Content = content,
             SentAt = message.SentAt,
             IsMine = false, // Will be determined by client based on senderId
-            IsEdited = false
+            IsEdited = false,
+            Media = message.Media.Select(md => new MediaViewModel
+            {
+                Url = md.Url,
+                MediaType = md.MediaType,
+                FileName = md.FileName
+            }).ToList()
         };
     }
 
@@ -303,6 +393,7 @@ public class ChatService : IChatService
     {
         var messages = await _dbContext.Messages
             .Include(m => m.Sender)
+            .Include(m => m.Media)
             .Where(m => m.GroupId == groupId)
             .OrderBy(m => m.SentAt)
             .ToListAsync();
@@ -317,7 +408,13 @@ public class ChatService : IChatService
             Content = m.Content,
             SentAt = m.SentAt,
             IsMine = false, // Will be set by client
-            IsEdited = m.IsEdited
+            IsEdited = m.IsEdited,
+            Media = m.Media.Select(md => new MediaViewModel
+            {
+                Url = md.Url,
+                MediaType = md.MediaType,
+                FileName = md.FileName
+            }).ToList()
         }).ToList();
     }
 
@@ -325,11 +422,11 @@ public class ChatService : IChatService
     {
         var groupMembers = await _dbContext.GroupMembers
             .Include(gm => gm.ChatGroup)
-                .ThenInclude(g => g.Messages.OrderByDescending(m => m.SentAt).Take(1))
+            .ThenInclude(g => g.Messages.OrderByDescending(m => m.SentAt).Take(1))
             .Include(gm => gm.ChatGroup)
-                .ThenInclude(g => g.Creator)
+            .ThenInclude(g => g.Creator)
             .Include(gm => gm.ChatGroup)
-                .ThenInclude(g => g.Members)
+            .ThenInclude(g => g.Members)
             .Where(gm => gm.UserId == userId)
             .ToListAsync();
 
@@ -351,10 +448,10 @@ public class ChatService : IChatService
     {
         return await _dbContext.ChatGroups
             .Include(g => g.Members)
-                .ThenInclude(m => m.User)
+            .ThenInclude(m => m.User)
             .Include(g => g.Creator)
             .Include(g => g.Messages)
-                .ThenInclude(m => m.Sender)
+            .ThenInclude(m => m.Sender)
             .FirstOrDefaultAsync(g => g.GroupId == groupId);
     }
 
@@ -366,7 +463,7 @@ public class ChatService : IChatService
 
         group.Name = name;
         group.Description = description;
-        
+
         await _dbContext.SaveChangesAsync();
     }
 
@@ -382,13 +479,13 @@ public class ChatService : IChatService
 
         // Xóa tất cả tin nhắn trong nhóm
         _dbContext.Messages.RemoveRange(group.Messages);
-        
+
         // Xóa tất cả thành viên
         _dbContext.GroupMembers.RemoveRange(group.Members);
-        
+
         // Xóa nhóm
         _dbContext.ChatGroups.Remove(group);
-        
+
         await _dbContext.SaveChangesAsync();
     }
 
@@ -396,7 +493,7 @@ public class ChatService : IChatService
     {
         return await _dbContext.Users
             .Where(u => u.UserId != currentUserId && // Không hiển thị người dùng hiện tại
-                       (u.FullName.Contains(searchTerm) || u.Email.Contains(searchTerm)))
+                        (u.FullName.Contains(searchTerm) || u.Email.Contains(searchTerm)))
             .Select(u => new UserViewModel
             {
                 UserId = (int)u.UserId,

@@ -24,4 +24,5 @@ public class MediaViewModel
 {
     public string Url { get; set; }
     public string MediaType { get; set; }
+    public string? FileName { get; set; }
 }

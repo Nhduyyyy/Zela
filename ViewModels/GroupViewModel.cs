@@ -14,4 +14,4 @@ public class GroupViewModel
     public bool IsOnline { get; set; } = true; // Groups luôn online
     public DateTime CreatedAt { get; set; }
     public string CreatorName { get; set; }
-} 
+}

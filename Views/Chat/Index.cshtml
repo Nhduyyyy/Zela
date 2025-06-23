@@ -69,17 +69,19 @@
                 <p class="mt-2">Hãy chọn bạn để bắt đầu trò chuyện</p>
             </div>
         </div>
-        <div class="chat-input-bar">
-            <div class="input-group d-flex align-items-center">
-                <input type="text" placeholder="Nhập tin nhắn..." class="flex-fill">
-                <div id="chat-preview" style="display:none;"></div>
-                <input type="file" id="chat-file-input" name="file" style="display:none;"
-                       accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,audio/*"/>
-                <div class="input-actions">
-                    <i class="bi bi-image" title="Hình ảnh"></i>
-                    <i class="bi bi-paperclip" title="Đính kèm"></i>
-                    <i class="bi bi-emoji-smile sticker-btn" title="Emoji"></i>
-                    <i class="bi bi-send btn-send" title="Gửi"></i>
+        <div class="chat-input-container">
+            <div id="chat-preview" style="display:none;"></div>
+            <div class="chat-input-bar">
+                <div class="input-group d-flex align-items-center">
+                    <input type="text" placeholder="Nhập tin nhắn..." class="flex-fill">
+                    <input type="file" id="chat-file-input" name="files" multiple style="display:none;"
+                           accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,audio/*"/>
+                    <div class="input-actions">
+                        <i class="bi bi-image" title="Hình ảnh"></i>
+                        <i class="bi bi-paperclip" title="Đính kèm"></i>
+                        <i class="bi bi-emoji-smile sticker-btn" title="Emoji"></i>
+                        <i class="bi bi-send btn-send" title="Gửi"></i>
+                    </div>
                 </div>
             </div>
         </div>
@@ -89,6 +91,15 @@
         <!-- Sidebar content will be loaded dynamically -->
     </div>
 </section>
+
+<!-- Drag & Drop Overlay -->
+<div id="drag-drop-overlay" class="drag-drop-overlay">
+    <div class="drag-drop-content">
+        <i class="bi bi-cloud-upload"></i>
+        <h3>Thả file vào đây</h3>
+        <p>Hỗ trợ ảnh, video, tài liệu<br/>Có thể thả nhiều file cùng lúc</p>
+    </div>
+</div>
 
 <!-- Include Create Group Modal -->
 @Html.Partial("_CreateGroup")

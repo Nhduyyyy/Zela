@@ -87,9 +87,9 @@
 }
 
 @keyframes bounce {
-    0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
-    40% {transform: translateY(-8px);}
-    60% {transform: translateY(-4px);}
+  0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+  40% {transform: translateY(-8px);}
+  60% {transform: translateY(-4px);}
 }
 
 .loading-spinner {
@@ -102,8 +102,8 @@
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 .animate-on-hover {
@@ -297,9 +297,9 @@
 .upload-progress-fill {
     width: 0%;
     height: 100%;
-    background: linear-gradient(90deg,
-    var(--theme-accent-red, #FF5A57) 0%,
-    var(--theme-accent-green, #E02F75) 100%);
+    background: linear-gradient(90deg, 
+        var(--theme-accent-red, #FF5A57) 0%, 
+        var(--theme-accent-green, #E02F75) 100%);
     border-radius: 2px;
     transition: width 2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     position: relative;
@@ -312,10 +312,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.3) 50%,
-    transparent 100%);
+    background: linear-gradient(90deg, 
+        transparent 0%, 
+        rgba(255, 255, 255, 0.3) 50%, 
+        transparent 100%);
     animation: progressShimmer 1.5s infinite;
 }
 
@@ -470,8 +470,8 @@
 #chat-preview img:hover {
     border-color: var(--theme-accent-green, #E02F75);
     transform: scale(1.08) translateY(-3px);
-    box-shadow: var(--theme-shadow-neon, 0 0 25px rgba(224, 47, 117, 0.6)),
-    0 8px 25px rgba(224, 47, 117, 0.3);
+    box-shadow: var(--theme-shadow-neon, 0 0 25px rgba(224, 47, 117, 0.6)), 
+                0 8px 25px rgba(224, 47, 117, 0.3);
     filter: brightness(1.1) saturate(1.2);
 }
 
@@ -525,7 +525,7 @@
     transform: scale(1.2) rotate(90deg);
     background: var(--theme-accent-green, #E02F75) !important;
     box-shadow: var(--theme-shadow-neon, 0 0 25px rgba(224, 47, 117, 0.6)),
-    0 0 40px rgba(224, 47, 117, 0.3);
+                0 0 40px rgba(224, 47, 117, 0.3);
 }
 
 #chat-preview .preview-remove:active {
@@ -555,7 +555,7 @@
     border-color: var(--theme-accent-green, #E02F75);
     transform: translateY(-5px) scale(1.05);
     box-shadow: var(--theme-shadow-neon, 0 0 25px rgba(224, 47, 117, 0.5)),
-    0 10px 30px rgba(224, 47, 117, 0.2);
+                0 10px 30px rgba(224, 47, 117, 0.2);
     background: var(--theme-bg-hover, rgba(224, 47, 117, 0.15));
 }
 
@@ -586,28 +586,28 @@
         gap: 10px;
         margin-bottom: 8px;
     }
-
+    
     #chat-preview::before {
         top: 3px;
         left: 10px;
         padding: 3px 8px;
         font-size: 10px;
     }
-
+    
     #chat-preview img {
         height: 60px;
         min-width: 60px;
     }
-
+    
     #chat-preview .file-preview {
         min-width: 60px;
         padding: 8px;
     }
-
+    
     #chat-preview .file-preview .file-icon {
         font-size: 20px;
     }
-
+    
     #chat-preview .preview-remove {
         width: 20px;
         height: 20px;
@@ -875,8 +875,8 @@
     animation: spin 1s linear infinite;
 }
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @keyframes imageAppear {

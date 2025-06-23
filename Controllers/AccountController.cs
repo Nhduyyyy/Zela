@@ -60,7 +60,7 @@ namespace Zela.Controllers
         // Task   : Khởi tạo quá trình đăng nhập với Google OAuth.
         // ---------------------------------------------
         /// <summary>
-        /// Khi người dùng nhấn nút “Đăng nhập bằng Google”, hàm này sẽ được gọi.
+        /// Khi người dùng nhấn nút "Đăng nhập bằng Google", hàm này sẽ được gọi.
         /// Nó thực hiện 2 việc chính:
         /// 1) Xác định đường dẫn (URL) mà Google sẽ gọi lại (callback) khi hoàn tất xác thực.
         /// 2) Bắt đầu quá trình xác thực (Challenge) bằng Google.
@@ -80,7 +80,7 @@ namespace Zela.Controllers
             // ──────────────────────────────────────────────────────────────────
             // BƯỚC 1: Tạo AuthenticationProperties để chứa thông tin callback URL
             // ──────────────────────────────────────────────────────────────────
-            // AuthenticationProperties là một lớp (class) dùng để truyền “thông tin bổ sung”
+            // AuthenticationProperties là một lớp (class) dùng để truyền "thông tin bổ sung"
             // cho quá trình xác thực (authentication). Ở đây, ta cần cho ASP.NET Core biết:
             //      → Khi Google xác thực xong, hãy redirect (trả người dùng) về đâu trong ứng dụng.
             //
@@ -183,7 +183,7 @@ namespace Zela.Controllers
             // trình duyệt chuyển đến action Login (trang đăng nhập).
 
             // -------------------------------------------------------------------
-            // BƯỚC 3: Đọc các thông tin “claims” (tuyên bố) do Google gửi về.
+            // BƯỚC 3: Đọc các thông tin "claims" (tuyên bố) do Google gửi về.
             //         Claims là các thông tin về user mà Google xác nhận (ví dụ:
             //         email, full name, avatar).
             // -------------------------------------------------------------------
@@ -207,7 +207,7 @@ namespace Zela.Controllers
 
             // -------------------------------------------------------------------
             // BƯỚC 5: Nếu Google không trả về tên đầy đủ (claim ClaimTypes.Name),
-            //         ta dùng email làm “tên” thay thế để hiển thị (ít nhất còn biết user là ai).
+            //         ta dùng email làm "tên" thay thế để hiển thị (ít nhất còn biết user là ai).
             // -------------------------------------------------------------------
             // fullName có thể null hoặc rỗng nếu user ở chế độ Google không chia sẻ tên.
             if (string.IsNullOrEmpty(fullName))
@@ -272,6 +272,36 @@ namespace Zela.Controllers
             // Nếu user cũ, các cột LastLoginAt, FullName, AvatarUrl đã được cập nhật.
 
             // -------------------------------------------------------------------
+            // BƯỚC 8b: Đảm bảo mỗi User luôn có ít nhất 1 Role trong bảng Roles.
+            //          • Nếu chưa có bản ghi Role nào cho user -> thêm "User" (mặc định).
+            //          • Nếu hệ thống CHƯA có bất kỳ Admin nào, phong Admin cho user đầu tiên.
+            // -------------------------------------------------------------------
+            var hasAnyRole = await _db.Roles.AnyAsync(r => r.UserId == user.UserId);
+            if (!hasAnyRole)
+            {
+                _db.Roles.Add(new Role
+                {
+                    UserId   = user.UserId,
+                    RoleName = "User",
+                    CreateAt = DateTime.Now
+                });
+
+                // Nếu chưa tồn tại Admin trong hệ thống, gán luôn Admin cho user hiện tại
+                var hasAdmin = await _db.Roles.AnyAsync(r => r.RoleName == "Admin");
+                if (!hasAdmin)
+                {
+                    _db.Roles.Add(new Role
+                    {
+                        UserId   = user.UserId,
+                        RoleName = "Admin",
+                        CreateAt = DateTime.Now
+                    });
+                }
+
+                await _db.SaveChangesAsync(); // Lưu các Role mới thêm
+            }
+
+            // -------------------------------------------------------------------
             // BƯỚC 9: Lưu thông tin user vào Session cho các trang khác dễ truy xuất.
             //         Session là một vùng lưu dữ liệu tạm thời trên server, gắn liền với cookie của user.
             // -------------------------------------------------------------------
@@ -288,6 +318,17 @@ namespace Zela.Controllers
             var claims = result.Principal.Claims.ToList();
             claims.Add(new Claim("UserId", user.UserId.ToString()));
 
+            // Bổ sung các role của user vào claims để hệ thống Authorization nhận diện
+            var userRoles = await _db.Roles
+                .Where(r => r.UserId == user.UserId)
+                .Select(r => r.RoleName)
+                .ToListAsync();
+
+            foreach (var roleName in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, roleName));
+            }
+
             var identity  = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
             var principal = new ClaimsPrincipal(identity);
             
@@ -297,11 +338,17 @@ namespace Zela.Controllers
                 principal);
 
             // -------------------------------------------------------------------
-            // BƯỚC 11: Sau khi tất cả hoàn thành (tạo/cập nhật user, lưu session, sign-in),
-            //          chuyển hướng (redirect) người dùng đến URL chỉ định (returnUrl).
+            // BƯỚC 11: Chuyển hướng người dùng dựa trên vai trò (Role).
             // -------------------------------------------------------------------
+            // Kiểm tra xem người dùng có vai trò "Admin" hay không.
+            if (userRoles.Contains("Admin"))
+            {
+                // Nếu là Admin, luôn chuyển hướng đến trang Admin Dashboard.
+                return RedirectToAction("Index", "Admin");
+            }
+            
+            // Nếu không phải Admin, chuyển hướng đến trang đích ban đầu (mặc định là Chat).
             return Redirect(returnUrl);
-            // Redirect(string url) trả về HTTP 302 cho trình duyệt, để browser tự điều hướng sang đường dẫn đó.
         }
 
         // ---------------------------------------------

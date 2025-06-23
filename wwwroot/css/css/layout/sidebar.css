@@ -1,0 +1,286 @@
+
+/* Layout chính bao gồm sidebar và nội dung */
+.zela-layout {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+}
+
+.zela-main {
+    flex: 1;
+    background: linear-gradient(135deg, #0B1D34 0%, #08192C 100%);
+    overflow-y: auto;
+}
+
+.zela-sidebar {
+    width: 270px;
+    background: linear-gradient(180deg, #0B1D34 0%, #08192C 100%);
+    color: #FFFFFF;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    flex-shrink: 0;
+    position: relative;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.zela-logo {
+    font-size: 1.6rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30px;
+    color: #FF5E5B;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.zela-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.zela-nav li {
+    margin: 6px 0;
+}
+
+.zela-nav a {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    text-decoration: none;
+    color: #D3E0F1;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.zela-nav a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(41, 182, 246, 0.1), transparent);
+    transition: left 0.6s ease;
+}
+
+.zela-nav a:hover {
+    background: linear-gradient(90deg, rgba(65, 215, 167, 0.1) 0%, rgba(41, 182, 246, 0.1) 100%);
+    border-left: 4px solid #00F0B5;
+    color: #FFFFFF;
+    transform: translateX(5px);
+}
+
+.zela-nav a:hover::before {
+    left: 100%;
+}
+
+.zela-nav a i {
+    margin-right: 10px;
+    font-size: 1.2rem;
+    color: #29B6F6;
+    transition: color 0.3s ease;
+}
+
+.zela-nav a:hover i {
+    color: #00F0B5;
+}
+
+.zela-nav a span {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+/* Nút đặc biệt cho "Hỏi đi con vợ" */
+.zela-nav a.special-btn {
+    background: linear-gradient(135deg, #41D7A7 0%, #22E3AC 100%);
+    color: #FFFFFF;
+    border-radius: 8px;
+    margin: 10px 20px;
+    padding: 12px 16px;
+    border-left: none;
+    box-shadow: 0 4px 12px rgba(65, 215, 167, 0.3);
+}
+
+.zela-nav a.special-btn:hover {
+    background: linear-gradient(135deg, #22E3AC 0%, #00F0B5 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(65, 215, 167, 0.4);
+}
+
+.zela-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column; /* NEW: Dọc thay vì ngang */
+    align-items: center;
+    gap: 16px;
+    padding: 20px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.zela-footer a,
+.zela-footer button {
+    color: #D3E0F1;
+    font-size: 1.3rem;
+    background: transparent;
+    border: none;
+    padding: 10px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.zela-footer a:hover,
+.zela-footer button:hover {
+    color: #29B6F6;
+    background-color: rgba(41, 182, 246, 0.15);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(41, 182, 246, 0.2);
+}
+
+.zela-footer form {
+    margin: 0;
+}
+
+
+/* Hiệu ứng gradient cho toàn bộ sidebar */
+.zela-sidebar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #FF5E5B 0%, #00F0B5 50%, #29B6F6 100%);
+}
+/*CSS cho User*/
+/* CSS for User Section in Sidebar */
+.zela-user-section {
+    padding: 10px 5px;
+    display: flex;
+    align-items: center;
+    background-color: #f4f6f9; /* Light background for contrast */
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.user-avatar-container {
+    position: relative;
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    margin-right: 10px;
+}
+
+.user-avatar-sidebar {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    border: 2px solid #ddd; /* Subtle border around avatar */
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.user-avatar-sidebar:hover {
+    transform: scale(1.1); /* Add a slight hover effect */
+}
+
+.user-status-indicator {
+    position: absolute;
+    bottom: 0;
+    right: 2px;
+    width: 12px;
+    height: 12px;
+    background: #28a745; /* Green online indicator */
+    border-radius: 50%;
+    border: 2px solid #ffffff; /* Border to give indicator visibility */
+}
+
+.user-info {
+    flex: 1; /* Allow user info to take up remaining space */
+}
+
+.user-name {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333333; /* Dark color for name */
+    margin-bottom: 5px;
+}
+
+.user-status-text {
+    font-size: 14px;
+    color: #6c757d; /* Neutral gray for less emphasis */
+}
+
+.user-status-text i {
+    margin-right: 5px;
+}
+
+.user-actions {
+    margin-left: auto;
+}
+
+.user-menu-btn {
+    padding: 0;
+    background-color: transparent;
+    border: none;
+    font-size: 1.2rem; /* Slightly larger icon size */
+    color: #6c757d;
+    transition: color 0.2s ease;
+}
+
+.user-menu-btn:hover {
+    color: #343a40; /* Slightly darker on hover */
+}
+
+/* Dropdown Styling */
+.dropdown-menu {
+    min-width: 200px;
+    border-radius: 6px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dropdown-item {
+    font-size: 14px;
+    color: #333333;
+    padding: 10px 15px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa; /* Light hover for items */
+    color: #007bff;
+}
+
+.dropdown-item.text-danger {
+    color: #dc3545;
+}
+
+.dropdown-item.text-danger:hover {
+    background-color: #f8d7da; /* Subtle hover for danger option */
+    color: #721c24;
+}
+
+.dropdown-divider {
+    margin: 5px 0;
+    border-top: 1px solid #f1f1f1;
+}
+
+/* Logout Button */
+.logout-btn {
+    font-size: 18px;
+    color: #6c757d;
+    background-color: transparent;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s ease;
+}
+
+.logout-btn:hover {
+    color: #dc3545; /* Red hover effect */
+}
