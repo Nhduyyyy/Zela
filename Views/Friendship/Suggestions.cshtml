@@ -1,0 +1,401 @@
+@model IEnumerable<Zela.ViewModels.UserWithMutualFriendsCount>
+
+@{
+    ViewData["Title"] = "Gợi ý kết bạn";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/themes/chat-theme.css"/>
+    <link rel="stylesheet" href="~/css/pages/friend.css"/>
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="suggestions-header">
+                <h2>
+                    <i class="fas fa-user-plus"></i>
+                    Gợi ý kết bạn
+                </h2>
+                <p class="text-muted">Những người bạn có thể biết dựa trên bạn chung</p>
+                <div class="header-actions">
+                    <a href="@Url.Action("Index")" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Quay lại
+                    </a>
+                    <a href="@Url.Action("Find")" class="btn btn-primary">
+                        <i class="fas fa-search"></i> Tìm bạn
+                    </a>
+                </div>
+            </div>
+
+            <!-- Suggestions List -->
+            @if (!Model.Any())
+            {
+                <div class="no-suggestions-container">
+                    <div class="no-suggestions-content">
+                        <div class="suggestion-icon">
+                            <i class="fas fa-user-friends"></i>
+                        </div>
+                        <h4 class="no-suggestions-title">Chưa có gợi ý</h4>
+                        <p class="no-suggestions-text">Hiện tại chưa có gợi ý kết bạn nào dựa trên bạn chung.</p>
+                        <a href="@Url.Action("Find")" class="btn btn-primary btn-find-friends">
+                            <i class="fas fa-search"></i> Tìm bạn bè
+                        </a>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="suggestions-grid">
+                    @foreach (var suggestion in Model)
+                    {
+                        <div class="suggestion-card">
+                            <div class="card-header">
+                                <div class="user-avatar">
+                                    <img src="@(suggestion.AvatarUrl ?? "/images/default-avatar.jpeg")" 
+                                         alt="@suggestion.UserName"
+                                         class="avatar-img">
+                                </div>
+                                <div class="user-info">
+                                    <h5 class="user-name">@suggestion.UserName</h5>
+                                    <p class="mutual-count">
+                                        <i class="fas fa-users"></i>
+                                        @suggestion.MutualFriendsCount bạn chung
+                                    </p>
+                                </div>
+                            </div>
+
+                            @if (suggestion.MutualFriendsPreview.Any())
+                            {
+                                <div class="mutual-preview">
+                                    <small class="text-muted">Bạn chung: </small>
+                                    <span class="preview-names">
+                                        @string.Join(", ", suggestion.MutualFriendsPreview.Take(2))
+                                        @if (suggestion.MutualFriendsPreview.Count > 2)
+                                        {
+                                            <span> và @(suggestion.MutualFriendsCount - 2) người khác</span>
+                                        }
+                                    </span>
+                                </div>
+                            }
+
+                            <div class="card-actions">
+                                <form asp-action="SendRequest" method="post" class="d-inline">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="userId2" value="@suggestion.UserId" />
+                                    <button type="submit" class="btn btn-primary btn-add-friend">
+                                        <i class="fas fa-user-plus"></i> Kết bạn
+                                    </button>
+                                </form>
+                                <button class="btn btn-outline-info btn-view-mutual" 
+                                        data-user-id="@suggestion.UserId"
+                                        data-user-name="@suggestion.UserName">
+                                    <i class="fas fa-users"></i> Xem bạn chung
+                                </button>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Modal hiển thị bạn chung -->
+<div class="modal fade" id="mutualFriendsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-users"></i>
+                    Bạn chung với <span id="modalUserName"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div id="mutualFriendsContent">
+                    <div class="text-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Đang tải...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.suggestions-header {
+    background: linear-gradient(135deg, #FF5A57, #FCCBF0);
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    color: white;
+    text-align: center;
+}
+
+.suggestions-header h2 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.header-actions {
+    margin-top: 1rem;
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.suggestion-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(255, 90, 87, 0.1);
+    border: 1px solid rgba(252, 203, 240, 0.3);
+    transition: all 0.3s ease;
+}
+
+.suggestion-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(255, 90, 87, 0.2);
+}
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.user-avatar .avatar-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #FCCBF0;
+}
+
+.user-info {
+    flex: 1;
+}
+
+.user-name {
+    margin-bottom: 0.25rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.mutual-count {
+    margin: 0;
+    color: #FF5A57;
+    font-weight: 500;
+}
+
+/* No Suggestions Styling */
+.no-suggestions-container {
+    background: linear-gradient(135deg, rgba(255, 90, 87, 0.05), rgba(252, 203, 240, 0.05));
+    border: 2px dashed rgba(255, 90, 87, 0.2);
+    border-radius: 20px;
+    padding: 3rem 2rem;
+    margin: 2rem 0;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.no-suggestions-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #FF5A57, #FCCBF0, #FF5A57);
+    background-size: 200% 100%;
+    animation: gradientMove 3s ease-in-out infinite;
+}
+
+.no-suggestions-content {
+    position: relative;
+    z-index: 1;
+}
+
+.suggestion-icon {
+    width: 80px;
+    height: 80px;
+    background: linear-gradient(135deg, #FF5A57, #FCCBF0);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 8px 25px rgba(255, 90, 87, 0.3);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.suggestion-icon i {
+    font-size: 2.5rem;
+    color: white;
+}
+
+.no-suggestions-title {
+    color: #FF5A57;
+    font-weight: 700;
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    text-shadow: 0 2px 4px rgba(255, 90, 87, 0.1);
+}
+
+.no-suggestions-text {
+    color: #666;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.btn-find-friends {
+    background: linear-gradient(135deg, #FF5A57, #FCCBF0);
+    border: none;
+    padding: 0.8rem 2rem;
+    font-weight: 600;
+    border-radius: 25px;
+    box-shadow: 0 4px 15px rgba(255, 90, 87, 0.3);
+    transition: all 0.3s ease;
+    text-transform: none;
+    font-size: 1rem;
+}
+
+.btn-find-friends:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(255, 90, 87, 0.4);
+    background: linear-gradient(135deg, #e54946, #f0b8e6);
+}
+
+.btn-find-friends i {
+    margin-right: 0.5rem;
+}
+
+@@keyframes gradientMove {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+@@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.mutual-preview {
+    background: rgba(252, 203, 240, 0.2);
+    padding: 0.75rem;
+    border-radius: 10px;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+}
+
+.preview-names {
+    color: #333;
+    font-weight: 500;
+}
+
+.card-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.card-actions .btn {
+    border-radius: 20px;
+    font-size: 0.875rem;
+    flex: 1;
+    min-width: 120px;
+}
+
+.no-suggestions {
+    background: white;
+    border-radius: 15px;
+    margin: 2rem 0;
+}
+
+@@media (max-width: 768px) {
+    .suggestions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .header-actions {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .card-actions {
+        flex-direction: column;
+    }
+}
+</style>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Xử lý click vào nút "Xem bạn chung"
+            document.querySelectorAll('.btn-view-mutual').forEach(button => {
+                button.addEventListener('click', function() {
+                    const userId = this.dataset.userId;
+                    const userName = this.dataset.userName;
+                    
+                    document.getElementById('modalUserName').textContent = userName;
+                    
+                    // Hiển thị modal
+                    const modal = new bootstrap.Modal(document.getElementById('mutualFriendsModal'));
+                    modal.show();
+                    
+                    // Load danh sách bạn chung
+                    loadMutualFriends(userId);
+                });
+            });
+        });
+
+        async function loadMutualFriends(targetUserId) {
+            const content = document.getElementById('mutualFriendsContent');
+            
+            try {
+                const response = await fetch(`/Friendship/GetMutualFriendsList?targetUserId=${targetUserId}`);
+                const data = await response.json();
+                
+                if (data.success && data.friends.length > 0) {
+                    content.innerHTML = `
+                        <div class="row">
+                            ${data.friends.map(friend => `
+                                <div class="col-md-6 mb-3">
+                                    <div class="d-flex align-items-center">
+                                        <img src="${friend.avatarUrl}" 
+                                             alt="${friend.name}" 
+                                             class="rounded-circle me-3"
+                                             style="width: 40px; height: 40px; object-fit: cover;">
+                                        <span>${friend.name}</span>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    `;
+                } else {
+                    content.innerHTML = '<p class="text-center text-muted">Không có bạn chung</p>';
+                }
+            } catch (error) {
+                content.innerHTML = '<p class="text-center text-danger">Lỗi khi tải danh sách bạn chung</p>';
+            }
+        }
+    </script>
+} 

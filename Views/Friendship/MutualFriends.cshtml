@@ -1,0 +1,158 @@
+@model Zela.ViewModels.MutualFriendsViewModel
+
+@{
+    ViewData["Title"] = $"Bạn chung với {Model.TargetUser.FullName ?? Model.TargetUser.Email}";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/themes/chat-theme.css"/>
+    <link rel="stylesheet" href="~/css/pages/friend.css"/>
+}
+
+<div class="container">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="mutual-friends-header">
+                <h2>
+                    <i class="fas fa-users"></i>
+                    Bạn chung với @(Model.TargetUser.FullName ?? Model.TargetUser.Email)
+                </h2>
+                <p class="text-muted">@Model.TotalCount bạn chung</p>
+                <a href="@Url.Action("Find")" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Quay lại
+                </a>
+            </div>
+
+            <!-- Mutual Friends List -->
+            @if (!Model.MutualFriends.Any())
+            {
+                <div class="no-mutual-friends">
+                    <div class="text-center py-5">
+                        <i class="fas fa-user-friends fa-3x text-muted mb-3"></i>
+                        <h4>Chưa có bạn chung</h4>
+                        <p class="text-muted">Bạn và @(Model.TargetUser.FullName ?? Model.TargetUser.Email) chưa có bạn chung nào.</p>
+                    </div>
+                </div>
+            }
+            else
+            {
+                <div class="mutual-friends-grid">
+                    @foreach (var friend in Model.MutualFriends)
+                    {
+                        <div class="mutual-friend-card">
+                            <div class="friend-avatar">
+                                <img src="@(friend.AvatarUrl ?? "/images/default-avatar.jpeg")" 
+                                     alt="@(friend.FullName ?? friend.Email)"
+                                     class="avatar-img">
+                            </div>
+                            <div class="friend-info">
+                                <h5 class="friend-name">@(friend.FullName ?? friend.Email)</h5>
+                                <div class="friend-actions">
+                                    <a href="@Url.Action("Index", "Chat", new { friendId = friend.UserId })" 
+                                       class="btn btn-sm btn-primary">
+                                        <i class="fas fa-comment"></i> Nhắn tin
+                                    </a>
+                                    <a href="@Url.Action("MutualFriends", new { targetUserId = friend.UserId })" 
+                                       class="btn btn-sm btn-outline-info">
+                                        <i class="fas fa-users"></i> Bạn chung
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+.mutual-friends-header {
+    background: linear-gradient(135deg, #FF5A57, #FCCBF0);
+    padding: 2rem;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    color: white;
+    text-align: center;
+}
+
+.mutual-friends-header h2 {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+}
+
+.mutual-friends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+    padding: 1rem 0;
+}
+
+.mutual-friend-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(255, 90, 87, 0.1);
+    border: 1px solid rgba(252, 203, 240, 0.3);
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.mutual-friend-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(255, 90, 87, 0.2);
+}
+
+.friend-avatar .avatar-img {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 3px solid #FCCBF0;
+}
+
+.friend-info {
+    flex: 1;
+}
+
+.friend-name {
+    margin-bottom: 0.5rem;
+    color: #333;
+    font-weight: 600;
+}
+
+.friend-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.friend-actions .btn {
+    border-radius: 20px;
+    font-size: 0.875rem;
+}
+
+.no-mutual-friends {
+    background: white;
+    border-radius: 15px;
+    margin: 2rem 0;
+}
+
+@@media (max-width: 768px) {
+    .mutual-friends-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .mutual-friend-card {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .friend-actions {
+        justify-content: center;
+    }
+}
+</style> 

@@ -1,41 +1,108 @@
 @{
-    ViewData["Title"] = "Phòng họp";
-    var code = ViewBag.MeetingCode as string ?? "";
-    var isHost = (bool)ViewBag.IsHost;
+    ViewData["Title"] = "Video Call Room";
 }
 
-@section Styles {
-    <link rel="stylesheet" href="~/css/pages/room-videocall.css"/>
-}
+<link href="~/css/pages/room-videocall.css" rel="stylesheet" />
 
 <div class="videocall-container">
-    <h2>Phòng: @(code)</h2>
-
-    <!-- Container hiển thị và copy code -->
+    <h2>🎥 Phòng họp: @ViewBag.meetingName</h2>
+    
     <div class="meeting-code-container">
-        <input id="meeting-code-input" readonly value="@(code)"/>
-        <button id="copy-code-btn" class="btn-copy">Copy mã phòng</button>
+        <input type="text" id="meeting-code-input" value="@ViewBag.code" readonly>
+        <button id="copy-code-btn">Copy mã phòng</button>
     </div>
 
-    <!-- Controls -->
+    <div id="loading-overlay">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <p class="loading-message">Đang kết nối...</p>
+        </div>
+    </div>
+
+    <div id="error-notification" style="display: none;">
+        <div class="error-content">
+            <span class="error-icon">⚠️</span>
+            <span class="error-message">Có lỗi xảy ra</span>
+            <button class="error-close">&times;</button>
+        </div>
+    </div>
+
+    <div id="connection-status" class="connection-status connecting">
+        <span class="status-icon">🔄</span>
+        <span class="status-text">Đang kết nối...</span>
+    </div>
+
     <div id="controls">
-        <button id="toggle-mic" class="btn btn-secondary">Tắt mic</button>
-        <button id="toggle-cam" class="btn btn-secondary">Tắt cam</button>
-        <button id="share-screen" class="btn btn-secondary">Chia sẻ màn hình</button>
-        <button id="btnLeave" class="btn btn-warning">Rời cuộc gọi</button>
-        @if (isHost)
-        {
-            <button id="btnEnd" class="btn btn-danger">Kết thúc cuộc gọi</button>
-        }
+        <button id="toggle-mic" class="btn">🎤 Micro</button>
+        <button id="toggle-cam" class="btn">📹 Camera</button>
+        <button id="share-screen" class="btn">🖥️ Chia sẻ màn hình</button>
+        <button id="toggle-quality" class="btn btn-info">⚙️ Chất lượng</button>
+        <button id="toggle-recording" class="btn btn-success">🎥 Ghi hình</button>
+        <button id="toggle-stats" class="btn btn-info">📊 Xem thống kê</button>
+        <button id="btnLeave" class="btn" onclick="window.location.href='/Meeting'">🚪 Rời phòng</button>
+        <button id="btnEnd" class="btn" onclick="if(confirm('Bạn có muốn kết thúc cuộc họp?')) window.location.href='/Meeting'">🔚 Kết thúc</button>
     </div>
 
-    <div id="video-grid" data-meeting-code="@(code)"></div>
+    <div id="video-grid"></div>
+
+    <!-- Stats Sidebar -->
+    <div id="stats-sidebar" class="stats-sidebar">
+        <div class="sidebar-header">
+            <h3>📊 Thống kê cuộc họp</h3>
+            <button id="close-stats" class="close-btn">&times;</button>
+        </div>
+        <div class="sidebar-content">
+            <div id="stats-loading" class="loading-spinner">
+                <div class="spinner"></div>
+                <p>Đang tải thống kê...</p>
+            </div>
+            <div id="stats-data" class="stats-data" style="display: none;">
+                <!-- Stats content will be loaded here -->
+            </div>
+            <div id="stats-error" class="error-message" style="display: none;">
+                <p>❌ Không thể tải thống kê</p>
+                <button id="retry-stats" class="btn btn-sm btn-primary">Thử lại</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quality Control Sidebar -->
+    <div id="quality-sidebar" class="stats-sidebar quality-sidebar">
+        <div class="sidebar-header">
+            <h3>⚙️ Chất lượng Video</h3>
+            <button id="close-quality" class="close-btn">&times;</button>
+        </div>
+        <div class="sidebar-content">
+            <div id="quality-content">
+                <!-- Quality control content will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Recording Sidebar -->
+    <div id="recording-sidebar" class="stats-sidebar recording-sidebar">
+        <div class="sidebar-header">
+            <h3>🎥 Ghi hình & Chụp ảnh</h3>
+            <button id="close-recording" class="close-btn">&times;</button>
+        </div>
+        <div class="sidebar-content">
+            <div id="recording-content">
+                <!-- Recording content will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar Overlay -->
+    <div id="sidebar-overlay" class="sidebar-overlay"></div>
 </div>
 
 @section Scripts {
     <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@7.0.5/dist/browser/signalr.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
     <script>
+        // Set global variables for recording system
+        window.meetingCode = '@ViewBag.code';
+        
         document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('copy-code-btn');
             const input = document.getElementById('meeting-code-input');
@@ -45,56 +112,64 @@
                 btn.textContent = 'Đã copy!';
                 setTimeout(() => btn.textContent = 'Copy mã phòng', 2000);
             });
-        });
 
-        // Thêm vào videocall.js
-        function updateVideoGridLayout() {
-            const videoGrid = document.getElementById('video-grid');
-            const videoCount = videoGrid.querySelectorAll('.video-container').length;
-
-            // Tạm thời tắt transition để layout thay đổi ngay lập tức
-            videoGrid.classList.add('immediate-layout');
-
-            // Cập nhật data-count
-            videoGrid.setAttribute('data-count', videoCount);
-
-            // Bật lại transition sau 50ms
-            setTimeout(() => {
-                videoGrid.classList.remove('immediate-layout');
-            }, 50);
-        }
-
-        // Gọi hàm này mỗi khi có video mới được thêm hoặc xóa
-        function addVideoToGrid(videoElement) {
-            const videoGrid = document.getElementById('video-grid');
-            videoGrid.appendChild(videoElement);
-            updateVideoGridLayout(); // Cập nhật ngay lập tức
-        }
-
-        function removeVideoFromGrid(videoElement) {
-            const videoGrid = document.getElementById('video-grid');
-            videoGrid.removeChild(videoElement);
-            updateVideoGridLayout(); // Cập nhật ngay lập tức
-        }
-
-        // Observer để theo dõi thay đổi trong video grid
-        const videoGridObserver = new MutationObserver(() => {
-            updateVideoGridLayout();
-        });
-
-        // Bắt đầu observe khi DOM loaded
-        document.addEventListener('DOMContentLoaded', () => {
-            const videoGrid = document.getElementById('video-grid');
-            if (videoGrid) {
-                videoGridObserver.observe(videoGrid, {
-                    childList: true,
-                    subtree: true
-                });
-
-                // Cập nhật layout ban đầu
-                updateVideoGridLayout();
+            // Reset button states on page load
+            const qualityBtn = document.getElementById('toggle-quality');
+            const recordingBtn = document.getElementById('toggle-recording');
+            const statsBtn = document.getElementById('toggle-stats');
+            
+            if (qualityBtn) {
+                qualityBtn.innerHTML = '⚙️ Chất lượng';
+                qualityBtn.classList.remove('active');
             }
+            
+            if (recordingBtn) {
+                recordingBtn.innerHTML = '🎥 Ghi hình';
+                recordingBtn.classList.remove('active');
+            }
+            
+            if (statsBtn) {
+                statsBtn.innerHTML = '📊 Xem thống kê';
+                statsBtn.classList.remove('active');
+            }
+            
+            // Ensure all sidebars are closed initially
+            const qualitySidebar = document.getElementById('quality-sidebar');
+            const recordingSidebar = document.getElementById('recording-sidebar');
+            const statsSidebar = document.getElementById('stats-sidebar');
+            const overlay = document.getElementById('sidebar-overlay');
+            
+            if (qualitySidebar) qualitySidebar.classList.remove('open');
+            if (recordingSidebar) recordingSidebar.classList.remove('open');
+            if (statsSidebar) statsSidebar.classList.remove('open');
+            if (overlay) overlay.classList.remove('show');
+
+            // Initialize sidebar systems after a short delay to ensure DOM is ready
+            setTimeout(() => {
+                // Initialize quality control system
+                if (typeof initializeQualityControl === 'function') {
+                    window.qualityController = initializeQualityControl();
+                    console.log('✅ Quality Control System initialized');
+                }
+                
+                // Initialize recording system
+                if (typeof initializeRecordingSystem === 'function') {
+                    window.recordingSystem = initializeRecordingSystem();
+                    console.log('✅ Recording System initialized');
+                }
+            }, 500);
         });
     </script>
-    <script src="~/js/videocall.js" defer></script>
+    
+    <!-- Main video call script - Load FIRST -->
+    <script src="~/js/videocall.js"></script>
+    
+    <!-- Quality Control System -->
+    <script src="~/js/quality-control.js"></script>
+    
+    <!-- Recording & Screenshots System -->
+    <script src="~/js/recording-system.js"></script>
+    
+    <!-- Stats Sidebar System -->
+    <script src="~/js/stats-sidebar.js"></script>
 }

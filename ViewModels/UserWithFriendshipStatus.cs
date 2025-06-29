@@ -7,6 +7,7 @@ namespace Zela.ViewModels
     {
         public int UserId { get; set; }
         public string UserName { get; set; }
+        public string Email { get; set; }
 
         /// <summary>
         /// StatusId: 0 = None, 1 = Pending, 2 = Accepted, 3 = Rejected (có thể không hiển thị)
@@ -14,6 +15,11 @@ namespace Zela.ViewModels
         public int StatusId { get; set; }
 
         public FriendshipRole Role { get; set; }
+        
+        /// <summary>
+        /// Số lượng bạn chung giữa currentUser và user này
+        /// </summary>
+        public int MutualFriendsCount { get; set; }
     }
 
     public enum FriendshipRole

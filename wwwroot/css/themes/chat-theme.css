@@ -19,7 +19,6 @@
     --theme-bg-primary: rgba(19, 24, 44, 0.95);   /* Nền chính - thêm để fix lỗi */
     --theme-bg-gradient: linear-gradient(135deg, var(--theme-primary-color) 0%, var(--theme-primary-dark) 100%);
     --theme-bg-secondary: rgba(27, 32, 98, 0.85); /* Nền phụ trong suốt dựa trên màu xanh đậm */
-    --theme-bg-tertiary: rgba(42, 48, 124, 0.6);  /* Nền tertiary - thêm để fix lỗi */
     --theme-bg-hover: rgba(224, 47, 117, 0.1);    /* Hover dựa trên màu hồng magenta */
     --theme-bg-active: rgba(224, 47, 117, 0.15);  /* Active dựa trên màu hồng magenta */
     --theme-bg-glass: rgba(255, 255, 255, 0.05);
@@ -34,7 +33,6 @@
 
     /* Border & Shadow */
     --theme-border-color: rgba(103, 0, 163, 0.4);  /* Viền dựa trên màu tím */
-    --theme-border-light: rgba(255, 255, 255, 0.1); /* Viền nhạt - thêm để fix lỗi */
     --theme-border-accent: var(--theme-accent-green);
     --theme-shadow-sm: 0 2px 4px rgba(5, 12, 56, 0.2);
     --theme-shadow-md: 0 4px 12px rgba(5, 12, 56, 0.25);
