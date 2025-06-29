@@ -13,6 +13,7 @@ using Zela.DbContext;
 using Zela.Hubs;
 using Zela.Services; // Namespace chứa ApplicationDbContext của bạn
 using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Server.IIS;
 using Zela.Services.Interface;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -120,6 +121,27 @@ builder.Services.AddScoped<IStickerService, StickerService>();
 // add Recording
 builder.Services.AddScoped<IRecordingService, RecordingService>();
 
+// Configure form options for file uploads
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.MultipartBodyLengthLimit = 50 * 1024 * 1024; // 50MB
+    options.ValueLengthLimit = 50 * 1024 * 1024; // 50MB for form values
+    options.KeyLengthLimit = 50 * 1024 * 1024; // 50MB for form keys
+    options.MemoryBufferThreshold = int.MaxValue;
+});
+
+// Configure Kestrel server options for large file uploads
+builder.Services.Configure<IISServerOptions>(options =>
+{
+    options.MaxRequestBodySize = 50 * 1024 * 1024; // 50MB
+});
+
+// Configure Kestrel server limits
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 50 * 1024 * 1024; // 50MB
+});
+
 // ---------------------------------------------
 // 6) Build WebApplication
 //    - Sau khi đăng ký hết services, gọi Build() để tạo đối tượng app.
@@ -185,11 +207,5 @@ app.UseStatusCodePagesWithRedirects("/Account/Login?error=403");
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<MeetingHub>("/meetingHub");
 
-
 // 7.10) Chạy ứng dụng, lắng nghe request trên port đã cấu hình
 app.Run();
-
-builder.Services.Configure<FormOptions>(options =>
-{
-    options.MultipartBodyLengthLimit = 50 * 1024 * 1024; // 50MB
-});

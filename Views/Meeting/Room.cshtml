@@ -3,9 +3,47 @@
 }
 
 <link href="~/css/pages/room-videocall.css" rel="stylesheet" />
+<style>
+    .host-badge {
+        background: linear-gradient(135deg, #ffd700, #ff8c00);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8em;
+        font-weight: 600;
+        margin-left: 10px;
+        box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+        animation: glow 2s ease-in-out infinite alternate;
+    }
+    
+    .participant-badge {
+        background: linear-gradient(135deg, #4a90e2, #357abd);
+        color: white;
+        padding: 4px 12px;
+        border-radius: 15px;
+        font-size: 0.8em;
+        font-weight: 600;
+        margin-left: 10px;
+        box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
+    }
+    
+    @@keyframes glow {
+        from { box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3); }
+        to { box-shadow: 0 4px 8px rgba(255, 215, 0, 0.6); }
+    }
+</style>
 
 <div class="videocall-container">
-    <h2>🎥 Phòng họp: @ViewBag.meetingName</h2>
+    <h2>🎥 Phòng họp: @ViewBag.meetingName 
+        @if (ViewBag.IsHost == true)
+        {
+            <span class="host-badge">👑 Host</span>
+        }
+        else
+        {
+            <span class="participant-badge">👤 Tham gia</span>
+        }
+    </h2>
     
     <div class="meeting-code-container">
         <input type="text" id="meeting-code-input" value="@ViewBag.code" readonly>
@@ -38,12 +76,18 @@
         <button id="share-screen" class="btn">🖥️ Chia sẻ màn hình</button>
         <button id="toggle-quality" class="btn btn-info">⚙️ Chất lượng</button>
         <button id="toggle-recording" class="btn btn-success">🎥 Ghi hình</button>
-        <button id="toggle-stats" class="btn btn-info">📊 Xem thống kê</button>
+        @if (ViewBag.IsHost == true)
+        {
+            <button id="toggle-stats" class="btn btn-info">📊 Xem thống kê</button>
+        }
         <button id="btnLeave" class="btn" onclick="window.location.href='/Meeting'">🚪 Rời phòng</button>
-        <button id="btnEnd" class="btn" onclick="if(confirm('Bạn có muốn kết thúc cuộc họp?')) window.location.href='/Meeting'">🔚 Kết thúc</button>
+        @if (ViewBag.IsHost == true)
+        {
+            <button id="btnEnd" class="btn" onclick="if(confirm('Bạn có muốn kết thúc cuộc họp cho tất cả mọi người?')) window.location.href='/Meeting'">🔚 Kết thúc cuộc họp</button>
+        }
     </div>
 
-    <div id="video-grid"></div>
+    <div id="video-grid" data-meeting-code="@ViewBag.code" data-user-id="@ViewBag.UserId"></div>
 
     <!-- Stats Sidebar -->
     <div id="stats-sidebar" class="stats-sidebar">
@@ -97,11 +141,13 @@
 </div>
 
 @section Scripts {
-    <script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@7.0.5/dist/browser/signalr.min.js"></script>
+    @* SignalR already loaded in _Layout.cshtml *@
     <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
     <script>
         // Set global variables for recording system
         window.meetingCode = '@ViewBag.code';
+        window.currentUserId = @ViewBag.UserId;
+        window.isHost = @(ViewBag.IsHost?.ToString().ToLower() ?? "false");
         
         document.addEventListener('DOMContentLoaded', () => {
             const btn = document.getElementById('copy-code-btn');
@@ -144,8 +190,17 @@
             if (statsSidebar) statsSidebar.classList.remove('open');
             if (overlay) overlay.classList.remove('show');
 
-            // Initialize sidebar systems after a short delay to ensure DOM is ready
+            // Initialize video call system first
             setTimeout(() => {
+                // Initialize video call system
+                if (typeof initializeVideoCall === 'function') {
+                    initializeVideoCall().then(() => {
+                        console.log('✅ Video Call System initialized');
+                    }).catch(error => {
+                        console.error('❌ Failed to initialize video call:', error);
+                    });
+                }
+                
                 // Initialize quality control system
                 if (typeof initializeQualityControl === 'function') {
                     window.qualityController = initializeQualityControl();

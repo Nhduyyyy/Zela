@@ -1,2 +1,136 @@
 ﻿<script src="~/lib/jquery-validation/dist/jquery.validate.min.js"></script>
 <script src="~/lib/jquery-validation-unobtrusive/jquery.validate.unobtrusive.min.js"></script>
+
+<script>
+    // File size validation for uploads
+    function validateFileSize(fileInput, maxSizeMB = 50) {
+        const files = fileInput.files;
+        const maxSizeBytes = maxSizeMB * 1024 * 1024; // Convert MB to bytes
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.size > maxSizeBytes) {
+                alert(`File "${file.name}" quá lớn. Kích thước tối đa cho phép: ${maxSizeMB}MB`);
+                fileInput.value = ''; // Clear the input
+                return false;
+            }
+        }
+        return true;
+    }
+    
+    // Auto-attach to all file inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                validateFileSize(this, 50);
+            });
+        });
+    });
+    
+    // Show file size info
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+    
+    // Display selected files info
+    function displayFileInfo(fileInput) {
+        const files = fileInput.files;
+        const infoDiv = document.getElementById('file-info') || createFileInfoDiv();
+        
+        if (files.length === 0) {
+            infoDiv.innerHTML = '';
+            return;
+        }
+        
+        let html = '<div class="file-info-container"><h4>📁 Files được chọn:</h4>';
+        let totalSize = 0;
+        
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            totalSize += file.size;
+            html += `
+                <div class="file-item">
+                    <span class="file-name">📄 ${file.name}</span>
+                    <span class="file-size">${formatFileSize(file.size)}</span>
+                </div>
+            `;
+        }
+        
+        html += `
+            <div class="total-size">
+                <strong>📊 Tổng: ${formatFileSize(totalSize)} (${files.length} file${files.length > 1 ? 's' : ''})</strong>
+            </div>
+        </div>`;
+        
+        infoDiv.innerHTML = html;
+    }
+    
+    function createFileInfoDiv() {
+        const div = document.createElement('div');
+        div.id = 'file-info';
+        div.style.cssText = `
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: white;
+        `;
+        
+        // Insert after the file input
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) {
+            fileInput.parentNode.insertBefore(div, fileInput.nextSibling);
+        }
+        
+        return div;
+    }
+    
+    // Attach file info display to file inputs
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInputs = document.querySelectorAll('input[type="file"]');
+        fileInputs.forEach(input => {
+            input.addEventListener('change', function() {
+                displayFileInfo(this);
+            });
+        });
+    });
+</script>
+
+<style>
+    .file-info-container {
+        font-family: Arial, sans-serif;
+    }
+    
+    .file-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 0;
+        border-bottom: 1px solid rgba(255,255,255,0.1);
+    }
+    
+    .file-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .file-size {
+        margin-left: 10px;
+        font-weight: bold;
+        color: #4CAF50;
+    }
+    
+    .total-size {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 2px solid rgba(255,255,255,0.2);
+        text-align: center;
+        color: #FFD700;
+    }
+</style>

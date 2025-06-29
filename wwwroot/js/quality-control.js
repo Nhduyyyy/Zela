@@ -574,10 +574,15 @@ class QualityController {
     updateStatsDisplay() {
         const { bandwidth, latency, frameRate, resolution } = this.connectionStats;
 
-        document.getElementById('bandwidth-value').textContent = `${Math.round(bandwidth)} kbps`;
-        document.getElementById('latency-value').textContent = `${Math.round(latency)} ms`;
-        document.getElementById('framerate-value').textContent = `${Math.round(frameRate)} fps`;
-        document.getElementById('resolution-value').textContent = `${resolution.width}x${resolution.height}`;
+        const bandwidthEl = document.getElementById('bandwidth-value');
+        const latencyEl = document.getElementById('latency-value');
+        const framerateEl = document.getElementById('framerate-value');
+        const resolutionEl = document.getElementById('resolution-value');
+
+        if (bandwidthEl) bandwidthEl.textContent = `${Math.round(bandwidth)} kbps`;
+        if (latencyEl) latencyEl.textContent = `${Math.round(latency)} ms`;
+        if (framerateEl) framerateEl.textContent = `${Math.round(frameRate)} fps`;
+        if (resolutionEl) resolutionEl.textContent = `${resolution.width}x${resolution.height}`;
     }
 
     updateQualityIndicators() {
@@ -588,22 +593,24 @@ class QualityController {
         const statusElement = document.getElementById('quality-status');
         const detailElement = document.getElementById('quality-detail');
         
-        if (qualityScore >= 80) {
-            iconElement.innerHTML = '<i class="bi bi-wifi" style="color: var(--success);"></i>';
-            statusElement.textContent = 'Kết nối tuyệt vời';
-            detailElement.textContent = 'Chất lượng cuộc gọi cao';
-        } else if (qualityScore >= 60) {
-            iconElement.innerHTML = '<i class="bi bi-wifi-2" style="color: var(--warning);"></i>';
-            statusElement.textContent = 'Kết nối tốt';
-            detailElement.textContent = 'Chất lượng cuộc gọi ổn định';
-        } else if (qualityScore >= 40) {
-            iconElement.innerHTML = '<i class="bi bi-wifi-1" style="color: var(--warning-alt);"></i>';
-            statusElement.textContent = 'Kết nối trung bình';
-            detailElement.textContent = 'Có thể gặp một số vấn đề';
-        } else {
-            iconElement.innerHTML = '<i class="bi bi-wifi-off" style="color: var(--danger);"></i>';
-            statusElement.textContent = 'Kết nối kém';
-            detailElement.textContent = 'Chất lượng cuộc gọi thấp';
+        if (iconElement && statusElement && detailElement) {
+            if (qualityScore >= 80) {
+                iconElement.innerHTML = '<i class="bi bi-wifi" style="color: var(--success);"></i>';
+                statusElement.textContent = 'Kết nối tuyệt vời';
+                detailElement.textContent = 'Chất lượng cuộc gọi cao';
+            } else if (qualityScore >= 60) {
+                iconElement.innerHTML = '<i class="bi bi-wifi-2" style="color: var(--warning);"></i>';
+                statusElement.textContent = 'Kết nối tốt';
+                detailElement.textContent = 'Chất lượng cuộc gọi ổn định';
+            } else if (qualityScore >= 40) {
+                iconElement.innerHTML = '<i class="bi bi-wifi-1" style="color: var(--warning-alt);"></i>';
+                statusElement.textContent = 'Kết nối trung bình';
+                detailElement.textContent = 'Có thể gặp một số vấn đề';
+            } else {
+                iconElement.innerHTML = '<i class="bi bi-wifi-off" style="color: var(--danger);"></i>';
+                statusElement.textContent = 'Kết nối kém';
+                detailElement.textContent = 'Chất lượng cuộc gọi thấp';
+            }
         }
     }
 
@@ -630,16 +637,20 @@ class QualityController {
 
     updateQualityInfo(type, quality) {
         const infoElement = document.getElementById(`${type}-quality-info`);
+        if (!infoElement) return;
+        
         const profile = this.qualityProfiles[quality];
         
         if (quality === 'auto') {
             infoElement.textContent = 'Tự động điều chỉnh theo kết nối';
-        } else {
+        } else if (profile) {
             const constraints = profile[type];
-            if (type === 'video') {
-                infoElement.textContent = `${constraints.width}x${constraints.height} @ ${constraints.frameRate}fps`;
-            } else if (type === 'audio') {
-                infoElement.textContent = `${constraints.bitrate}kbps @ ${constraints.sampleRate/1000}kHz`;
+            if (constraints) {
+                if (type === 'video') {
+                    infoElement.textContent = `${constraints.width}x${constraints.height} @ ${constraints.frameRate}fps`;
+                } else if (type === 'audio') {
+                    infoElement.textContent = `${constraints.bitrate}kbps @ ${constraints.sampleRate/1000}kHz`;
+                }
             }
         }
     }

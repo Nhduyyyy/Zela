@@ -1231,7 +1231,13 @@ class RecordingSystem {
         const startBtn = document.getElementById('start-recording-btn');
         const pauseBtn = document.getElementById('pause-recording-btn');
         const stopBtn = document.getElementById('stop-recording-btn');
-        const indicator = document.getElementById('recording-indicator');
+        const indicator = document.getElementById('recording-status');
+
+        // Check if elements exist before updating
+        if (!startBtn || !pauseBtn || !stopBtn || !indicator) {
+            console.warn('Recording UI elements not found, skipping update');
+            return;
+        }
 
         switch (state) {
             case 'recording':
@@ -1239,16 +1245,13 @@ class RecordingSystem {
                 pauseBtn.disabled = false;
                 stopBtn.disabled = false;
                 
-                indicator.innerHTML = '<i class="bi bi-record-circle recording-pulse"></i><span>Đang ghi hình...</span>';
-                indicator.className = 'status-indicator recording';
-                
-                pauseBtn.innerHTML = '<i class="bi bi-pause-circle"></i><span>Tạm dừng</span>';
+                indicator.textContent = 'Đang ghi hình...';
+                pauseBtn.innerHTML = '⏸️ Tạm dừng';
                 break;
 
             case 'paused':
-                pauseBtn.innerHTML = '<i class="bi bi-play-circle"></i><span>Tiếp tục</span>';
-                indicator.innerHTML = '<i class="bi bi-pause-circle"></i><span>Đã tạm dừng</span>';
-                indicator.className = 'status-indicator paused';
+                pauseBtn.innerHTML = '▶️ Tiếp tục';
+                indicator.textContent = 'Đã tạm dừng';
                 break;
 
             case 'stopped':
@@ -1256,10 +1259,8 @@ class RecordingSystem {
                 pauseBtn.disabled = true;
                 stopBtn.disabled = true;
                 
-                indicator.innerHTML = '<i class="bi bi-circle"></i><span>Sẵn sàng ghi hình</span>';
-                indicator.className = 'status-indicator ready';
-                
-                pauseBtn.innerHTML = '<i class="bi bi-pause-circle"></i><span>Tạm dừng</span>';
+                indicator.textContent = 'Microphone Ready';
+                pauseBtn.innerHTML = '⏸️ Tạm dừng';
                 break;
         }
     }
@@ -1628,19 +1629,25 @@ class RecordingSystem {
             
             if (preferences.quality) {
                 this.setRecordingQuality(preferences.quality);
-                document.getElementById('recording-quality-select').value = preferences.quality;
+                const qualitySelect = document.getElementById('recording-quality-select');
+                if (qualitySelect) qualitySelect.value = preferences.quality;
             }
             
             if (preferences.screenshotSettings) {
                 Object.assign(this.screenshotSettings, preferences.screenshotSettings);
-                document.getElementById('screenshot-format-select').value = this.screenshotSettings.format;
+                const formatSelect = document.getElementById('screenshot-format-select');
+                if (formatSelect) formatSelect.value = this.screenshotSettings.format;
             }
             
             if (preferences.storageSettings) {
                 Object.assign(this.storageSettings, preferences.storageSettings);
-                document.getElementById('upload-cloud-checkbox').checked = this.storageSettings.uploadToCloud;
-                document.getElementById('save-local-checkbox').checked = this.storageSettings.saveLocally;
-                document.getElementById('auto-delete-checkbox').checked = this.storageSettings.autoDelete;
+                const uploadCloudCheckbox = document.getElementById('upload-cloud-checkbox');
+                const saveLocalCheckbox = document.getElementById('save-local-checkbox');
+                const autoDeleteCheckbox = document.getElementById('auto-delete-checkbox');
+                
+                if (uploadCloudCheckbox) uploadCloudCheckbox.checked = this.storageSettings.uploadToCloud;
+                if (saveLocalCheckbox) saveLocalCheckbox.checked = this.storageSettings.saveLocally;
+                if (autoDeleteCheckbox) autoDeleteCheckbox.checked = this.storageSettings.autoDelete;
             }
             
         } catch (error) {

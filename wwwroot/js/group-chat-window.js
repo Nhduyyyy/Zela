@@ -80,7 +80,11 @@ connection.on("ReceiveGroupSticker", function (msg) {
 // Start connection after initializing currentUserId
 function startSignalRConnection() {
     initializeCurrentUserId();
-    connection.start().catch(err => console.error(err.toString()));
+    
+    // Only start if not already connected or connecting
+    if (connection.state === signalR.HubConnectionState.Disconnected) {
+        connection.start().catch(err => console.error('GroupChat SignalR start error:', err.toString()));
+    }
 }
 
 // ===== INDEX PAGE FUNCTIONALITY =====
@@ -195,9 +199,13 @@ function initializeDetailsPage() {
         currentGroupId = Number(groupIdElement.dataset.groupId);
 
         // Tham gia vào nhóm
-        connection.start().then(function() {
+        if (connection.state === signalR.HubConnectionState.Disconnected) {
+            connection.start().then(function() {
+                connection.invoke("JoinGroup", currentGroupId);
+            }).catch(err => console.error('GroupChat details page SignalR start error:', err));
+        } else if (connection.state === signalR.HubConnectionState.Connected) {
             connection.invoke("JoinGroup", currentGroupId);
-        });
+        }
 
         // Load tin nhắn cũ
         loadMessages();

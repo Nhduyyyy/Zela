@@ -74,6 +74,7 @@ namespace Zela.Controllers
         /// <param name="files">Danh sách file đính kèm (có thể null)</param>
         /// <returns>Ok 200 hoặc lỗi 500</returns>
         [HttpPost]
+        [RequestSizeLimit(50 * 1024 * 1024)] // 50MB limit
         public async Task<IActionResult> SendMessage(int friendId, string content, List<IFormFile> files)
         {
             try

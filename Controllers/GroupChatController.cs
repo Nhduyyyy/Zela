@@ -49,6 +49,7 @@ namespace Zela.Controllers
 
         // Gửi tin nhắn nhóm với file
         [HttpPost]
+        [RequestSizeLimit(50 * 1024 * 1024)] // 50MB limit
         public async Task<IActionResult> SendGroupMessage(int groupId, string content, List<IFormFile> files, long? replyToMessageId = null)
         {
             try

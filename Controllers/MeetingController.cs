@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http.Features;
 using Zela.Models.ViewModels;
 using Zela.Services;
 using Zela.Services.Interface;
@@ -68,8 +69,11 @@ namespace Zela.Controllers
             // 2. Xác định host
             ViewBag.IsHost = await _meetingService.IsHostAsync(code, userId);
 
-            // 3. Luôn truyền meeting code
+            // 3. Luôn truyền meeting code và userId
             ViewBag.MeetingCode = code;
+            ViewBag.UserId = userId;
+            ViewBag.code = code; // Keep this for compatibility
+            ViewBag.meetingName = $"Meeting {code}"; // Add meeting name
             return View();
         }
 
@@ -187,6 +191,7 @@ namespace Zela.Controllers
         }
 
         [HttpPost]
+        [RequestSizeLimit(50 * 1024 * 1024)] // 50MB limit
         public async Task<IActionResult> UploadRecording(IFormFile file, string type, string meetingCode, int? duration = null, string? metadata = null, string? thumbnailUrl = null, Guid? sessionId = null)
         {
             try
@@ -460,6 +465,7 @@ namespace Zela.Controllers
         }
 
         [HttpPost]
+        [RequestSizeLimit(50 * 1024 * 1024)] // 50MB limit
         public async Task<IActionResult> ValidateRecordingFile(IFormFile file, string type)
         {
             try
