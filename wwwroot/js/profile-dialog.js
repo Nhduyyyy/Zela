@@ -153,27 +153,35 @@ function saveProfile() {
     });
 }
 
-document.getElementById('avatarFile').addEventListener('change', function(e) {
-    const file = e.target.files[0];
-    if (file) {
-        // Validate file type
-        if (!file.type.startsWith('image/')) {
-            alert('Vui lòng chọn file ảnh hợp lệ');
-            return;
-        }
+// Wait for DOM to be ready before adding event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const avatarFileInput = document.getElementById('avatarFile');
+    if (avatarFileInput) {
+        avatarFileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Vui lòng chọn file ảnh hợp lệ');
+                    return;
+                }
 
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            alert('Kích thước ảnh không được vượt quá 5MB');
-            return;
-        }
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Kích thước ảnh không được vượt quá 5MB');
+                    return;
+                }
 
-        // Preview image
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            document.getElementById('avatarPreview').src = e.target.result;
-            document.getElementById('AvatarUrl').value = e.target.result;
-        };
-        reader.readAsDataURL(file);
+                // Preview image
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const avatarPreview = document.getElementById('avatarPreview');
+                    const avatarUrl = document.getElementById('AvatarUrl');
+                    if (avatarPreview) avatarPreview.src = e.target.result;
+                    if (avatarUrl) avatarUrl.value = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
     }
 }); 

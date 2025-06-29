@@ -7,3 +7,5 @@
 @import url("./chat/_responsive.css");
 @import url("./chat/_features.css");
 @import url("./chat/_sticker.css");
+@import url("./chat/_reactions.css");
+@import url("./chat/_group-chat-messages.css");

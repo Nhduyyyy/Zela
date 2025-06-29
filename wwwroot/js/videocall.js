@@ -19,6 +19,9 @@ let retryCount = 0;      // Retry counter
 const MAX_RETRIES = 5;   // Maximum retry attempts
 let currentUserId = null; // Current user ID for tracking
 
+// ======== CONNECTION LOCK ========
+let isConnecting = false; // Prevent race conditions
+
 // ======== QUALITY CONTROL INTEGRATION ========
 let qualityController = null; // Will be set from quality-control.js
 
@@ -49,6 +52,9 @@ const connection = new signalR.HubConnectionBuilder()
     .withUrl('/meetingHub')
     .withAutomaticReconnect([0, 2000, 10000, 30000])
     .build();
+
+// Expose connection globally for other components
+window.connection = connection;
 
 // ======== GET USER ID ========
 function getCurrentUserId() {
@@ -186,18 +192,36 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log('Current User ID:', currentUserId);
     
     setupControls();
-    initializeVideoCall();
+    
+    // NOTE: initializeVideoCall() is called from Room.cshtml to avoid double initialization
+    console.log('✅ videocall.js DOM ready, waiting for Room.cshtml to initialize...');
 });
 
 // ======== KHỞI TẠO VIDEO CALL ========
+let isInitializing = false; // Flag to prevent double initialization
 async function initializeVideoCall() {
+    // Prevent double initialization
+    if (isInitializing) {
+        console.log('⚠️ initializeVideoCall already in progress, skipping...');
+        return;
+    }
+    
+    if (connection.state !== signalR.HubConnectionState.Disconnected) {
+        console.log('⚠️ Connection not in Disconnected state:', connection.state);
+        return;
+    }
+    
+    isInitializing = true;
     try {
         showLoading('Đang khởi tạo cuộc họp...');
         await start();
         hideLoading();
+        console.log('✅ Video call initialized successfully');
     } catch (error) {
         hideLoading();
         handleError(error, 'Không thể khởi tạo cuộc họp');
+    } finally {
+        isInitializing = false;
     }
 }
 
@@ -280,27 +304,74 @@ async function getUserMediaWithRetry(constraints = { video: true, audio: true })
 
 // ======== SIGNALR CONNECTION WITH RETRY ========
 async function connectSignalRWithRetry() {
+    // Prevent race conditions with global lock
+    if (isConnecting) {
+        console.log('⏳ Connection already in progress, waiting...');
+        // Wait for existing connection attempt to complete
+        while (isConnecting) {
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        // Check final state after waiting
+        if (connection.state === signalR.HubConnectionState.Connected) {
+            console.log('✅ Connection completed by another process');
+            return;
+        }
+    }
+    
+    // Set lock
+    isConnecting = true;
     let attempts = 0;
     
-    while (attempts < MAX_RETRIES) {
-        try {
-            await connection.start();
-            console.log('SignalR connected');
-            retryCount = 0; // Reset retry count on success
-            return;
-        } catch (error) {
-            attempts++;
-            console.warn(`SignalR connection attempt ${attempts} failed:`, error);
-            
-            if (attempts >= MAX_RETRIES) {
-                throw new Error(ERROR_TYPES.SIGNALR_CONNECTION_FAILED);
+    try {
+        while (attempts < MAX_RETRIES) {
+            try {
+                // Double-check connection state with lock
+                if (connection.state === signalR.HubConnectionState.Connected) {
+                    console.log('✅ SignalR already connected');
+                    return;
+                } else if (connection.state === signalR.HubConnectionState.Connecting) {
+                    console.log('⏳ Connection already in progress, waiting...');
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    continue;
+                } else if (connection.state === signalR.HubConnectionState.Disconnected) {
+                    console.log('🔄 Starting SignalR connection...');
+                    await connection.start();
+                    console.log('✅ SignalR connected successfully');
+                    retryCount = 0; // Reset retry count on success
+                    return;
+                } else {
+                    // Reconnecting or other states - wait
+                    console.log(`⏳ SignalR in ${connection.state} state, waiting...`);
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    continue;
+                }
+            } catch (error) {
+                attempts++;
+                console.warn(`❌ SignalR connection attempt ${attempts} failed:`, error);
+                
+                if (attempts >= MAX_RETRIES) {
+                    throw new Error(ERROR_TYPES.SIGNALR_CONNECTION_FAILED);
+                }
+                
+                // Stop connection if it's in a bad state
+                try {
+                    if (connection.state !== signalR.HubConnectionState.Disconnected) {
+                        console.log('🛑 Stopping connection in bad state...');
+                        await connection.stop();
+                    }
+                } catch (stopError) {
+                    console.warn('⚠️ Error stopping connection:', stopError);
+                }
+                
+                // Exponential backoff
+                const delay = Math.pow(2, attempts) * 1000;
+                showLoading(`Đang thử kết nối lại... (${attempts}/${MAX_RETRIES})`);
+                await new Promise(resolve => setTimeout(resolve, delay));
             }
-            
-            // Exponential backoff
-            const delay = Math.pow(2, attempts) * 1000;
-            showLoading(`Đang thử kết nối lại... (${attempts}/${MAX_RETRIES})`);
-            await new Promise(resolve => setTimeout(resolve, delay));
         }
+    } finally {
+        // Always release lock
+        isConnecting = false;
     }
 }
 
@@ -824,9 +895,18 @@ document.addEventListener('visibilitychange', () => {
         // Resume video when page becomes visible
         if (connectionState === 'disconnected') {
             showError('Đang thử kết nối lại...', true);
-            initializeVideoCall().catch(error => {
-                console.error('Error reconnecting:', error);
-            });
+            // Only reconnect SignalR, don't re-initialize everything
+            if (!isConnecting) {
+                connectSignalRWithRetry().then(() => {
+                    console.log('✅ Reconnected successfully');
+                    hideError();
+                }).catch(error => {
+                    console.error('Error reconnecting:', error);
+                    showError('Không thể kết nối lại', false);
+                });
+            } else {
+                console.log('⏳ Connection already in progress, skipping reconnect');
+            }
         }
     }
 });

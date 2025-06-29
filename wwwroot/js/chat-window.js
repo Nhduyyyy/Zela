@@ -46,7 +46,12 @@
         }
     });
 
-    connection.start().catch(err => console.error('SignalR error:', err));
+    // Only start if not already connected or connecting
+    if (connection.state === signalR.HubConnectionState.Disconnected) {
+        connection.start().catch(err => console.error('Chat SignalR error:', err));
+    } else {
+        console.log('Chat SignalR already connected or connecting');
+    }
 
     // Gửi tin nhắn
     // Show loading state

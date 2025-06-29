@@ -103,6 +103,12 @@ class StatsSidebar {
     show() {
         if (this.isOpen) return;
         
+        // Check if user is host
+        if (!window.isHost) {
+            this.showError('Chỉ host mới có thể xem thống kê cuộc họp');
+            return;
+        }
+        
         // Close other sidebars first
         this.closeAllSidebars();
         
@@ -193,6 +199,12 @@ class StatsSidebar {
     async loadStats() {
         if (!this.meetingCode) {
             this.showError('Không có mã phòng');
+            return;
+        }
+        
+        // Double-check host permission
+        if (!window.isHost) {
+            this.showError('Chỉ host mới có thể xem thống kê cuộc họp');
             return;
         }
         
