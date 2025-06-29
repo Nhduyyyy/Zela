@@ -16,4 +16,4 @@ public class MessageReactionSummaryViewModel
     public int Count { get; set; }
     public List<string> UserNames { get; set; } = new List<string>();
     public bool HasUserReaction { get; set; }
-} 
+}

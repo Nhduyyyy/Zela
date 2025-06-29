@@ -47,7 +47,7 @@ function setupReactionBadgeClicks() {
             const badge = e.target.closest('.reaction-badge');
             const messageId = badge.closest('.message').getAttribute('data-message-id');
             const reactionType = badge.getAttribute('data-reaction-type');
-            
+
             if (badge.classList.contains('user-reaction')) {
                 // Remove user's reaction
                 removeReaction(messageId);
@@ -62,16 +62,16 @@ function setupReactionBadgeClicks() {
 // Show reaction menuu
 function showReactionMenu(messageId) {
     currentMessageId = messageId;
-    
+
     if (reactionMenu) {
         reactionMenu.style.display = 'flex';
-        
+
         // Position menu near the clicked button
         const button = event.target.closest('.message-reaction-btn');
         if (button) {
             const rect = button.getBoundingClientRect();
             const menuContent = reactionMenu.querySelector('.reaction-menu-content');
-            
+
             // Position menu above the button
             menuContent.style.position = 'absolute';
             menuContent.style.top = (rect.top - menuContent.offsetHeight - 10) + 'px';
@@ -105,7 +105,7 @@ async function addReaction(messageId, reactionType) {
         });
 
         const result = await response.json();
-        
+
         if (result.success) {
             if (result.action === 'removed') {
                 // Reaction was removed, refresh reactions
@@ -138,7 +138,7 @@ async function removeReaction(messageId) {
         });
 
         const result = await response.json();
-        
+
         if (result.success) {
             await refreshMessageReactions(messageId);
         } else {
@@ -154,7 +154,7 @@ async function refreshMessageReactions(messageId) {
     try {
         const response = await fetch(`/GroupChat/GetMessageReactions?messageId=${messageId}`);
         const result = await response.json();
-        
+
         if (result.success) {
             updateMessageReactions(messageId, result.reactions);
         }
@@ -185,10 +185,10 @@ function updateMessageReactions(messageId, reactions) {
         badge.className = `reaction-badge ${reaction.hasUserReaction ? 'user-reaction' : ''}`;
         badge.setAttribute('data-reaction-type', reaction.reactionType);
         badge.setAttribute('title', reaction.userNames.join(', '));
-        
+
         const emoji = getReactionEmoji(reaction.reactionType);
         badge.innerHTML = `${emoji} ${reaction.count}`;
-        
+
         reactionsContainer.appendChild(badge);
     });
 }

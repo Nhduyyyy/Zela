@@ -17,4 +17,9 @@ public class GroupViewModel
     public int CreatorId { get; set; } // ID của người tạo nhóm
     public string CreatorName { get; set; }
     public List<UserViewModel> Members { get; set; } = new List<UserViewModel>();
+    
+    // Thêm thuộc tính để lưu trữ media của nhóm
+    public List<MediaViewModel> Images { get; set; } = new List<MediaViewModel>();
+    public List<MediaViewModel> Videos { get; set; } = new List<MediaViewModel>();
+    public List<MediaViewModel> Files { get; set; } = new List<MediaViewModel>();
 }

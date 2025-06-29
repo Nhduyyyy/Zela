@@ -13,6 +13,8 @@ using Zela.DbContext;
 using Zela.Hubs;
 using Zela.Services; // Namespace chứa ApplicationDbContext của bạn
 using Microsoft.AspNetCore.Http.Features;
+using Zela.Models;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,7 +30,12 @@ builder.Services.AddHttpContextAccessor();
 // 2) Đăng ký MVC (Controllers + Views)
 //    - Cho phép ứng dụng sử dụng pattern MVC, dùng Controllers và Views để render HTML.
 // ---------------------------------------------
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
+        options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
+    });
 
 // ---------------------------------------------
 // 3) Đăng ký Session

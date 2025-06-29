@@ -20,6 +20,11 @@ public class Message
 
     public string Content { get; set; }            // NVARCHAR(MAX)
 
+    // Thêm thuộc tính reply
+    public long? ReplyToMessageId { get; set; }   // FK -> Message được reply (nullable)
+    [ForeignKey(nameof(ReplyToMessageId))]
+    public Message ReplyToMessage { get; set; }
+
     [ForeignKey(nameof(SenderId))]
     public User Sender { get; set; }
     [ForeignKey(nameof(RecipientId))]

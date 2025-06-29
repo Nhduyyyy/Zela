@@ -45,12 +45,10 @@ public class ChatHub : Hub
     }
     
     // Gửi tin nhắn nhóm
-    public async Task SendGroupMessage(int groupId, string content)
+    public async Task SendGroupMessage(int groupId, string content, long? replyToMessageId = null)
     {
         int senderId = int.Parse(Context.UserIdentifier);
-        var msgVm = await _chatService.SendGroupMessageAsync(senderId, groupId, content);
-        
-        // Gửi message cho tất cả thành viên trong nhóm
+        var msgVm = await _chatService.SendGroupMessageAsync(senderId, groupId, content, null, replyToMessageId);
         await Clients.Group(groupId.ToString()).SendAsync("ReceiveGroupMessage", msgVm);
     }
 
@@ -92,5 +90,13 @@ public class ChatHub : Hub
         await _chatService.RemoveMemberFromGroupAsync(groupId, userId);
         // Thông báo cho tất cả thành viên trong nhóm
         await Clients.Group(groupId.ToString()).SendAsync("MemberRemoved", userId);
+    }
+
+    // Gửi sticker nhóm
+    public async Task SendGroupSticker(int groupId, string url)
+    {
+        int senderId = int.Parse(Context.UserIdentifier);
+        var stickerVm = await _chatService.SendGroupStickerAsync(senderId, groupId, url);
+        await Clients.Group(groupId.ToString()).SendAsync("ReceiveGroupSticker", stickerVm);
     }
 }

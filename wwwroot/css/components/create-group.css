@@ -4,27 +4,27 @@
         margin: 0.5rem;
         max-width: none;
     }
-    
+
     #createGroupModal .modal-content {
         border-radius: 8px;
     }
-    
+
     #createGroupModal .modal-header {
         padding: 1rem;
     }
-    
+
     #createGroupModal .modal-body {
         padding: 1rem;
     }
-    
+
     #createGroupModal .modal-footer {
         padding: 1rem;
     }
-    
+
     #createGroupModal .modal-title {
         font-size: 1.1rem;
     }
-    
+
     #createGroupModal .btn {
         padding: 0.5rem 1rem;
         font-size: 0.9rem;
@@ -57,7 +57,7 @@
         right: 1rem;
         left: 1rem;
     }
-    
+
     #groupToast {
         width: 100%;
         max-width: none;

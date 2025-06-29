@@ -18,4 +18,12 @@ public class GroupMessageViewModel
     public List<MediaViewModel> Media { get; set; } = new();
     //Reactions
     public List<MessageReactionSummaryViewModel> Reactions { get; set; } = new List<MessageReactionSummaryViewModel>();
+
+    // Reply support
+    public long? ReplyToMessageId { get; set; }
+    public string ReplyToMessageContent { get; set; }
+    public string ReplyToMessageSenderName { get; set; }
+
+    public string StickerUrl { get; set; }
+    public string StickerType { get; set; }
 }

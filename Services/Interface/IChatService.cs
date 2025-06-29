@@ -13,7 +13,7 @@ public interface IChatService
     Task<User> FindUserByIdAsync(int userId);
     
     // Group chat methods
-    Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content, List<IFormFile>? files = null);
+    Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content, List<IFormFile>? files = null, long? replyToMessageId = null);
     Task<ChatGroup> CreateGroupAsync(int creatorId, string name, string description);
     Task AddMemberToGroupAsync(int groupId, int userId);
     Task RemoveMemberFromGroupAsync(int groupId, int userId);
@@ -30,4 +30,9 @@ public interface IChatService
     Task<List<MessageReactionSummaryViewModel>> GetMessageReactionsAsync(long messageId, int currentUserId);
     Task RemoveReactionAsync(long messageId, int userId);
     Task<bool> HasUserReactionAsync(long messageId, int userId, string reactionType);
+
+    Task<GroupMessageViewModel> SendGroupStickerAsync(int senderId, int groupId, string stickerUrl);
+    
+    // Group media methods
+    Task<(List<MediaViewModel> Images, List<MediaViewModel> Videos, List<MediaViewModel> Files)> GetGroupMediaAsync(int groupId, int limit = 20);
 }

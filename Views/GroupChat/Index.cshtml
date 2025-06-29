@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="~/css/themes/chat-theme.css"/>
     <link rel="stylesheet" href="~/css/pages/chat.css"/>
     <link rel="stylesheet" href="~/css/pages/chat/_reactions.css"/>
+    <link rel="stylesheet" href="~/css/pages/chat/_group-chat-messages.css"/>
 }
 
 <section class="chat-window">
@@ -70,6 +71,10 @@
             </div>
         </div>
         <div class="chat-input-bar">
+            <div id="reply-preview-bar">
+                <span id="reply-preview-content"></span>
+                <button type="button" id="cancel-reply-btn"></button>
+            </div>
             <div class="input-group d-flex align-items-center">
                 <input type="text" placeholder="Nhập tin nhắn..." class="flex-fill" id="groupChatInput">
                 <div class="input-actions">
@@ -91,6 +96,11 @@
     <div id="sidebar-right" class="sidebar-right d-none">
         <!-- Sidebar content will be loaded dynamically -->
     </div>
+
+    <!-- Sidebar Media Container -->
+    <div id="sidebar-media-container" class="sidebar-right d-none">
+        <!-- Sidebar media content will be loaded dynamically -->
+    </div>
 </section>
 <!-- Hidden element to store current user ID -->
 <div data-current-user-id="@(Context.Session.GetInt32("UserId") ?? 0)" style="display: none;"></div>
@@ -105,6 +115,7 @@
     <script src="~/js/group-chat-window.js"></script>
     <script src="~/js/add-member.js"></script>
     <script src="~/js/message-reactions.js"></script>
+    <script src="~/js/sidebar-media.js"></script>
     <script>
         // File upload functionality for Index page
         let indexSelectedFiles = [];
@@ -185,57 +196,71 @@
                 console.log('Index: Group selected:', indexCurrentGroupId);
             });
 
-            // Override send message function to handle files
+            // Reply logic
+            let replyToMessageId = null;
+            let replyToMessageContent = null;
+
+            function replyToMessage(messageId, content) {
+                replyToMessageId = messageId;
+                replyToMessageContent = content;
+                $('#reply-preview-content').text(content);
+                $('#reply-preview-bar').show();
+                $('#groupChatInput').focus();
+            }
+            window.replyToMessage = replyToMessage;
+
+            $('#cancel-reply-btn').on('click', function() {
+                replyToMessageId = null;
+                replyToMessageContent = null;
+                $('#reply-preview-bar').hide();
+            });
+
+            // Gửi tin nhắn nhóm (override)
             window.sendIndexGroupMessage = async function () {
                 const content = $('#groupChatInput').val().trim();
                 const files = indexSelectedFiles.length > 0 ? indexSelectedFiles : null;
-
                 if (!content && !files) return;
                 if (!indexCurrentGroupId) {
                     alert('Vui lòng chọn một nhóm!');
                     return;
                 }
-
                 try {
                     if (files && files.length > 0) {
-                        console.log('Index: Sending files via HTTP...');
-                        // Send files via HTTP POST
                         const formData = new FormData();
                         formData.append('content', content);
                         formData.append('groupId', indexCurrentGroupId);
-
+                        if (replyToMessageId) formData.append('replyToMessageId', replyToMessageId);
                         files.forEach(file => {
                             formData.append('files', file);
                         });
-
                         const response = await fetch('/GroupChat/SendGroupMessage', {
                             method: 'POST',
                             body: formData
                         });
-
                         if (response.ok) {
-                            console.log('Index: Files sent successfully');
                             $('#groupChatInput').val('');
                             indexSelectedFiles = [];
                             clearIndexFilePreview();
                             fileInput.value = '';
-                            alert('Gửi file thành công!');
+                            $('#reply-preview-bar').hide();
+                            replyToMessageId = null;
+                            replyToMessageContent = null;
+                            // alert('Gửi file thành công!');
                         } else {
-                            console.error('Index: Error sending files:', response.status);
                             alert('Có lỗi xảy ra khi gửi file!');
                         }
                     } else {
-                        // Send text via SignalR (existing functionality)
                         if (typeof connection !== 'undefined' && connection.invoke) {
-                            await connection.invoke("SendGroupMessage", indexCurrentGroupId, content);
+                            await connection.invoke("SendGroupMessage", indexCurrentGroupId, content, replyToMessageId);
                             $('#groupChatInput').val('');
-                            console.log('Index: Text message sent via SignalR');
+                            $('#reply-preview-bar').hide();
+                            replyToMessageId = null;
+                            replyToMessageContent = null;
                         } else {
                             alert('Lỗi kết nối SignalR!');
                         }
                     }
                 } catch (error) {
-                    console.error('Index: Send message error:', error);
                     alert('Có lỗi xảy ra khi gửi tin nhắn!');
                 }
             };
