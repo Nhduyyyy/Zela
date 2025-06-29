@@ -2,6 +2,8 @@
 let currentGroupId = null;
 let currentUserId = null;
 let selectedFiles = [];
+let groupStickerPanelVisible = false;
+let availableStickers = [];
 
 // Initialize current user ID from the page
 function initializeCurrentUserId() {
@@ -65,6 +67,16 @@ connection.on("MemberRemoved", function (userId) {
     // Có thể cập nhật UI nếu cần
 });
 
+// Nhận sticker mới từ nhóm
+connection.on("ReceiveGroupSticker", function (msg) {
+    let currentId = Number(currentGroupId);
+    if (currentId && msg.groupId === currentId) {
+        msg.isMine = Number(msg.senderId) === Number(currentUserId);
+        $('.chat-content').append(renderGroupMessage(msg));
+        scrollToBottom();
+    }
+});
+
 // Start connection after initializing currentUserId
 function startSignalRConnection() {
     initializeCurrentUserId();
@@ -121,18 +133,41 @@ async function loadGroupSidebar(groupId) {
     } catch (error) {
         console.error('Error loading group sidebar:', error);
     }
+
+    // Load sidebar media
+    try {
+        const response = await fetch(`/GroupChat/GetGroupSidebarMedia?groupId=${groupId}`);
+        if (response.ok) {
+            const html = await response.text();
+            const sidebarMediaContainer = document.getElementById('sidebar-media-container');
+            if (sidebarMediaContainer) {
+                sidebarMediaContainer.innerHTML = html;
+            }
+        } else {
+            console.error('Failed to load group sidebar media');
+        }
+    } catch (error) {
+        console.error('Error loading group sidebar media:', error);
+    }
 }
 
 // Load tin nhắn nhóm
 function loadGroupMessages() {
-    $.get('/GroupChat/GetGroupMessages', { groupId: currentGroupId }, function(html) {
-        // Nếu server trả về có chứa <div class="chat-content">, chỉ lấy nội dung bên trong
-        let $response = $(html);
-        if ($response.hasClass('chat-content')) {
-            $('.chat-content').html($response.html());
+    $.get('/GroupChat/GetGroupMessages', { groupId: currentGroupId }, function(messages) {
+        let chatContent = $('.chat-content');
+        chatContent.html(''); // Clear existing messages
+
+        if (messages && messages.length > 0) {
+            messages.forEach(function(msg) {
+                // The currentUserId should be available globally in this script.
+                const messageHtml = renderGroupMessage(msg);
+                chatContent.append(messageHtml);
+            });
         } else {
-            $('.chat-content').html(html);
+            // Optional: show a message if there are no messages
+            chatContent.html('<div class="no-messages">Chưa có tin nhắn nào trong nhóm này.</div>');
         }
+
         scrollToBottom();
 
         // Initialize reaction functionality for new messages
@@ -185,8 +220,13 @@ function loadMessages() {
     const groupId = currentGroupId;
     if (!groupId) return;
 
-    $.get(`/GroupChat/GetGroupMessages?groupId=${groupId}`, function(data) {
-        $("#chatMessages").html(data);
+    $.get(`/GroupChat/GetGroupMessages?groupId=${groupId}`, function(messages) {
+        $("#chatMessages").html(''); // Clear existing messages
+        if (messages && messages.length > 0) {
+            messages.forEach(function(message) {
+                appendMessage(message); // appendMessage will add it to #chatMessages
+            });
+        }
         scrollToBottom();
     });
 }
@@ -279,30 +319,30 @@ function sendGroupMessage() {
     let content = $('.chat-input-bar input').val();
     if (!content.trim() || !currentGroupId) return;
 
-    connection.invoke("SendGroupMessage", currentGroupId, content)
+    // Lấy replyToMessageId từ biến toàn cục nếu có
+    let replyId = window.replyToMessageId || null;
+    connection.invoke("SendGroupMessage", currentGroupId, content, replyId)
         .then(() => {
-            console.log("Tin nhắn nhóm đã gửi thành công");
+            window.replyToMessageId = null;
+            window.replyToMessageContent = null;
+            $('#reply-preview-bar').hide();
+            $('.chat-input-bar input').val('');
         })
         .catch(err => console.error(err.toString()));
-
-    $('.chat-input-bar input').val('');
 }
 
 // Render tin nhắn nhóm mới - Index page
 function renderGroupMessage(msg) {
     const senderIdNum = Number(msg.senderId);
     const currentUserIdNum = Number(currentUserId);
-    let isMine = senderIdNum === currentUserIdNum;
-    let side = isMine ? 'right' : 'left';
+    const isMine = senderIdNum === currentUserIdNum;
 
-    // Format time HH:mm
     let sentTime = '';
     if (msg.sentAt) {
         const date = new Date(msg.sentAt);
         sentTime = date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false });
     }
 
-    // Render media
     let mediaHtml = '';
     if (msg.media && msg.media.length > 0) {
         for (const media of msg.media) {
@@ -322,10 +362,55 @@ function renderGroupMessage(msg) {
         }
     }
 
-    // Render reactions
+    let contentHtml = '';
+    if (msg.stickerUrl && msg.stickerUrl.length > 0) {
+        contentHtml = `<img src="${msg.stickerUrl}" class="sticker-message" alt="Sticker" draggable="false" style="max-width:120px;max-height:120px;"/>`;
+    } else if (msg.content && msg.content !== "[Đã gửi file]") {
+        let replyHtml = '';
+        if (msg.replyToMessageId && msg.replyToMessageContent) {
+            const replySenderText = isMine
+                ? `Bạn đã trả lời '${msg.replyToMessageSenderName || "ai đó"}'`
+                : `Đã trả lời '${msg.replyToMessageSenderName || "ai đó"}'`;
+
+            replyHtml = `
+                <div class="reply-preview-in-bubble" style="align-self: stretch; background: #f0f0f0; border-left: 3px solid #007bff; padding: 4px 8px; margin-bottom: 2px; border-radius: 6px 6px 0 0;">
+                    <div style="font-size: 12px; color: #007bff; font-weight: 500; margin-bottom: 2px;">
+                    ${replySenderText}
+                    </div>
+                    <span class="reply-label">Reply:</span>
+                    <span class="reply-content">${msg.replyToMessageContent}</span>
+                </div>`;
+        }
+
+        const escapedContent = (msg.content || '').replace(/'/g, "&#39;");
+        let bubbleContentHtml;
+        if (isMine) {
+            bubbleContentHtml = `
+                <div style="display: flex; align-items: center; gap: 6px; width: 100%;justify-content: flex-end;">
+                    <button class="btn-reply" onclick="replyToMessage(${msg.messageId}, '${escapedContent}')" title="Reply" style="background: none; border: none; cursor: pointer; color: #007bff; visibility: hidden;">↩️</button>
+                    <div class="message-reaction-btn" onclick="showReactionMenu(${msg.messageId})">😀</div>
+                    <span class="message-bubble">${msg.content}</span>
+                </div>`;
+        } else {
+            bubbleContentHtml = `
+                <div style="display: flex; align-items: center; gap: 6px; width: 100%;justify-content: flex-start;">
+                    <span class="message-bubble">${msg.content}</span>
+                    <div class="message-reaction-btn" onclick="showReactionMenu(${msg.messageId})">😀</div>
+                    <button class="btn-reply" onclick="replyToMessage(${msg.messageId}, '${escapedContent}')" title="Reply" style="background: none; border: none; cursor: pointer; color: #007bff; visibility: hidden;">↩️</button>
+                </div>`;
+        }
+
+        const bubbleRowAlign = isMine ? 'align-items: flex-end;' : 'align-items: flex-start;';
+        contentHtml = `
+            <div class="bubble-row" style="display: flex; align-items: center; gap: 6px; flex-direction: column; ${bubbleRowAlign}">
+                ${replyHtml}
+                ${bubbleContentHtml}
+            </div>`;
+    }
+
     let reactionsHtml = '';
     if (msg.reactions && msg.reactions.length > 0) {
-        reactionsHtml = `<div class="message-reactions">`;
+        reactionsHtml += `<div class="message-reactions">`;
         for (const reaction of msg.reactions) {
             const userClass = reaction.hasUserReaction ? "user-reaction" : "";
             const emoji = getReactionEmoji(reaction.reactionType);
@@ -338,38 +423,16 @@ function renderGroupMessage(msg) {
         reactionsHtml += `</div>`;
     }
 
-    // Bubble row (bubble + reaction button)
-    let bubbleRow = '';
-    if (msg.content && msg.content !== "[Đã gửi file]") {
-        if (isMine) {
-            bubbleRow = `
-                <div class="bubble-row" style="display: flex; align-items: center; gap: 6px;">
-                    <div class="message-reaction-btn" onclick="showReactionMenu(${msg.messageId})">😀</div>
-                    <span class="message-bubble">${msg.content}</span>
-                </div>
-            `;
-        } else {
-            bubbleRow = `
-                <div class="bubble-row" style="display: flex; align-items: center; gap: 6px;">
-                    <span class="message-bubble">${msg.content}</span>
-                    <div class="message-reaction-btn" onclick="showReactionMenu(${msg.messageId})">😀</div>
-                </div>
-            `;
-        }
-    }
-
-    // Main HTML
     if (isMine) {
         return `
             <div class="message right" data-message-id="${msg.messageId}">
                 <div class="message-content">
                     <span class="message-time">${sentTime}</span>
                     ${mediaHtml}
-                    ${bubbleRow}
+                    ${contentHtml}
                     ${reactionsHtml}
                 </div>
-            </div>
-        `;
+            </div>`;
     } else {
         return `
             <div class="message left" data-message-id="${msg.messageId}">
@@ -378,11 +441,10 @@ function renderGroupMessage(msg) {
                     <div class="message-sender">${msg.senderName}</div>
                     <span class="message-time">${sentTime}</span>
                     ${mediaHtml}
-                    ${bubbleRow}
+                    ${contentHtml}
                     ${reactionsHtml}
                 </div>
-            </div>
-        `;
+            </div>`;
     }
 }
 
@@ -664,9 +726,17 @@ $(document).ready(function() {
     // Sidebar toggle
     const toggleBtn = document.querySelector(".toggle-sidebar-btn");
     const sidebar = document.getElementById("sidebar-right");
+    const sidebarMediaContainer = document.getElementById("sidebar-media-container");
 
     if (toggleBtn && sidebar) {
         toggleBtn.addEventListener("click", function () {
+            // Nếu sidebar media đang hiển thị, ẩn nó trước
+            if (sidebarMediaContainer && !sidebarMediaContainer.classList.contains('d-none')) {
+                hideSidebarMedia();
+                return;
+            }
+
+            // Toggle sidebar right
             sidebar.classList.toggle("d-none");
             sidebar.classList.toggle("show");
         });
@@ -674,6 +744,12 @@ $(document).ready(function() {
 
     // Initialize drag and drop
     initializeDragAndDrop();
+
+    $(document).on('mouseenter', '.message-content', function () {
+        $(this).find('.btn-reply').css('visibility', 'visible');
+    }).on('mouseleave', '.message-content', function () {
+        $(this).find('.btn-reply').css('visibility', 'hidden');
+    });
 });
 
 // ===== DRAG & DROP FUNCTIONALITY =====
@@ -744,4 +820,125 @@ function initializeDragAndDrop() {
             dragDropOverlay.classList.remove('active');
         }
     });
+}
+
+// ===== STICKER PANEL FOR GROUP CHAT =====
+
+// Load danh sách sticker từ server
+async function loadStickers() {
+    try {
+        const response = await fetch('/Chat/GetStickers');
+        const stickers = await response.json();
+        availableStickers = stickers;
+        renderStickerPanel(stickers);
+
+    } catch (error) {
+        console.error('Failed to load stickers:', error);
+    }
+}
+
+// Render sticker panel
+function renderStickerPanel(stickers) {
+    let panel = document.querySelector('.sticker-panel');
+    if (!panel) {
+        const inputBar = document.querySelector('.chat-input-bar .input-actions');
+        if (!inputBar) return;
+        inputBar.insertAdjacentHTML('beforeend', `
+            <div class="sticker-panel">
+                <div class="sticker-header" style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; border-bottom:1px solid #eee;">
+                    <h6 style="margin:0; font-size:16px;">Stickers</h6>
+                    <button class="sticker-close" style="background:none; border:none; font-size:20px; cursor:pointer;">&times;</button>
+                </div>
+                <div class="sticker-grid" style="flex-wrap:wrap; gap:8px; padding:12px;"></div>
+            </div>
+        `);
+        panel = document.querySelector('.sticker-panel');
+    }
+    const grid = panel.querySelector('.sticker-grid');
+    grid.innerHTML = '';
+    stickers.forEach(sticker => {
+        const img = document.createElement('img');
+        img.src = sticker.stickerUrl;
+        img.className = 'sticker-img';
+        img.dataset.url = sticker.stickerUrl;
+        img.alt = sticker.stickerName;
+        img.style.width = '64px';
+        img.style.height = '64px';
+        img.style.cursor = 'pointer';
+        img.onerror = function() { this.style.display = 'none'; };
+        grid.appendChild(img);
+    });
+}
+
+// Khởi tạo sticker panel khi DOM ready
+function initializeStickerPanel() {
+    loadStickers();
+}
+document.addEventListener('DOMContentLoaded', initializeStickerPanel);
+
+// Toggle sticker panel
+$(document).on('click', '.chat-input-bar .bi-emoji-smile', function () {
+    groupStickerPanelVisible = !groupStickerPanelVisible;
+    const stickerPanel = document.querySelector('.sticker-panel');
+    if (stickerPanel) {
+        stickerPanel.style.display = groupStickerPanelVisible ? 'block' : 'none';
+    }
+});
+// Đóng sticker panel
+$(document).on('click', '.sticker-close', function () {
+    groupStickerPanelVisible = false;
+    const stickerPanel = document.querySelector('.sticker-panel');
+    if (stickerPanel) {
+        stickerPanel.style.display = 'none';
+    }
+});
+// Chọn và gửi sticker
+$(document).on('click', '.sticker-img', function () {
+    const stickerUrl = this.dataset.url;
+    if (typeof connection !== 'undefined' && connection.invoke) {
+        connection.invoke("SendGroupSticker", currentGroupId, stickerUrl)
+            .then(() => {
+                groupStickerPanelVisible = false;
+                const stickerPanel = document.querySelector('.sticker-panel');
+                if (stickerPanel) stickerPanel.style.display = 'none';
+            })
+            .catch(err => alert('Lỗi gửi sticker!'));
+    }
+});
+// Ẩn panel khi click ra ngoài
+$(document).on('mousedown', function (e) {
+    const stickerPanel = document.querySelector('.sticker-panel');
+    if (stickerPanel && !stickerPanel.contains(e.target) && !e.target.closest('.bi-emoji-smile')) {
+        stickerPanel.style.display = 'none';
+        groupStickerPanelVisible = false;
+    }
+});
+
+// Hàm ẩn sidebar media
+function hideSidebarMedia() {
+    const sidebarRight = document.querySelector('.chat-info-panel:not(.sidebar-media)');
+    const sidebarMedia = document.querySelector('.sidebar-media');
+    const sidebarMediaContainer = document.getElementById('sidebar-media-container');
+
+    if (!sidebarMedia) {
+        return;
+    }
+
+    // Thêm animation slide out
+    sidebarMedia.classList.add('slide-out');
+
+    // Sau khi animation hoàn thành, ẩn sidebar media và hiển thị sidebar right
+    setTimeout(() => {
+        sidebarMedia.style.display = 'none';
+        sidebarMedia.classList.remove('slide-out');
+
+        // Ẩn sidebar media container
+        if (sidebarMediaContainer) {
+            sidebarMediaContainer.classList.add('d-none');
+        }
+
+        if (sidebarRight) {
+            sidebarRight.style.display = 'block';
+        }
+    }, 300);
 } 

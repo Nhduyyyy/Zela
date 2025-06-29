@@ -51,44 +51,80 @@
 
     <div class="info-section">
         <h6><i class="bi bi-images me-2"></i>Ảnh/Video</h6>
-        <div class="media-grid">
-            <img src="https://images.unsplash.com/photo-1551033406-611cf9a28f67?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
-            <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
-            <img src="https://images.unsplash.com/photo-1484417894907-623942c8ee29?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
-            <img src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
-            <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
-            <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=150&h=150&fit=crop" alt="Ảnh chia sẻ trong nhóm">
-        </div>
-        <a href="#" class="view-all-link">
-            <i class="bi bi-arrow-right me-1"></i>Xem tất cả
-        </a>
+        @if (Model.Images.Count > 0 || Model.Videos.Count > 0)
+        {
+            <div class="media-grid">
+                @{
+                    var allMedia = Model.Images.Take(6).Select(img => new { Type = "image", Item = img })
+                                    .Concat(Model.Videos.Take(6 - Model.Images.Count).Select(vid => new { Type = "video", Item = vid }))
+                                    .Take(6).ToList();
+                }
+                @foreach (var media in allMedia)
+                {
+                    if (media.Type == "image")
+                    {
+                        <img src="@media.Item.Url" alt="Ảnh chia sẻ trong nhóm" style="width: 100%; height: 100%; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <video src="@media.Item.Url" alt="Video chia sẻ trong nhóm" style="width: 100%; height: 100%; object-fit: cover;" muted>
+                            <source src="@media.Item.Url" type="@media.Item.MediaType">
+                        </video>
+                    }
+                }
+            </div>
+            <a href="#" class="view-all-link">
+                <i class="bi bi-arrow-right me-1"></i>Xem tất cả (@(Model.Images.Count + Model.Videos.Count) items)
+            </a>
+        }
+        else
+        {
+            <div class="text-muted">Chưa có ảnh hoặc video nào được chia sẻ.</div>
+        }
     </div>
 
     <div class="info-section">
         <h6><i class="bi bi-files me-2"></i>File đã chia sẻ</h6>
-        <ul class="file-list">
-            <li class="file-item">
-                <i class="bi bi-file-earmark-word-fill"></i>
-                <div class="file-details">
-                    <p class="file-name">Report 2.docx</p>
-                    <p class="file-size">1.57 MB</p>
-                </div>
-            </li>
-            <li class="file-item">
-                <i class="bi bi-file-earmark-word-fill"></i>
-                <div class="file-details">
-                    <p class="file-name">Report 3.docx</p>
-                    <p class="file-size">27.77 MB</p>
-                </div>
-            </li>
-            <li class="file-item">
-                <i class="bi bi-file-earmark-excel-fill text-success"></i>
-                <div class="file-details">
-                    <p class="file-name">Review.xlsx</p>
-                    <p class="file-size">11.3 KB</p>
-                </div>
-            </li>
-        </ul>
+        @if (Model.Files.Count > 0)
+        {
+            <ul class="file-list">
+                @foreach (var file in Model.Files.Take(3))
+                {
+                    <li class="file-item">
+                        @{
+                            var fileExtension = System.IO.Path.GetExtension(file.FileName ?? file.Url)?.ToLower();
+                            var iconClass = fileExtension switch
+                            {
+                                ".doc" or ".docx" => "bi-file-earmark-word-fill",
+                                ".xls" or ".xlsx" => "bi-file-earmark-excel-fill text-success",
+                                ".ppt" or ".pptx" => "bi-file-earmark-ppt-fill text-warning",
+                                ".pdf" => "bi-file-earmark-pdf-fill text-danger",
+                                ".txt" => "bi-file-earmark-text-fill",
+                                _ => "bi-file-earmark-fill"
+                            };
+                        }
+                        <i class="bi @iconClass"></i>
+                        <div class="file-details">
+                            <p class="file-name">@(file.FileName ?? System.IO.Path.GetFileName(file.Url))</p>
+                            <p class="file-size">File</p>
+                        </div>
+                        <a href="@file.Url" download="@(file.FileName ?? System.IO.Path.GetFileName(file.Url))" class="file-download-btn" title="Tải về">
+                            <i class="bi bi-download"></i>
+                        </a>
+                    </li>
+                }
+            </ul>
+            @if (Model.Files.Count > 5)
+            {
+                <a href="#" class="view-all-link">
+                    <i class="bi bi-arrow-right me-1"></i>Xem tất cả (@Model.Files.Count files)
+                </a>
+            }
+        }
+        else
+        {
+            <div class="text-muted">Chưa có file nào được chia sẻ.</div>
+        }
     </div>
 
     <div class="info-section">

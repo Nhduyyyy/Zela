@@ -145,16 +145,16 @@
         padding: 12px;
         gap: 12px;
     }
-    
+
     .reaction-option {
         min-width: 50px;
         padding: 6px;
     }
-    
+
     .reaction-emoji {
         font-size: 20px;
     }
-    
+
     .reaction-label {
         font-size: 10px;
     }

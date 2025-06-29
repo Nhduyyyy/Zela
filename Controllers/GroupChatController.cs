@@ -25,7 +25,7 @@ namespace Zela.Controllers
             return View(groups);
         }
 
-        // Trả về partial chứa lịch sử chat nhóm
+        // Trả về JSON chứa lịch sử chat nhóm
         [HttpGet]
         public async Task<IActionResult> GetGroupMessages(int groupId)
         {
@@ -44,12 +44,12 @@ namespace Zela.Controllers
                 }
             }
             
-            return PartialView("_GroupMessagesPartial", messages);
+            return Json(messages);
         }
 
         // Gửi tin nhắn nhóm với file
         [HttpPost]
-        public async Task<IActionResult> SendGroupMessage(int groupId, string content, List<IFormFile> files)
+        public async Task<IActionResult> SendGroupMessage(int groupId, string content, List<IFormFile> files, long? replyToMessageId = null)
         {
             try
             {
@@ -65,7 +65,7 @@ namespace Zela.Controllers
                     return BadRequest(new { message = "Vui lòng nhập nội dung tin nhắn hoặc chọn file" });
                 }
 
-                var message = await _chatService.SendGroupMessageAsync(senderId, groupId, content, files);
+                var message = await _chatService.SendGroupMessageAsync(senderId, groupId, content, files, replyToMessageId);
                 return Ok(new { success = true, message = message });
             }
             catch (Exception ex)
@@ -215,39 +215,104 @@ namespace Zela.Controllers
             }
         }
 
+        // Trả về HTML cho sidebar right
         [HttpGet]
         public async Task<IActionResult> GetGroupSidebar(int groupId)
         {
-            var group = await _chatService.GetGroupDetailsAsync(groupId);
-            if (group == null)
+            try
             {
-                return NotFound();
+                var group = await _chatService.GetGroupDetailsAsync(groupId);
+                if (group == null)
+                {
+                    return NotFound();
+                }
+
+                var members = group.Members?.Select(m => new UserViewModel
+                {
+                    UserId = m.UserId,
+                    FullName = m.User?.FullName ?? "Unknown",
+                    Email = m.User?.Email ?? "",
+                    AvatarUrl = m.User?.AvatarUrl ?? "/images/default-avatar.jpeg",
+                    IsOnline = m.User != null && m.User.LastLoginAt > DateTime.Now.AddMinutes(-3),
+                    LastLoginAt = m.User?.LastLoginAt
+                }).ToList() ?? new List<UserViewModel>();
+
+                // Lấy media của nhóm
+                var (images, videos, files) = await _chatService.GetGroupMediaAsync(groupId, 12); // Giới hạn 12 items cho mỗi loại
+
+                var groupViewModel = new GroupViewModel()
+                {
+                    GroupId = (int)group.GroupId,
+                    Name = group.Name,
+                    Description = group.Description,
+                    AvatarUrl = group.AvatarUrl ?? "/images/default-group-avatar.png",
+                    MemberCount = group.Members?.Count ?? 0,
+                    CreatedAt = group.CreatedAt,
+                    CreatorId = group.CreatorId,
+                    CreatorName = group.Creator?.FullName ?? "Unknown",
+                    Members = members,
+                    Images = images,
+                    Videos = videos,
+                    Files = files
+                };
+
+                return PartialView("_SidebarRight", groupViewModel);
             }
-
-            var members = group.Members?.Select(m => new UserViewModel
+            catch (Exception ex)
             {
-                UserId = m.UserId,
-                FullName = m.User?.FullName ?? "Unknown",
-                Email = m.User?.Email ?? "",
-                AvatarUrl = m.User?.AvatarUrl ?? "/images/default-avatar.jpeg",
-                IsOnline = m.User != null && m.User.LastLoginAt > DateTime.Now.AddMinutes(-3),
-                LastLoginAt = m.User?.LastLoginAt
-            }).ToList() ?? new List<UserViewModel>();
+                Console.WriteLine($"Error loading group sidebar: {ex.Message}");
+                return StatusCode(500, "Có lỗi xảy ra khi tải thông tin nhóm");
+            }
+        }
 
-            var groupViewModel = new GroupViewModel()
+        // Trả về HTML cho sidebar media
+        [HttpGet]
+        public async Task<IActionResult> GetGroupSidebarMedia(int groupId)
+        {
+            try
             {
-                GroupId = (int)group.GroupId,
-                Name = group.Name,
-                Description = group.Description,
-                AvatarUrl = group.AvatarUrl ?? "/images/default-group-avatar.png",
-                MemberCount = group.Members?.Count ?? 0,
-                CreatedAt = group.CreatedAt,
-                CreatorId = group.CreatorId,
-                CreatorName = group.Creator?.FullName ?? "Unknown",
-                Members = members
-            };
+                var group = await _chatService.GetGroupDetailsAsync(groupId);
+                if (group == null)
+                {
+                    return NotFound();
+                }
 
-            return PartialView("_SidebarRight", groupViewModel);
+                var members = group.Members?.Select(m => new UserViewModel
+                {
+                    UserId = m.UserId,
+                    FullName = m.User?.FullName ?? "Unknown",
+                    Email = m.User?.Email ?? "",
+                    AvatarUrl = m.User?.AvatarUrl ?? "/images/default-avatar.jpeg",
+                    IsOnline = m.User != null && m.User.LastLoginAt > DateTime.Now.AddMinutes(-3),
+                    LastLoginAt = m.User?.LastLoginAt
+                }).ToList() ?? new List<UserViewModel>();
+
+                // Lấy tất cả media của nhóm (không giới hạn số lượng)
+                var (images, videos, files) = await _chatService.GetGroupMediaAsync(groupId, 100); // Lấy nhiều hơn cho sidebar media
+
+                var groupViewModel = new GroupViewModel()
+                {
+                    GroupId = (int)group.GroupId,
+                    Name = group.Name,
+                    Description = group.Description,
+                    AvatarUrl = group.AvatarUrl ?? "/images/default-group-avatar.png",
+                    MemberCount = group.Members?.Count ?? 0,
+                    CreatedAt = group.CreatedAt,
+                    CreatorId = group.CreatorId,
+                    CreatorName = group.Creator?.FullName ?? "Unknown",
+                    Members = members,
+                    Images = images,
+                    Videos = videos,
+                    Files = files
+                };
+
+                return PartialView("_SidebarMedia", groupViewModel);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading group sidebar media: {ex.Message}");
+                return StatusCode(500, "Có lỗi xảy ra khi tải media nhóm");
+            }
         }
 
         // Message Reaction Endpoints

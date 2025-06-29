@@ -105,11 +105,13 @@
 /* 5.4 Media Grid */
 .media-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
-    gap: 10px;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
 }
 
-.media-grid img {
+.media-grid img,
+.media-grid video {
     width: 100%;
     height: 80px;
     object-fit: cover;
@@ -117,12 +119,38 @@
     cursor: pointer;
     transition: 0.3s ease;
     border: 1px solid var(--theme-border-color);
+    background: var(--theme-bg-dark);
+    min-width: 80px;
+    min-height: 80px;
+    max-width: 80px;
+    max-height: 80px;
 }
 
-.media-grid img:hover {
+.media-grid img:hover,
+.media-grid video:hover {
     transform: scale(1.05);
     border-color: var(--theme-accent-green);
     box-shadow: 0 0 10px var(--theme-accent-green);
+}
+
+.media-grid video {
+    background: var(--theme-bg-dark);
+}
+
+.media-grid video::-webkit-media-controls {
+    display: none;
+}
+
+.media-grid video::-webkit-media-controls-panel {
+    display: none;
+}
+
+.media-grid video::-webkit-media-controls-play-button {
+    display: none;
+}
+
+.media-grid video::-webkit-media-controls-start-playback-button {
+    display: none;
 }
 
 .view-all-link {
@@ -138,6 +166,39 @@
     text-decoration: underline;
 }
 
+/* Responsive cho media grid */
+@media (max-width: 768px) {
+    .media-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .media-grid img,
+    .media-grid video {
+        height: 60px;
+        min-width: 60px;
+        min-height: 60px;
+        max-width: 60px;
+        max-height: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .media-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+    }
+
+    .media-grid img,
+    .media-grid video {
+        height: 50px;
+        min-width: 50px;
+        min-height: 50px;
+        max-width: 50px;
+        max-height: 50px;
+    }
+}
+
 /* 5.5 File List */
 .file-list {
     list-style: none;
@@ -147,7 +208,6 @@
 .file-item {
     display: flex;
     align-items: center;
-    padding: 10px 0;
     border-bottom: 1px solid var(--theme-border-color);
 }
 
@@ -183,4 +243,117 @@
 .file-size {
     font-size: 0.8rem;
     color: var(--theme-text-muted);
+}
+
+.file-download-btn {
+    color: var(--theme-text-muted);
+    text-decoration: none;
+    padding: 5px;
+    border-radius: 4px;
+    transition: 0.3s ease;
+}
+
+.file-download-btn:hover {
+    color: var(--theme-accent-green);
+    background: var(--theme-bg-hover);
+}
+
+/*=======================================================================================*/
+/*                                6. SIDEBAR MEDIA                                      */
+/*=======================================================================================*/
+
+/* CSS đã được chuyển sang file riêng: components/sidebar-media.css */
+
+/* Modal Media Styles */
+.modal-content {
+    background: var(--theme-bg-dark);
+    border: 1px solid var(--theme-border-color);
+    border-radius: 15px;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--theme-border-color);
+    background: var(--theme-bg-secondary);
+    border-radius: 15px 15px 0 0;
+}
+
+.modal-title {
+    color: var(--theme-text-primary);
+}
+
+.btn-close {
+    filter: invert(1);
+}
+
+.modal-body {
+    background: var(--theme-bg-dark);
+    border-radius: 0 0 15px 15px;
+}
+
+/* Loading and Error States */
+.sidebar-media .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: var(--theme-accent-green);
+}
+
+.sidebar-media .text-danger {
+    color: var(--theme-accent-red) !important;
+}
+
+.sidebar-media .btn-outline-primary {
+    border-color: var(--theme-accent-green);
+    color: var(--theme-accent-green);
+}
+
+.sidebar-media .btn-outline-primary:hover {
+    background-color: var(--theme-accent-green);
+    border-color: var(--theme-accent-green);
+    color: var(--theme-text-dark);
+}
+
+/* Empty State */
+.empty-state {
+    padding: 2rem 1rem;
+}
+
+.empty-state i {
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.empty-state:hover i {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+/* Header Improvements */
+.sidebar-media .info-header {
+    text-align: left;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--theme-border-color);
+    position: relative;
+}
+
+.sidebar-media .info-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background: var(--theme-accent-green);
+}
+
+.sidebar-media .info-header h4 {
+    color: var(--theme-text-primary);
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.sidebar-media .info-header small {
+    font-size: 0.85rem;
+    opacity: 0.8;
 } 

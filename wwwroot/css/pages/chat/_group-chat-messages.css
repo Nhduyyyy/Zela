@@ -1,0 +1,199 @@
+.bubble-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-direction: column;
+}
+
+.message.right .bubble-row {
+    align-items: flex-end;
+}
+
+.message.left .bubble-row {
+    align-items: flex-start;
+}
+
+.reply-preview-in-bubble {
+    align-self: stretch;
+    background: #f0f0f0;
+    border-left: 3px solid #007bff;
+    padding: 4px 8px;
+    margin-bottom: 2px;
+    border-radius: 6px 6px 0 0;
+}
+
+    .reply-preview-in-bubble .reply-preview-sender {
+        font-size: 12px;
+        color: #007bff;
+        font-weight: 500;
+        margin-bottom: 2px;
+    }
+
+.message-actions-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+}
+
+.message.right .message-actions-row {
+    justify-content: flex-end;
+}
+
+.message.left .message-actions-row {
+    justify-content: flex-start;
+}
+
+.btn-reply {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #007bff;
+} 
+
+/*Reply*/
+#reply-preview-bar {
+    display: none;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: none;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    border-radius: 8px;
+    color: #495057;
+    position: relative;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+#reply-preview-bar:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+#reply-preview-content {
+    display: block;
+    font-size: 14px;
+    line-height: 1.4;
+    margin-right: 30px;
+    color: #6c757d;
+    font-style: italic;
+}
+
+#reply-preview-content::before {
+    content: "Bạn đang trả lời: ";
+    font-weight: 600;
+    color: #0066cc;
+    font-style: normal;
+}
+
+#cancel-reply-btn {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(108, 117, 125, 0.1);
+    border: none;
+    color: #6c757d;
+    font-size: 18px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-weight: bold;
+}
+
+#cancel-reply-btn:hover {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+    transform: translateY(-50%) scale(1.1);
+}
+
+#cancel-reply-btn:active {
+    transform: translateY(-50%) scale(0.95);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    #reply-preview-bar {
+        background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+        color: #e2e8f0;
+        border-left-color: #4299e1;
+    }
+
+    #reply-preview-content {
+        display: flex;
+        flex-direction: column;
+        color: #a0aec0;
+    }
+
+    #reply-preview-content::before {
+        color: #4299e1;
+    }
+
+    #cancel-reply-btn {
+        background: rgba(160, 174, 192, 0.1);
+        color: #a0aec0;
+    }
+
+    #cancel-reply-btn:hover {
+        background: rgba(248, 113, 113, 0.2);
+        color: #f87171;
+    }
+}
+
+/* Animation when showing/hiding */
+#reply-preview-bar.show {
+    display: block;
+    animation: slideInDown 0.3s ease-out;
+}
+
+#reply-preview-bar.hide {
+    animation: slideOutUp 0.3s ease-in;
+}
+
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideOutUp {
+    from {
+        opacity: 1;
+        transform: translateY(0);
+    }
+    to {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    #reply-preview-bar {
+        padding: 10px 14px;
+        margin-bottom: 6px;
+    }
+
+    #reply-preview-content {
+        font-size: 13px;
+        margin-right: 28px;
+    }
+
+    #cancel-reply-btn {
+        width: 22px;
+        height: 22px;
+        font-size: 16px;
+        right: 6px;
+    }
+}

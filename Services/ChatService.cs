@@ -233,7 +233,7 @@ public class ChatService : IChatService
     }
 
     // Group chat methods
-    public async Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content, List<IFormFile>? files = null)
+    public async Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content, List<IFormFile>? files = null, long? replyToMessageId = null)
     {
         var sender = await _dbContext.Users.FindAsync(senderId);
         var group = await _dbContext.ChatGroups.FindAsync(groupId);
@@ -244,6 +244,21 @@ public class ChatService : IChatService
         if (group == null)
             throw new Exception("Group not found");
 
+        string replyContent = null;
+        string replySenderName = null;
+        if (replyToMessageId.HasValue)
+        {
+            var replyMsg = await _dbContext.Messages
+                .Include(m => m.Sender)
+                .FirstOrDefaultAsync(m => m.MessageId == replyToMessageId.Value);
+
+            if (replyMsg != null)
+            {
+                replyContent = replyMsg.Content;
+                replySenderName = replyMsg.Sender?.FullName ?? "ai đó";
+            }
+        }
+
         var message = new Message
         {
             SenderId = senderId,
@@ -251,7 +266,8 @@ public class ChatService : IChatService
             Content = content ?? "",
             SentAt = DateTime.Now,
             IsEdited = false,
-            Media = new List<Media>()
+            Media = new List<Media>(),
+            ReplyToMessageId = replyToMessageId
         };
 
         // Handle file uploads if provided
@@ -297,7 +313,10 @@ public class ChatService : IChatService
                 Url = md.Url,
                 MediaType = md.MediaType,
                 FileName = md.FileName
-            }).ToList()
+            }).ToList(),
+            ReplyToMessageId = replyToMessageId,
+            ReplyToMessageContent = replyContent,
+            ReplyToMessageSenderName = replySenderName
         };
     }
 
@@ -394,9 +413,13 @@ public class ChatService : IChatService
         var messages = await _dbContext.Messages
             .Include(m => m.Sender)
             .Include(m => m.Media)
+            .Include(m => m.Sticker)
             .Where(m => m.GroupId == groupId)
             .OrderBy(m => m.SentAt)
             .ToListAsync();
+
+        // Bổ sung lấy nội dung tin nhắn được reply nếu có
+        var messageDict = messages.ToDictionary(m => m.MessageId, m => m);
 
         return messages.Select(m => new GroupMessageViewModel
         {
@@ -414,7 +437,16 @@ public class ChatService : IChatService
                 Url = md.Url,
                 MediaType = md.MediaType,
                 FileName = md.FileName
-            }).ToList()
+            }).ToList(),
+            ReplyToMessageId = m.ReplyToMessageId,
+            ReplyToMessageContent = m.ReplyToMessageId.HasValue && messageDict.ContainsKey(m.ReplyToMessageId.Value)
+                ? messageDict[m.ReplyToMessageId.Value].Content
+                : null,
+            ReplyToMessageSenderName = m.ReplyToMessageId.HasValue && messageDict.ContainsKey(m.ReplyToMessageId.Value)
+                ? messageDict[m.ReplyToMessageId.Value].Sender.FullName
+                : null,
+            StickerUrl = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerUrl : null,
+            StickerType = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerType : null
         }).ToList();
     }
 
@@ -615,5 +647,97 @@ public class ChatService : IChatService
     {
         return await _dbContext.MessageReactions
             .AnyAsync(r => r.MessageId == messageId && r.UserId == userId && r.ReactionType == reactionType);
+    }
+
+    public async Task<GroupMessageViewModel> SendGroupStickerAsync(int senderId, int groupId, string stickerUrl)
+    {
+        var sender = await _dbContext.Users.FindAsync(senderId);
+        var group = await _dbContext.ChatGroups.FindAsync(groupId);
+        if (sender == null) throw new Exception("Sender not found");
+        if (group == null) throw new Exception("Group not found");
+        if (string.IsNullOrEmpty(stickerUrl)) throw new ArgumentException("Sticker URL cannot be empty");
+
+        // Lấy loại sticker từ url
+        var parts = stickerUrl.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        var stickerIndex = Array.IndexOf(parts, "sticker");
+        string stickerType = "Unknown";
+        if (stickerIndex != -1 && parts.Length > stickerIndex + 1)
+            stickerType = parts[stickerIndex + 1];
+
+        var message = new Message
+        {
+            SenderId = senderId,
+            GroupId = groupId,
+            Content = "Sticker",
+            SentAt = DateTime.Now,
+            IsEdited = false,
+            Media = new List<Media>(),
+            Sticker = new List<Sticker>()
+        };
+        var sticker = new Sticker
+        {
+            StickerUrl = stickerUrl,
+            StickerType = stickerType,
+            SentAt = DateTime.Now
+        };
+        message.Sticker.Add(sticker);
+        _dbContext.Messages.Add(message);
+        await _dbContext.SaveChangesAsync();
+
+        return new GroupMessageViewModel
+        {
+            MessageId = (int)message.MessageId,
+            SenderId = senderId,
+            GroupId = groupId,
+            SenderName = sender.FullName,
+            AvatarUrl = sender.AvatarUrl,
+            Content = message.Content,
+            SentAt = message.SentAt,
+            IsMine = false,
+            IsEdited = false,
+            Media = new List<MediaViewModel>(),
+            StickerUrl = stickerUrl,
+            StickerType = stickerType
+        };
+    }
+
+    // Lấy media của nhóm (ảnh, video, file)
+    public async Task<(List<MediaViewModel> Images, List<MediaViewModel> Videos, List<MediaViewModel> Files)> GetGroupMediaAsync(int groupId, int limit = 20)
+    {
+        var media = await _dbContext.Media
+            .Include(m => m.Message)
+            .Where(m => m.Message.GroupId == groupId)
+            .OrderByDescending(m => m.UploadedAt)
+            .Take(limit)
+            .ToListAsync();
+
+        var images = new List<MediaViewModel>();
+        var videos = new List<MediaViewModel>();
+        var files = new List<MediaViewModel>();
+
+        foreach (var item in media)
+        {
+            var mediaViewModel = new MediaViewModel
+            {
+                Url = item.Url,
+                MediaType = item.MediaType,
+                FileName = item.FileName
+            };
+
+            if (item.MediaType != null && item.MediaType.StartsWith("image/"))
+            {
+                images.Add(mediaViewModel);
+            }
+            else if (item.MediaType != null && item.MediaType.StartsWith("video/"))
+            {
+                videos.Add(mediaViewModel);
+            }
+            else
+            {
+                files.Add(mediaViewModel);
+            }
+        }
+
+        return (images, videos, files);
     }
 }

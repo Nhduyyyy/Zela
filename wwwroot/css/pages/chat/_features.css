@@ -140,6 +140,17 @@
 .sidebar-right.d-none {
     display: none;
 }
+
+/* Sidebar media container */
+#sidebar-media-container {
+    background: var(--theme-bg-secondary);
+    border-left: 1px solid var(--theme-border-color);
+    transition: margin-right .5s;
+    overflow-y: auto;
+    overflow-x: hidden;
+    position: relative;
+}
+
 /* Sender name */
 .message-sender {
     font-size: 0.8rem;
