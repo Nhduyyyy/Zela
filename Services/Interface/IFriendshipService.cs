@@ -1,5 +1,3 @@
-
-
 using Zela.Models;
 using Zela.ViewModels;
 
@@ -60,5 +58,29 @@ namespace Zela.Services
         Task<List<FriendViewModel>> SearchFriendsAsync(int currentUserId, string keyword);
         
         Task<List<FriendViewModel>> GetFriendListAsync(int userId);
+
+        // ---------------------------------------------
+        // MUTUAL FRIENDS FEATURES
+        // ---------------------------------------------
+        
+        /// <summary>
+        /// Lấy danh sách bạn chung giữa currentUser và targetUser
+        /// </summary>
+        Task<IEnumerable<User>> GetMutualFriendsAsync(int currentUserId, int targetUserId);
+        
+        /// <summary>
+        /// Đếm số lượng bạn chung giữa currentUser và targetUser
+        /// </summary>
+        Task<int> GetMutualFriendsCountAsync(int currentUserId, int targetUserId);
+        
+        /// <summary>
+        /// Lấy gợi ý kết bạn dựa trên số lượng bạn chung (top N users)
+        /// </summary>
+        Task<IEnumerable<UserWithMutualFriendsCount>> GetFriendSuggestionsAsync(int currentUserId, int limit = 10);
+        
+        /// <summary>
+        /// Lấy tất cả user (trừ currentUser), kèm quan hệ và số lượng bạn chung
+        /// </summary>
+        Task<IEnumerable<UserWithFriendshipStatus>> GetAllUsersWithMutualFriendsAsync(int currentUserId);
     }
 }

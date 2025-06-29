@@ -92,12 +92,28 @@ namespace Zela.Services
             // BƯỚC 2: Kiểm tra xem đã tồn tại record Friendship giữa hai user không
             // Gọi phương thức helper GetFriendshipBetweenAsync (đã định nghĩa) để tìm record
             var existing = await GetFriendshipBetweenAsync(currentUserId, targetUserId);
-            // Nếu existing != null nghĩa là đã có record Friendship (Pending/Accepted/Rejected/etc.)
+            
+            // Nếu existing != null nghĩa là đã có record Friendship
             if (existing != null)
             {
-                // Nếu đã tồn tại record với bất kỳ trạng thái nào (Pending, Accepted, Rejected),
-                // theo logic hiện tại không cho phép gửi lại => trả false.
-                return false;
+                // Nếu trạng thái là Pending (1) hoặc Accepted (2) => không cho phép gửi lại
+                if (existing.StatusId == 1 || existing.StatusId == 2)
+                {
+                    return false;
+                }
+                
+                // Nếu trạng thái là Rejected (3) => cho phép gửi lại bằng cách cập nhật record hiện tại
+                if (existing.StatusId == 3)
+                {
+                    // Cập nhật lại thông tin: currentUserId thành người gửi mới, trạng thái về Pending
+                    existing.UserId1 = currentUserId;
+                    existing.UserId2 = targetUserId;
+                    existing.StatusId = 1; // Pending
+                    existing.CreatedAt = DateTime.UtcNow;
+                    
+                    await _dbContext.SaveChangesAsync();
+                    return true;
+                }
             }
 
             // BƯỚC 3: Tạo record Friendship mới với trạng thái Pending (StatusId = 3)
@@ -551,6 +567,7 @@ namespace Zela.Services
                 {
                     UserId = user.UserId,
                     UserName = user.FullName ?? user.Email,
+                    Email = user.Email,
                     StatusId = record?.StatusId ?? 0,
                     Role = FriendshipRole.None
                 };
@@ -558,7 +575,7 @@ namespace Zela.Services
                 // Nếu tồn tại record Friendship giữa currentUser và user
                 if (record != null)
                 {
-                    // Kiểm tra trạng thái Pending (StatusId = 3)
+                    // Kiểm tra trạng thái Pending (StatusId = 1)
                     if (record.StatusId == 1)
                     {
                         // Nếu currentUserId khớp record.UserId1 => currentUser đã gửi lời mời (PendingSent)
@@ -574,7 +591,12 @@ namespace Zela.Services
                         // Hai người đã chấp nhận kết bạn
                         vm.Role = FriendshipRole.Accepted;
                     }
-                    // Bạn có thể thêm xử lý cho các StatusId khác (ví dụ Removed = 5, Cancelled = 6) nếu cần
+                    // Nếu trạng thái là Rejected (StatusId = 3) => hiển thị như None để có thể gửi lời mời lại
+                    else if (record.StatusId == 3)
+                    {
+                        vm.Role = FriendshipRole.None;
+                        vm.StatusId = 0; // Reset về None để hiển thị nút "Kết bạn"
+                    }
                 }
 
                 // Thêm ViewModel đã gán xong trạng thái vào kết quả
@@ -658,6 +680,142 @@ namespace Zela.Services
                 .ToListAsync();
 
             return friends;
+        }
+
+        // ---------------------------------------------
+        // MUTUAL FRIENDS FEATURES
+        // Author : A–DUY
+        // Date   : 2025-01-XX
+        // Task   : Triển khai các tính năng bạn chung
+        // ---------------------------------------------
+
+        /// <summary>
+        /// Lấy danh sách bạn chung giữa currentUser và targetUser
+        /// </summary>
+        public async Task<IEnumerable<User>> GetMutualFriendsAsync(int currentUserId, int targetUserId)
+        {
+            // BƯỚC 1: Lấy danh sách ID bạn bè của currentUser (StatusId = 2)
+            var currentUserFriendIds = await _dbContext.Friendships
+                .Where(f => (f.UserId1 == currentUserId || f.UserId2 == currentUserId) && f.StatusId == 2)
+                .Select(f => f.UserId1 == currentUserId ? f.UserId2 : f.UserId1)
+                .ToListAsync();
+
+            // BƯỚC 2: Lấy danh sách ID bạn bè của targetUser (StatusId = 2)
+            var targetUserFriendIds = await _dbContext.Friendships
+                .Where(f => (f.UserId1 == targetUserId || f.UserId2 == targetUserId) && f.StatusId == 2)
+                .Select(f => f.UserId1 == targetUserId ? f.UserId2 : f.UserId1)
+                .ToListAsync();
+
+            // BƯỚC 3: Tìm giao điểm (bạn chung)
+            var mutualFriendIds = currentUserFriendIds.Intersect(targetUserFriendIds).ToList();
+
+            // BƯỚC 4: Lấy thông tin User của các bạn chung
+            return await _dbContext.Users
+                .Where(u => mutualFriendIds.Contains(u.UserId))
+                .ToListAsync();
+        }
+
+        /// <summary>
+        /// Đếm số lượng bạn chung giữa currentUser và targetUser
+        /// </summary>
+        public async Task<int> GetMutualFriendsCountAsync(int currentUserId, int targetUserId)
+        {
+            // Tối ưu hóa: chỉ đếm không cần lấy dữ liệu
+            var currentUserFriendIds = await _dbContext.Friendships
+                .Where(f => (f.UserId1 == currentUserId || f.UserId2 == currentUserId) && f.StatusId == 2)
+                .Select(f => f.UserId1 == currentUserId ? f.UserId2 : f.UserId1)
+                .ToListAsync();
+
+            var targetUserFriendIds = await _dbContext.Friendships
+                .Where(f => (f.UserId1 == targetUserId || f.UserId2 == targetUserId) && f.StatusId == 2)
+                .Select(f => f.UserId1 == targetUserId ? f.UserId2 : f.UserId1)
+                .ToListAsync();
+
+            return currentUserFriendIds.Intersect(targetUserFriendIds).Count();
+        }
+
+        /// <summary>
+        /// Lấy gợi ý kết bạn dựa trên số lượng bạn chung
+        /// </summary>
+        public async Task<IEnumerable<UserWithMutualFriendsCount>> GetFriendSuggestionsAsync(int currentUserId, int limit = 10)
+        {
+            // BƯỚC 1: Lấy danh sách bạn bè của currentUser
+            var currentUserFriendIds = await _dbContext.Friendships
+                .Where(f => (f.UserId1 == currentUserId || f.UserId2 == currentUserId) && f.StatusId == 2)
+                .Select(f => f.UserId1 == currentUserId ? f.UserId2 : f.UserId1)
+                .ToListAsync();
+
+            // BƯỚC 2: Lấy danh sách user đã có quan hệ với currentUser (để loại trừ)
+            var relatedUserIds = await _dbContext.Friendships
+                .Where(f => f.UserId1 == currentUserId || f.UserId2 == currentUserId)
+                .Select(f => f.UserId1 == currentUserId ? f.UserId2 : f.UserId1)
+                .ToListAsync();
+
+            // BƯỚC 3: Lấy tất cả user (trừ currentUser và những user đã có quan hệ)
+            var candidateUsers = await _dbContext.Users
+                .Where(u => u.UserId != currentUserId && !relatedUserIds.Contains(u.UserId))
+                .ToListAsync();
+
+            // BƯỚC 4: Tính số bạn chung cho từng candidate
+            var suggestions = new List<UserWithMutualFriendsCount>();
+
+            foreach (var user in candidateUsers)
+            {
+                var mutualCount = await GetMutualFriendsCountAsync(currentUserId, user.UserId);
+                
+                if (mutualCount > 0) // Chỉ gợi ý những user có ít nhất 1 bạn chung
+                {
+                    // Lấy preview một vài tên bạn chung
+                    var mutualFriends = await GetMutualFriendsAsync(currentUserId, user.UserId);
+                    var preview = mutualFriends.Take(3).Select(f => f.FullName ?? f.Email).ToList();
+
+                    suggestions.Add(new UserWithMutualFriendsCount
+                    {
+                        UserId = user.UserId,
+                        UserName = user.FullName ?? user.Email,
+                        AvatarUrl = user.AvatarUrl,
+                        Email = user.Email,
+                        MutualFriendsCount = mutualCount,
+                        Role = FriendshipRole.None,
+                        MutualFriendsPreview = preview
+                    });
+                }
+            }
+
+            // BƯỚC 5: Sắp xếp theo số bạn chung giảm dần và lấy top N
+            return suggestions
+                .OrderByDescending(s => s.MutualFriendsCount)
+                .Take(limit);
+        }
+
+        /// <summary>
+        /// Lấy tất cả user (trừ currentUser), kèm quan hệ và số lượng bạn chung
+        /// </summary>
+        public async Task<IEnumerable<UserWithFriendshipStatus>> GetAllUsersWithMutualFriendsAsync(int currentUserId)
+        {
+            // Sử dụng method hiện tại làm base
+            var users = await GetAllUsersExceptCurrentAsync(currentUserId);
+            var result = new List<UserWithFriendshipStatus>();
+
+            // Thêm thông tin bạn chung cho từng user
+            foreach (var user in users)
+            {
+                var mutualCount = await GetMutualFriendsCountAsync(currentUserId, user.UserId);
+                
+                var userWithMutual = new UserWithFriendshipStatus
+                {
+                    UserId = user.UserId,
+                    UserName = user.UserName,
+                    Email = user.Email,
+                    StatusId = user.StatusId,
+                    Role = user.Role,
+                    MutualFriendsCount = mutualCount
+                };
+                
+                result.Add(userWithMutual);
+            }
+
+            return result;
         }
     }
 }

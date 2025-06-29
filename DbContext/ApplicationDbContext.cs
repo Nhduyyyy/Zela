@@ -43,6 +43,7 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<Attendance> Attendances { get; set; }
     public DbSet<CallTranscript> CallTranscripts { get; set; }
     public DbSet<Subtitle> Subtitles { get; set; }
+    public DbSet<Recording> Recordings { get; set; }
 
     // ------------ Learning Tools ------------
     public DbSet<Quiz> Quizzes { get; set; }
@@ -243,6 +244,36 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
             .WithMany(cs => cs.Transcripts)
             .HasForeignKey(ct => ct.SessionId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        #endregion
+
+        #region Recording ↔ User
+
+        modelBuilder.Entity<Recording>()
+            .HasOne(r => r.User)
+            .WithMany()
+            .HasForeignKey(r => r.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Recording ↔ CallSession (Optional relationship)
+        modelBuilder.Entity<Recording>()
+            .HasOne(r => r.CallSession)
+            .WithMany(cs => cs.Recordings)
+            .HasForeignKey(r => r.SessionId)
+            .OnDelete(DeleteBehavior.SetNull); // When session deleted, keep recording but clear SessionId
+
+        // Indexing for better performance
+        modelBuilder.Entity<Recording>()
+            .HasIndex(r => r.MeetingCode);
+        
+        modelBuilder.Entity<Recording>()
+            .HasIndex(r => new { r.UserId, r.CreatedAt });
+
+        modelBuilder.Entity<Recording>()
+            .HasIndex(r => r.IsActive);
+        
+        modelBuilder.Entity<Recording>()
+            .HasIndex(r => r.SessionId);
 
         #endregion
 

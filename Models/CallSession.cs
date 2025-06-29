@@ -22,4 +22,5 @@ public class CallSession
     public VideoRoom VideoRoom { get; set; }
     public ICollection<Attendance> Attendances { get; set; }
     public ICollection<CallTranscript> Transcripts { get; set; }
+    public ICollection<Recording> Recordings { get; set; } = new List<Recording>();
 }

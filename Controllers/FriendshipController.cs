@@ -8,7 +8,9 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zela.Services;
+using Zela.ViewModels;
 using ZelaTestDemo.ViewModels;
+using Zela.Models;
 
 
 namespace Zela.Controllers
@@ -141,10 +143,10 @@ namespace Zela.Controllers
                 return Forbid();
             
             // Gọi service để lấy danh sách các user khác,
-            // kèm trạng thái quan hệ so với currentUserId.
-            var allUsers = await _friendshipService.GetAllUsersExceptCurrentAsync(currentUserId);
+            // kèm trạng thái quan hệ và thông tin bạn chung so với currentUserId.
+            var allUsers = await _friendshipService.GetAllUsersWithMutualFriendsAsync(currentUserId);
             
-            // Trả về view Find.cshtml với model chứa list user và status.
+            // Trả về view Find.cshtml với model chứa list user, status và mutual friends count.
             return View(allUsers);
         }
         
@@ -371,6 +373,126 @@ namespace Zela.Controllers
             // Có keyword -> tìm bạn theo keyword
             var filteredFriends = await _friendshipService.SearchFriendsAsync(currentUserId, keyword);
             return PartialView("_FriendListPartial", filteredFriends);
+        }
+
+        // ---------------------------------------------
+        // MUTUAL FRIENDS FEATURES
+        // Author : A–DUY  
+        // Date   : 2025-01-XX
+        // Task   : Các actions cho tính năng bạn chung
+        // ---------------------------------------------
+
+        /// <summary>
+        /// Hiển thị danh sách bạn chung giữa currentUser và targetUser
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> MutualFriends(int targetUserId)
+        {
+            if (!TryGetCurrentUserId(out var currentUserId))
+                return Forbid();
+
+            // Lấy thông tin targetUser
+            var targetUser = await _friendshipService.GetFriendsAsync(currentUserId);
+            var target = targetUser.FirstOrDefault(u => u.UserId == targetUserId);
+            
+            if (target == null)
+            {
+                // Nếu không phải bạn bè, có thể lấy từ database
+                // Hoặc return NotFound tùy business logic
+                TempData["Error"] = "Không thể xem bạn chung với người này.";
+                return RedirectToAction(nameof(Find));
+            }
+
+            // Lấy danh sách bạn chung
+            var mutualFriends = await _friendshipService.GetMutualFriendsAsync(currentUserId, targetUserId);
+            
+            // Lấy thông tin currentUser để hiển thị
+            var currentUser = await _friendshipService.GetFriendsAsync(currentUserId);
+            
+            var viewModel = new MutualFriendsViewModel
+            {
+                TargetUser = target,
+                MutualFriends = mutualFriends.ToList(),
+                TotalCount = mutualFriends.Count(),
+                CurrentUser = currentUser.FirstOrDefault() // Cần fix logic này
+            };
+
+            return View(viewModel);
+        }
+
+        /// <summary>
+        /// API lấy số lượng bạn chung (cho AJAX calls)
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetMutualFriendsCount(int targetUserId)
+        {
+            if (!TryGetCurrentUserId(out var currentUserId))
+                return Json(new { success = false, message = "Chưa đăng nhập" });
+
+            try
+            {
+                var count = await _friendshipService.GetMutualFriendsCountAsync(currentUserId, targetUserId);
+                return Json(new { success = true, count = count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi lấy thông tin bạn chung" });
+            }
+        }
+
+        /// <summary>
+        /// Trang gợi ý kết bạn dựa trên bạn chung
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> Suggestions()
+        {
+            if (!TryGetCurrentUserId(out var currentUserId))
+                return Forbid();
+
+            var suggestions = await _friendshipService.GetFriendSuggestionsAsync(currentUserId, 20);
+            
+            return View(suggestions);
+        }
+
+        /// <summary>
+        /// Cập nhật Find action để hiển thị thông tin bạn chung
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> FindWithMutualFriends()
+        {
+            if (!TryGetCurrentUserId(out var currentUserId))
+                return Forbid();
+
+            // Sử dụng method mới có thông tin bạn chung
+            var users = await _friendshipService.GetAllUsersWithMutualFriendsAsync(currentUserId);
+            
+            return View("Find", users);
+        }
+
+        /// <summary>
+        /// API lấy danh sách bạn chung (cho modal popup)
+        /// </summary>
+        [HttpGet]
+        public async Task<IActionResult> GetMutualFriendsList(int targetUserId)
+        {
+            if (!TryGetCurrentUserId(out var currentUserId))
+                return Json(new { success = false, message = "Chưa đăng nhập" });
+
+            try
+            {
+                var mutualFriends = await _friendshipService.GetMutualFriendsAsync(currentUserId, targetUserId);
+                var friendsList = mutualFriends.Select(f => new {
+                    userId = f.UserId,
+                    name = f.FullName ?? f.Email,
+                    avatarUrl = f.AvatarUrl ?? "/images/default-avatar.jpeg"
+                }).ToList();
+
+                return Json(new { success = true, friends = friendsList });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "Lỗi khi lấy danh sách bạn chung" });
+            }
         }
     }
 }

@@ -1,0 +1,552 @@
+@{
+    ViewData["Title"] = "Quản lý Recordings";
+    var userId = Context.Session.GetInt32("UserId") ?? 0;
+}
+
+<div class="recordings-container">
+    <!-- Header -->
+    <div class="recordings-header">
+        <div class="header-content">
+            <h1><i class="bi bi-camera-video"></i> Quản lý Recordings</h1>
+            <p>Xem và quản lý các video đã ghi của bạn</p>
+        </div>
+        
+        <!-- Action Bar -->
+        <div class="recordings-action-bar">
+            <div class="recordings-filters">
+                <div class="filter-group">
+                    <label for="meeting-filter">Cuộc họp:</label>
+                    <select id="meeting-filter" class="form-select">
+                        <option value="">Tất cả cuộc họp</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="date-filter">Thời gian:</label>
+                    <select id="date-filter" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="today">Hôm nay</option>
+                        <option value="week">Tuần này</option>
+                        <option value="month">Tháng này</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="type-filter">Loại:</label>
+                    <select id="type-filter" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="recording">Video</option>
+                        <option value="screenshot">Ảnh chụp</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label for="search-input">Tìm kiếm:</label>
+                    <input type="text" id="search-input" class="form-control" placeholder="Tìm tên file, mô tả...">
+                </div>
+            </div>
+            
+            <div class="recordings-actions">
+                <button id="upload-recording" class="btn btn-success">
+                    <i class="bi bi-cloud-upload"></i> Upload Recording
+                </button>
+                
+                <button id="bulk-delete" class="btn btn-outline-danger" style="display: none;">
+                    <i class="bi bi-trash"></i> Xóa đã chọn (<span id="selected-count">0</span>)
+                </button>
+                
+                <button id="show-statistics" class="btn btn-outline-info">
+                    <i class="bi bi-bar-chart"></i> Thống kê
+                </button>
+                
+                <button id="refresh-recordings" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-clockwise"></i> Làm mới
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="recordings-loading" class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Đang tải...</span>
+        </div>
+        <p class="mt-2">Đang tải recordings...</p>
+    </div>
+
+    <!-- Empty State -->
+    <div id="recordings-empty" class="empty-state text-center py-5" style="display: none;">
+        <i class="bi bi-camera-video-off display-1 text-muted"></i>
+        <h3>Chưa có recordings nào</h3>
+        <p class="text-muted">Hãy tham gia cuộc họp và bắt đầu ghi hình để xem recordings tại đây</p>
+        <a href="/Meeting" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Tạo cuộc họp mới
+        </a>
+    </div>
+
+    <!-- Recordings Grid -->
+    <div id="recordings-grid" class="recordings-grid" style="display: none;">
+        <!-- Will be populated by JavaScript -->
+    </div>
+
+    <!-- Pagination -->
+    <div id="recordings-pagination" class="pagination-container" style="display: none;">
+        <!-- Will be populated by JavaScript -->
+    </div>
+</div>
+
+<!-- Recording Detail Modal -->
+<div class="modal fade" id="recordingDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi tiết Recording</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Video Player Section - Full Width -->
+                <div class="video-section mb-4">
+                    <div class="video-player-container">
+                        <video id="recording-player" controls style="width: 100%; height: 500px; background: #000;">
+                            Trình duyệt của bạn không hỗ trợ video player.
+                        </video>
+                    </div>
+                </div>
+                
+                <!-- Recording Info Section - Full Width -->
+                <div class="recording-info-section">
+                    <div class="recording-info">
+                        <h6>Thông tin Recording</h6>
+                        <div id="recording-details">
+                            <!-- Will be populated by JavaScript -->
+                        </div>
+                        
+                        <!-- Actions -->
+                        <div class="recording-actions mt-4">
+                            <button id="download-recording" class="btn btn-primary">
+                                <i class="bi bi-download"></i> Tải xuống
+                            </button>
+                            <button id="share-recording" class="btn btn-outline-secondary">
+                                <i class="bi bi-share"></i> Chia sẻ
+                            </button>
+                            <button id="delete-recording" class="btn btn-outline-danger">
+                                <i class="bi bi-trash"></i> Xóa
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tags/Description Modal -->
+<div class="modal fade" id="editRecordingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa Recording</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-recording-form">
+                    <div class="mb-3">
+                        <label for="recording-description" class="form-label">Mô tả:</label>
+                        <textarea id="recording-description" class="form-control" rows="3" 
+                                  placeholder="Nhập mô tả cho recording này..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="recording-tags" class="form-label">Tags:</label>
+                        <input type="text" id="recording-tags" class="form-control" 
+                               placeholder="Nhập tags, phân cách bằng dấu phẩy...">
+                        <div class="form-text">Ví dụ: meeting, important, project-a</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="save-recording-changes" class="btn btn-primary">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Upload Recording Modal -->
+<div class="modal fade" id="uploadRecordingModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="bi bi-cloud-upload"></i> Upload Recording
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="upload-recording-form" enctype="multipart/form-data">
+                    <!-- File Upload Area -->
+                    <div class="mb-4">
+                        <label class="form-label">Chọn file recording:</label>
+                        <div class="upload-drop-zone" id="upload-drop-zone">
+                            <div class="upload-drop-content">
+                                <i class="bi bi-cloud-upload-fill upload-icon"></i>
+                                <h5>Kéo thả file vào đây hoặc click để chọn</h5>
+                                <p class="text-muted mb-0">
+                                    Hỗ trợ: MP4, WebM, AVI, MOV (tối đa 500MB)<br>
+                                    Hoặc PNG, JPEG, WebP cho ảnh chụp (tối đa 50MB)
+                                </p>
+                            </div>
+                            <input type="file" id="upload-file-input" accept="video/*,image/*" style="display: none;">
+                        </div>
+                        
+                        <!-- Selected File Info -->
+                        <div id="selected-file-info" class="mt-3" style="display: none;">
+                            <div class="selected-file-card">
+                                <div class="file-icon">
+                                    <i class="bi bi-file-earmark-play"></i>
+                                </div>
+                                <div class="file-details">
+                                    <div class="file-name"></div>
+                                    <div class="file-meta text-muted"></div>
+                                </div>
+                                <button type="button" class="btn btn-sm btn-outline-danger remove-file">
+                                    <i class="bi bi-x"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Upload Progress -->
+                        <div id="upload-progress" class="mt-3" style="display: none;">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <span class="upload-status">Đang upload...</span>
+                                <span class="upload-percentage">0%</span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated" 
+                                     role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recording Details -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="upload-meeting-code" class="form-label">Mã cuộc họp:</label>
+                                <input type="text" id="upload-meeting-code" class="form-control" 
+                                       placeholder="Nhập mã cuộc họp..." required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="upload-type" class="form-label">Loại file:</label>
+                                <select id="upload-type" class="form-select">
+                                    <option value="recording">Video Recording</option>
+                                    <option value="screenshot">Screenshot</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="upload-description" class="form-label">Mô tả:</label>
+                        <textarea id="upload-description" class="form-control" rows="3" 
+                                  placeholder="Nhập mô tả cho recording này..."></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="upload-tags" class="form-label">Tags:</label>
+                        <input type="text" id="upload-tags" class="form-control" 
+                               placeholder="meeting, important, project-a">
+                        <div class="form-text">Phân cách các tags bằng dấu phẩy</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="start-upload" class="btn btn-success">
+                    <i class="bi bi-cloud-upload"></i> Bắt đầu Upload
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Modal -->
+<div class="modal fade" id="statisticsModal" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content stats-modal-content">
+            <div class="stats-modal-header">
+                <div class="stats-header-content">
+                    <h2 class="stats-title">
+                        <span class="stats-icon">📊</span>
+                        <span>Analytics Dashboard</span>
+                        <span class="stats-subtitle">Recordings Intelligence</span>
+                    </h2>
+                    <button type="button" class="stats-close-btn" data-bs-dismiss="modal">
+                        <i class="bi bi-x-lg"></i>
+                    </button>
+                </div>
+                
+                <!-- Time Range Selector -->
+                <div class="time-range-selector">
+                    <div class="time-range-buttons">
+                        <button class="time-btn active" data-range="today">Hôm nay</button>
+                        <button class="time-btn" data-range="week">Tuần này</button>
+                        <button class="time-btn" data-range="month">Tháng này</button>
+                        <button class="time-btn" data-range="quarter">Quý này</button>
+                        <button class="time-btn" data-range="year">Năm này</button>
+                        <button class="time-btn" data-range="all">Tất cả</button>
+                    </div>
+                    <div class="custom-range">
+                        <input type="date" id="start-date" class="custom-date-input">
+                        <span>đến</span>
+                        <input type="date" id="end-date" class="custom-date-input">
+                        <button id="apply-custom-range" class="apply-btn">Áp dụng</button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="stats-modal-body">
+                <!-- Statistics Loading -->
+                <div id="stats-loading" class="stats-loading">
+                    <div class="loading-container">
+                        <div class="loading-spinner"></div>
+                        <div class="loading-text">
+                            <h3>Đang phân tích dữ liệu...</h3>
+                            <p>Vui lòng chờ trong khi chúng tôi tính toán thống kê</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Statistics Content -->
+                <div id="stats-content" style="display: none;">
+                    <!-- Key Metrics Row -->
+                    <div class="metrics-grid">
+                        <div class="metric-card recordings-metric">
+                            <div class="metric-icon">
+                                <i class="bi bi-camera-video-fill"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="total-recordings">0</div>
+                                <div class="metric-label">Tổng Recordings</div>
+                                <div class="metric-change" id="recordings-change">+0% so với kỳ trước</div>
+                            </div>
+                            <div class="metric-sparkline" id="recordings-sparkline"></div>
+                        </div>
+                        
+                        <div class="metric-card storage-metric">
+                            <div class="metric-icon">
+                                <i class="bi bi-hdd-stack-fill"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="total-storage">0 MB</div>
+                                <div class="metric-label">Dung lượng sử dụng</div>
+                                <div class="metric-change" id="storage-change">+0% so với kỳ trước</div>
+                            </div>
+                            <div class="metric-progress">
+                                <div class="progress-ring">
+                                    <svg width="60" height="60">
+                                        <circle class="progress-ring-bg" cx="30" cy="30" r="26"></circle>
+                                        <circle class="progress-ring-fill" cx="30" cy="30" r="26" id="storage-progress-ring"></circle>
+                                    </svg>
+                                    <div class="progress-percent" id="storage-percent">0%</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card duration-metric">
+                            <div class="metric-icon">
+                                <i class="bi bi-stopwatch-fill"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="total-duration">0h 0m</div>
+                                <div class="metric-label">Tổng thời lượng</div>
+                                <div class="metric-change" id="duration-change">+0% so với kỳ trước</div>
+                            </div>
+                            <div class="metric-visual">
+                                <div class="duration-bars" id="duration-bars">
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                    <div class="bar"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card downloads-metric">
+                            <div class="metric-icon">
+                                <i class="bi bi-arrow-down-circle-fill"></i>
+                            </div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="total-downloads">0</div>
+                                <div class="metric-label">Lượt tải xuống</div>
+                                <div class="metric-change" id="downloads-change">+0% so với kỳ trước</div>
+                            </div>
+                            <div class="metric-visual">
+                                <div class="download-trend" id="download-trend"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Charts Section -->
+                    <div class="charts-section">
+                        <!-- Timeline Chart -->
+                        <div class="chart-container timeline-chart">
+                            <div class="chart-header">
+                                <h4>📈 Xu hướng Recordings theo thời gian</h4>
+                                <div class="chart-controls">
+                                    <select id="timeline-view" class="chart-select">
+                                        <option value="daily">Theo ngày</option>
+                                        <option value="weekly">Theo tuần</option>
+                                        <option value="monthly" selected>Theo tháng</option>
+                                        <option value="yearly">Theo năm</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper">
+                                <canvas id="recordings-timeline-chart" width="800" height="400"></canvas>
+                                <div class="chart-insights" id="timeline-insights">
+                                    <div class="insight-item">
+                                        <span class="insight-label">Đỉnh cao:</span>
+                                        <span class="insight-value" id="peak-day">-</span>
+                                    </div>
+                                    <div class="insight-item">
+                                        <span class="insight-label">Trung bình:</span>
+                                        <span class="insight-value" id="avg-recordings">-</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Distribution Charts -->
+                        <div class="charts-row">
+                            <div class="chart-container file-type-chart">
+                                <div class="chart-header">
+                                    <h4>🎯 Phân loại theo loại file</h4>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="file-type-chart" width="300" height="300"></canvas>
+                                    <div class="chart-legend" id="file-type-legend"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="chart-container quality-chart">
+                                <div class="chart-header">
+                                    <h4>🎬 Chất lượng Recordings</h4>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <canvas id="quality-distribution-chart" width="300" height="300"></canvas>
+                                    <div class="quality-stats" id="quality-stats"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="chart-container meeting-stats">
+                                <div class="chart-header">
+                                    <h4>🏆 Top Meeting Codes</h4>
+                                </div>
+                                <div class="chart-wrapper">
+                                    <div class="top-meetings" id="top-meetings"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Heat Map -->
+                        <div class="chart-container heatmap-chart">
+                            <div class="chart-header">
+                                <h4>🔥 Heat Map - Hoạt động theo giờ</h4>
+                                <div class="heatmap-legend">
+                                    <span>Ít</span>
+                                    <div class="legend-gradient"></div>
+                                    <span>Nhiều</span>
+                                </div>
+                            </div>
+                            <div class="chart-wrapper">
+                                <div class="heatmap-container" id="activity-heatmap"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Analytics -->
+                    <div class="advanced-analytics">
+                        <div class="analytics-card insights-card">
+                            <h4>🧠 Insights & Recommendations</h4>
+                            <div class="insights-list" id="smart-insights">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                        
+                        <div class="analytics-card storage-breakdown">
+                            <h4>💾 Chi tiết Storage</h4>
+                            <div class="storage-details" id="storage-details">
+                                <!-- Will be populated by JavaScript -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Storage Management -->
+                    <div class="storage-management">
+                        <h6><i class="bi bi-hdd"></i> Quản lý dung lượng</h6>
+                        <div class="storage-progress mb-3">
+                            <div class="d-flex justify-content-between mb-2">
+                                <span>Đã sử dụng: <span id="used-storage">0 MB</span></span>
+                                <span>Giới hạn: <span id="storage-limit">5 GB</span></span>
+                            </div>
+                            <div class="progress">
+                                <div class="progress-bar" id="storage-progress-bar" role="progressbar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="storage-actions">
+                            <button id="cleanup-old-files" class="btn btn-outline-warning btn-sm">
+                                <i class="bi bi-trash"></i> Dọn dẹp file cũ (>30 ngày)
+                            </button>
+                            <button id="compress-recordings" class="btn btn-outline-info btn-sm">
+                                <i class="bi bi-archive"></i> Nén recordings cũ
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Operations Confirmation Modal -->
+<div class="modal fade" id="bulkOperationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xác nhận thao tác</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center">
+                    <i class="bi bi-exclamation-triangle-fill text-warning" style="font-size: 3rem;"></i>
+                    <h5 class="mt-3">Bạn có chắc chắn muốn xóa <span id="bulk-count">0</span> recordings đã chọn?</h5>
+                    <p class="text-muted">Thao tác này không thể hoàn tác!</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" id="confirm-bulk-delete" class="btn btn-danger">
+                    <i class="bi bi-trash"></i> Xóa
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include CSS -->
+<link rel="stylesheet" href="~/css/pages/recordings.css">
+
+<!-- Include JavaScript -->
+<script src="~/js/recordings-manager.js"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        window.recordingsManager = new RecordingsManager(@userId);
+        window.recordingsManager.initialize();
+    });
+</script> 

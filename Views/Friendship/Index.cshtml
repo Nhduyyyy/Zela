@@ -37,7 +37,12 @@
                         }
                     }
                 </ul>
-                <a asp-action="Find" class="btn btn-primary mt-3">Tìm bạn mới</a>
+                <div class="mt-3">
+                    <a asp-action="Find" class="btn btn-primary">Tìm bạn mới</a>
+                    <a asp-action="Suggestions" class="btn btn-outline-info ms-2">
+                        <i class="fas fa-lightbulb"></i> Gợi ý kết bạn
+                    </a>
+                </div>
             </div>
             <div class="col-md-4">
                 <h4>Lời mời đến (@Model.IncomingRequests.Count)</h4>
