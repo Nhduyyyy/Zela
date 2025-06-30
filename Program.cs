@@ -121,6 +121,9 @@ builder.Services.AddScoped<IStickerService, StickerService>();
 // add Recording
 builder.Services.AddScoped<IRecordingService, RecordingService>();
 
+// add Whiteboard
+builder.Services.AddScoped<IWhiteboardService, WhiteboardService>();
+
 // Configure form options for file uploads
 builder.Services.Configure<FormOptions>(options =>
 {
@@ -206,6 +209,7 @@ app.UseStatusCodePagesWithRedirects("/Account/Login?error=403");
 
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<MeetingHub>("/meetingHub");
+app.MapHub<WhiteboardHub>("/whiteboardHub");
 
 // 7.10) Chạy ứng dụng, lắng nghe request trên port đã cấu hình
 app.Run();

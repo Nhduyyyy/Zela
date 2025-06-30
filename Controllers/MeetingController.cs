@@ -238,20 +238,51 @@ namespace Zela.Controllers
         {
             try
             {
-                var currentUserId = HttpContext.Session.GetInt32("UserId");
-                if (currentUserId == null)
+                // Try both claim and session approaches
+                var currentUserId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (currentUserId == 0)
+                {
+                    currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                }
+                
+                if (currentUserId == 0)
                     return Unauthorized();
 
                 // Use current user's ID if not specified, or validate access
-                var targetUserId = userId ?? currentUserId.Value;
-                if (targetUserId != currentUserId.Value)
+                var targetUserId = userId ?? currentUserId;
+                if (targetUserId != currentUserId)
                 {
                     // Only allow admins to view other users' recordings
                     return Forbid("Access denied");
                 }
 
-                var recordings = await _recordingService.GetUserRecordingsAsync(targetUserId);
-                return Json(new { success = true, recordings = recordings });
+                // Use GetRecordingHistoryAsync instead of GetUserRecordingsAsync
+                // This returns the proper RecordingHistoryItem format that JavaScript expects
+                var recordings = await _recordingService.GetRecordingHistoryAsync(targetUserId, meetingCode);
+                
+                // Map to format expected by JavaScript
+                var mappedRecordings = recordings.Select(r => new
+                {
+                    id = r.Id,
+                    fileName = r.FileName,
+                    originalFileName = r.OriginalFileName,
+                    fileUrl = r.Url,
+                    fileSize = r.FileSize,
+                    recordingType = r.Type,
+                    meetingCode = r.MeetingCode,
+                    sessionId = r.SessionId,
+                    createdAt = r.CreatedAt,
+                    userId = r.UserId,
+                    duration = r.Duration,
+                    metadata = r.Metadata,
+                    thumbnailUrl = r.ThumbnailUrl,
+                    tags = r.Tags,
+                    description = r.Description,
+                    downloadCount = r.DownloadCount,
+                    lastAccessedAt = r.LastAccessedAt
+                }).ToList();
+                
+                return Json(new { success = true, recordings = mappedRecordings });
             }
             catch (Exception ex)
             {
@@ -457,10 +488,18 @@ namespace Zela.Controllers
         [HttpGet]
         public async Task<IActionResult> Recordings()
         {
-            var userId = HttpContext.Session.GetInt32("UserId");
-            if (userId == null)
+            // Try both claim and session approaches to get userId
+            var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+            if (userId == 0)
+            {
+                userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            }
+            
+            if (userId == 0)
                 return RedirectToAction("Login", "Account");
 
+            // Pass userId to view for JavaScript initialization
+            ViewBag.UserId = userId;
             return View();
         }
 

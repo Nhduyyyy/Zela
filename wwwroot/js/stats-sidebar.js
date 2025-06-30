@@ -12,6 +12,7 @@ class StatsSidebar {
         this.meetingCode = '';
         this.currentUserId = 0;
         this.signalRConnection = null;
+        this.meetingTimer = null;
         
         this.init();
     }
@@ -149,6 +150,9 @@ class StatsSidebar {
         // Stop auto-refresh
         this.stopAutoRefresh();
         
+        // Stop meeting timer
+        this.stopMeetingTimer();
+        
         console.log('📊 Stats sidebar closed');
     }
     
@@ -282,6 +286,8 @@ class StatsSidebar {
             `;
         } else {
             statsData.innerHTML = this.renderActiveSession(data);
+            // Start meeting timer for dynamic duration
+            this.startMeetingTimer(data.session.startedAt);
         }
         
         statsData.style.display = 'block';
@@ -311,7 +317,7 @@ class StatsSidebar {
                 <h4>⏱️ Thời gian cuộc họp</h4>
                 <div class="stat-info">
                     <p><strong>Bắt đầu:</strong> ${this.formatDateTime(session.startedAt)}</p>
-                    <p><strong>Thời lượng:</strong> ${session.durationMinutes} phút</p>
+                    <p><strong>Thời lượng:</strong> <span id="meeting-duration"></span></p>
                     <p><strong>Đang ghi hình:</strong> ${session.hasRecording ? '✅ Có' : '❌ Không'}</p>
                 </div>
             </div>
@@ -405,6 +411,31 @@ class StatsSidebar {
             });
         } catch (error) {
             return dateString;
+        }
+    }
+    
+    startMeetingTimer(startedAt) {
+        if (this.meetingTimer) clearInterval(this.meetingTimer);
+        const durationEl = document.getElementById('meeting-duration');
+        if (!durationEl) return;
+        const start = new Date(Date.parse(startedAt));
+        const update = () => {
+            const now = new Date();
+            let diff = Math.floor((now - start) / 1000);
+            if (diff < 0) diff = 0;
+            const h = String(Math.floor(diff / 3600)).padStart(2, '0');
+            const m = String(Math.floor((diff % 3600) / 60)).padStart(2, '0');
+            const s = String(diff % 60).padStart(2, '0');
+            durationEl.textContent = `${h}:${m}:${s}`;
+        };
+        update(); // Initial call
+        this.meetingTimer = setInterval(update, 1000);
+    }
+    
+    stopMeetingTimer() {
+        if (this.meetingTimer) {
+            clearInterval(this.meetingTimer);
+            this.meetingTimer = null;
         }
     }
     

@@ -11,17 +11,20 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="~/css/base/normalize.css"/>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css"/>
     
-    <!-- Theme và CSS chính -->
-    <link rel="stylesheet" href="~/css/themes/colors.css?v=@DateTime.Now.Ticks"/>
-    <link rel="stylesheet" href="~/css/themes/chat-theme.css?v=@DateTime.Now.Ticks"/>
+    <!-- Bootstrap PHẢI ĐƯỢC LOAD TRƯỚC để không đè lên CSS custom -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
+    
+    <!-- Theme và CSS chính - LOAD SAU Bootstrap để override -->
+    <link rel="stylesheet" href="~/css/themes/chat-theme.css" />
+    <!-- Force CSS variables load -->
     <link rel="stylesheet" href="~/css/layout/sidebar.css"/>
     <link rel="stylesheet" href="~/css/components/profile-dialog.css"/>
     <link rel="stylesheet" href="~/css/components/sidebar-media.css"/>
     <link rel="stylesheet" href="~/css/video-call-popup.css"/>
     <link rel="stylesheet" href="~/css/pages/chat/_reactions.css"/>
+
     @RenderSection("Styles", required: false)
 
     <!-- Scripts -->

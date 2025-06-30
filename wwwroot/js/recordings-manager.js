@@ -540,8 +540,6 @@ class RecordingsManager {
         timeoutId = setTimeout(detectFailure, 15000);
     }
 
-
-
     async rollbackDownload(recordingId) {
         try {
             await fetch('/Meeting/RollbackDownload', {
@@ -1119,8 +1117,8 @@ class RecordingsManager {
 
     // ======== ADVANCED STATISTICS ========
     initializeStatisticsModal() {
-        // Time range selector
-        this.currentTimeRange = 'today';
+        // Time range selector - Default to show all recordings
+        this.currentTimeRange = 'all';
         this.customDateRange = { start: null, end: null };
         
         // Time range buttons
@@ -1180,6 +1178,19 @@ class RecordingsManager {
         document.getElementById('stats-content').style.display = 'none';
         
         try {
+            // Force refresh recordings data
+            await this.loadRecordings();
+            
+            // Ensure currentTimeRange is set to 'all' for initial display
+            this.currentTimeRange = 'all';
+            
+            // Update UI to reflect 'all' is active
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+            const allBtn = document.querySelector('.time-btn[data-range="all"]');
+            if (allBtn) allBtn.classList.add('active');
+            
+            console.log(`[DEBUG] Loading statistics with currentTimeRange: ${this.currentTimeRange}, recordings count: ${this.recordings.length}`);
+            
             await this.loadStatistics();
         } catch (error) {
             console.error('Error loading statistics:', error);
@@ -1197,8 +1208,17 @@ class RecordingsManager {
         // Filter recordings based on time range
         const filteredRecordings = this.getFilteredRecordings();
         
+        console.log(`[DEBUG] loadStatistics - filteredRecordings count: ${filteredRecordings.length}`);
+        
         // Calculate statistics
         const stats = this.calculateAdvancedStatistics(filteredRecordings);
+        
+        console.log(`[DEBUG] loadStatistics - calculated stats:`, {
+            totalRecordings: stats.totalRecordings,
+            totalStorage: stats.totalStorage,
+            totalDuration: stats.totalDuration,
+            timelineDataKeys: Object.keys(stats.timelineData).length
+        });
         
         // Update metric cards with animations
         this.updateMetricCards(stats);
@@ -1228,7 +1248,13 @@ class RecordingsManager {
         const now = new Date();
         let startDate, endDate;
         
+        console.log(`[DEBUG] getFilteredRecordings called with currentTimeRange: ${this.currentTimeRange}, total recordings: ${this.recordings.length}`);
+        
         switch (this.currentTimeRange) {
+            case 'all':
+                // Return all recordings without filtering
+                console.log(`[DEBUG] Returning all ${this.recordings.length} recordings`);
+                return this.recordings;
             case 'today':
                 startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
                 endDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
@@ -1257,13 +1283,17 @@ class RecordingsManager {
                 endDate = this.customDateRange.end;
                 break;
             default:
+                console.log(`[DEBUG] Default case - returning all ${this.recordings.length} recordings`);
                 return this.recordings;
         }
         
-        return this.recordings.filter(recording => {
+        const filtered = this.recordings.filter(recording => {
             const recordingDate = new Date(recording.createdAt);
             return recordingDate >= startDate && recordingDate < endDate;
         });
+        
+        console.log(`[DEBUG] Filtered to ${filtered.length} recordings from ${startDate} to ${endDate}`);
+        return filtered;
     }
 
     calculateAdvancedStatistics(recordings) {
