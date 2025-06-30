@@ -76,6 +76,7 @@
         <button id="share-screen" class="btn">🖥️ Chia sẻ màn hình</button>
         <button id="toggle-quality" class="btn btn-info">⚙️ Chất lượng</button>
         <button id="toggle-recording" class="btn btn-success">🎥 Ghi hình</button>
+        <button id="toggle-whiteboard" class="btn btn-warning">🎨 Whiteboard</button>
         @if (ViewBag.IsHost == true)
         {
             <button id="toggle-stats" class="btn btn-info">📊 Xem thống kê</button>
@@ -138,6 +139,11 @@
     
     <!-- Sidebar Overlay -->
     <div id="sidebar-overlay" class="sidebar-overlay"></div>
+    
+    <!-- Whiteboard Container -->
+    <div id="whiteboard-container" class="whiteboard-container" style="display: none;">
+        <!-- Whiteboard content will be loaded here -->
+    </div>
 </div>
 
 @section Scripts {
@@ -227,4 +233,8 @@
     
     <!-- Stats Sidebar System -->
     <script src="~/js/stats-sidebar.js"></script>
+    
+    <!-- Whiteboard System -->
+    <link href="~/css/components/whiteboard.css" rel="stylesheet" />
+    <script src="~/js/whiteboard.js"></script>
 }

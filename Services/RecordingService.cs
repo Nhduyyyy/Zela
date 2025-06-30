@@ -222,16 +222,25 @@ namespace Zela.Services
                     {
                         Id = r.Id.ToString(),
                         FileName = r.FileName,
+                        OriginalFileName = r.OriginalFileName,
                         Url = r.FileUrl,
                         FileSize = r.FileSize,
                         Type = r.RecordingType,
                         MeetingCode = r.MeetingCode,
                         SessionId = r.SessionId,
                         CreatedAt = r.CreatedAt,
-                        UserId = r.UserId
+                        UserId = r.UserId,
+                        Duration = r.Duration,
+                        Metadata = r.Metadata,
+                        ThumbnailUrl = r.ThumbnailUrl,
+                        Tags = r.Tags,
+                        Description = r.Description,
+                        DownloadCount = r.DownloadCount,
+                        LastAccessedAt = r.LastAccessedAt
                     })
                     .ToListAsync();
 
+                _logger.LogInformation("Retrieved {Count} recordings for user {UserId}", recordings.Count, userId);
                 return recordings;
             }
             catch (Exception ex)

@@ -9,3 +9,29 @@
 @import url("./chat/_sticker.css");
 @import url("./chat/_reactions.css");
 @import url("./chat/_group-chat-messages.css");
+
+/* --- OVERRIDE BOOTSTRAP LAYOUT CHAT --- */
+body .chat-window {
+    display: flex !important;
+    height: 100vh !important;
+    overflow: hidden !important;
+    background: var(--theme-bg-gradient) !important;
+}
+
+body .friend-list {
+    width: 280px !important;
+    border-right: 1px solid var(--theme-border-color) !important;
+    overflow-y: auto !important;
+    height: 100vh !important;
+    background: var(--theme-bg-secondary) !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: var(--theme-shadow-md) !important;
+}
+
+body .chat-panel {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: transparent !important;
+}
+

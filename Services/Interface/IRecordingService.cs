@@ -130,6 +130,7 @@ namespace Zela.Services.Interface
     {
         public string Id { get; set; } = string.Empty;
         public string FileName { get; set; } = string.Empty;
+        public string OriginalFileName { get; set; } = string.Empty;
         public string Url { get; set; } = string.Empty;
         public long FileSize { get; set; }
         public string Type { get; set; } = string.Empty;
@@ -137,6 +138,13 @@ namespace Zela.Services.Interface
         public Guid? SessionId { get; set; }
         public DateTime CreatedAt { get; set; }
         public int UserId { get; set; }
+        public int? Duration { get; set; }
+        public string? Metadata { get; set; }
+        public string? ThumbnailUrl { get; set; }
+        public string? Tags { get; set; }
+        public string? Description { get; set; }
+        public int DownloadCount { get; set; } = 0;
+        public DateTime? LastAccessedAt { get; set; }
     }
 
     public class RecordingValidationResult
