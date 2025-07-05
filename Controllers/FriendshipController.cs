@@ -494,5 +494,20 @@ namespace Zela.Controllers
                 return Json(new { success = false, message = "Lỗi khi lấy danh sách bạn chung" });
             }
         }
+
+        // API trả về danh sách bạn bè dạng JSON cho modal tạo nhóm
+        [HttpGet]
+        public async Task<IActionResult> GetMyFriends()
+        {
+            if (!TryGetCurrentUserId(out var currentUserId))
+                return Json(new { success = false, message = "Chưa đăng nhập" });
+            var friends = await _friendshipService.GetFriendListAsync(currentUserId);
+            var result = friends.Select(f => new {
+                userId = f.UserId,
+                name = f.FullName ?? f.Email,
+                avatarUrl = f.AvatarUrl ?? "/images/default-avatar.jpeg"
+            }).ToList();
+            return Json(result);
+        }
     }
 }

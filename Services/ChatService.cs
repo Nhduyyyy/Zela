@@ -320,37 +320,43 @@ public class ChatService : IChatService
         };
     }
 
-    public async Task<ChatGroup> CreateGroupAsync(int creatorId, string name, string description)
+    public async Task<ChatGroup> CreateGroupAsync(int creatorId, string name, string description, string avatarUrl, string password, List<int> friendIds)
     {
         // Validate input
         if (string.IsNullOrEmpty(name))
             throw new ArgumentException("Tên nhóm không được để trống");
-
         if (name.Length > 100)
             throw new ArgumentException("Tên nhóm không được vượt quá 100 ký tự");
-
         if (description?.Length > 50)
             throw new ArgumentException("Mô tả không được vượt quá 50 ký tự");
+        if (friendIds == null || friendIds.Count < 2)
+            throw new ArgumentException("Bạn phải chọn ít nhất 2 người bạn để tạo nhóm.");
 
-        // Check if creator exists
-        var creator = await _dbContext.Users.FindAsync(creatorId);
-        if (creator == null)
-            throw new ArgumentException("Người tạo nhóm không tồn tại");
+        // Không cho phép trùng creatorId
+        friendIds = friendIds.Distinct().Where(fid => fid != creatorId).ToList();
+        if (friendIds.Count < 2)
+            throw new ArgumentException("Bạn phải chọn ít nhất 2 người bạn khác bạn để tạo nhóm.");
 
-        var group = new ChatGroup
-        {
-            Name = name,
-            Description = description ?? "",
-            CreatorId = creatorId,
-            CreatedAt = DateTime.Now,
-            IsOpen = true,
-            AvatarUrl = "/images/default-group-avatar.png",
-            Members = new List<GroupMember>(),
-            Messages = new List<Message>()
-        };
+        // Kiểm tra tất cả friendIds có tồn tại
+        var validFriends = await _dbContext.Users.Where(u => friendIds.Contains(u.UserId)).Select(u => u.UserId).ToListAsync();
+        if (validFriends.Count != friendIds.Count)
+            throw new ArgumentException("Có bạn bè không tồn tại hoặc đã bị xóa.");
 
+        using var transaction = await _dbContext.Database.BeginTransactionAsync();
         try
         {
+            var group = new ChatGroup
+            {
+                Name = name,
+                Description = description ?? "",
+                CreatorId = creatorId,
+                CreatedAt = DateTime.Now,
+                IsOpen = true,
+                AvatarUrl = string.IsNullOrEmpty(avatarUrl) ? "/images/default-group-avatar.png" : avatarUrl,
+                Password = string.IsNullOrEmpty(password) ? null : password,
+                Members = new List<GroupMember>(),
+                Messages = new List<Message>()
+            };
             _dbContext.ChatGroups.Add(group);
             await _dbContext.SaveChangesAsync();
 
@@ -362,14 +368,27 @@ public class ChatService : IChatService
                 IsModerator = true,
                 JoinedAt = DateTime.Now
             };
-
             _dbContext.GroupMembers.Add(member);
-            await _dbContext.SaveChangesAsync();
 
+            // Add selected friends as members
+            foreach (var fid in friendIds)
+            {
+                var friendMember = new GroupMember
+                {
+                    GroupId = group.GroupId,
+                    UserId = fid,
+                    IsModerator = false,
+                    JoinedAt = DateTime.Now
+                };
+                _dbContext.GroupMembers.Add(friendMember);
+            }
+            await _dbContext.SaveChangesAsync();
+            await transaction.CommitAsync();
             return group;
         }
         catch (Exception ex)
         {
+            await transaction.RollbackAsync();
             // Log the error
             Console.WriteLine($"Error in CreateGroupAsync: {ex.Message}");
             throw new Exception("Không thể tạo nhóm: " + ex.Message);
@@ -739,5 +758,144 @@ public class ChatService : IChatService
         }
 
         return (images, videos, files);
+    }
+
+    // New method: Create group with avatar and friendIds parsing/validation
+    public async Task<(bool Success, string Message, GroupViewModel Group)> CreateGroupWithAvatarAndFriendsAsync(
+        int creatorId, string name, string description, IFormFile avatar, string password, string friendIdsJson)
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(name?.Trim()))
+                return (false, "Tên nhóm không được để trống", null);
+            if (creatorId == 0)
+                return (false, "Không tìm thấy thông tin người dùng", null);
+
+            // Parse friendIds
+            var friendIdList = new List<int>();
+            if (!string.IsNullOrEmpty(friendIdsJson))
+            {
+                friendIdList = System.Text.Json.JsonSerializer.Deserialize<List<int>>(friendIdsJson);
+            }
+            if (friendIdList == null || friendIdList.Count < 2)
+                return (false, "Bạn phải chọn ít nhất 2 người bạn để tạo nhóm.", null);
+
+            // Handle avatar upload
+            string avatarUrl = null;
+            if (avatar != null && avatar.Length > 0)
+            {
+                var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
+                if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
+                var fileName = $"group_{Guid.NewGuid()}{Path.GetExtension(avatar.FileName)}";
+                var filePath = Path.Combine(uploads, fileName);
+                using (var stream = new FileStream(filePath, FileMode.Create))
+                {
+                    await avatar.CopyToAsync(stream);
+                }
+                avatarUrl = $"/images/{fileName}";
+            }
+
+            // Call existing group creation logic
+            var group = await CreateGroupAsync(creatorId, name.Trim(), description?.Trim(), avatarUrl, password, friendIdList);
+            var groupVm = new GroupViewModel
+            {
+                GroupId = group.GroupId,
+                Name = group.Name,
+                AvatarUrl = group.AvatarUrl,
+                Description = group.Description,
+                CreatedAt = group.CreatedAt
+            };
+            return (true, null, groupVm);
+        }
+        catch (ArgumentException ex)
+        {
+            return (false, ex.Message, null);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error creating group: {ex.Message}");
+            return (false, "Có lỗi xảy ra khi tạo nhóm. Vui lòng thử lại.", null);
+        }
+    }
+
+    // New method: Add member with all validation
+    public async Task<(bool Success, string Message)> AddMemberWithValidationAsync(int groupId, int userIdToAdd, int currentUserId)
+    {
+        try
+        {
+            if (currentUserId == 0)
+                return (false, "Không tìm thấy thông tin người dùng");
+            var group = await GetGroupDetailsAsync(groupId);
+            if (group == null)
+                return (false, "Không tìm thấy nhóm");
+            var isMember = group.Members.Any(m => m.UserId == currentUserId);
+            if (!isMember)
+                return (false, "Bạn không phải thành viên của nhóm này");
+            var existingMember = group.Members.FirstOrDefault(m => m.UserId == userIdToAdd);
+            if (existingMember != null)
+                return (false, "Người dùng đã là thành viên của nhóm");
+            await AddMemberToGroupAsync(groupId, userIdToAdd);
+            return (true, "Thêm thành viên thành công");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding member to group: {ex.Message}");
+            return (false, "Có lỗi xảy ra khi thêm thành viên. Vui lòng thử lại.");
+        }
+    }
+
+    // New method: Search users and filter out group members
+    public async Task<List<UserViewModel>> SearchUsersWithGroupFilterAsync(string searchTerm, int currentUserId, int? groupId)
+    {
+        var users = await SearchUsersAsync(searchTerm, currentUserId);
+        if (groupId.HasValue)
+        {
+            var group = await GetGroupDetailsAsync(groupId.Value);
+            if (group != null)
+            {
+                var existingMemberIds = group.Members.Select(m => m.UserId).ToHashSet();
+                users = users.Where(u => !existingMemberIds.Contains(u.UserId)).ToList();
+            }
+        }
+        return users;
+    }
+
+    // New method: Build group sidebar view model (right)
+    public async Task<GroupViewModel> BuildGroupSidebarViewModelAsync(int groupId, int mediaLimit)
+    {
+        var group = await GetGroupDetailsAsync(groupId);
+        if (group == null) return null;
+        var members = group.Members?.Select(m => new UserViewModel
+        {
+            UserId = m.UserId,
+            FullName = m.User?.FullName ?? "Unknown",
+            Email = m.User?.Email ?? "",
+            AvatarUrl = m.User?.AvatarUrl ?? "/images/default-avatar.jpeg",
+            IsOnline = m.User != null && m.User.LastLoginAt > DateTime.Now.AddMinutes(-3),
+            LastLoginAt = m.User?.LastLoginAt
+        }).ToList() ?? new List<UserViewModel>();
+        var (images, videos, files) = await GetGroupMediaAsync(groupId, mediaLimit);
+        return new GroupViewModel
+        {
+            GroupId = (int)group.GroupId,
+            Name = group.Name,
+            Description = group.Description,
+            AvatarUrl = group.AvatarUrl ?? "/images/default-group-avatar.png",
+            MemberCount = group.Members?.Count ?? 0,
+            CreatedAt = group.CreatedAt,
+            CreatorId = group.CreatorId,
+            CreatorName = group.Creator?.FullName ?? "Unknown",
+            Members = members,
+            Images = images,
+            Videos = videos,
+            Files = files
+        };
+    }
+
+    // New method: Build group sidebar media view model
+    public async Task<GroupViewModel> BuildGroupSidebarMediaViewModelAsync(int groupId, int mediaLimit)
+    {
+        // For sidebar media, just call the above with a higher limit
+        return await BuildGroupSidebarViewModelAsync(groupId, mediaLimit);
     }
 }

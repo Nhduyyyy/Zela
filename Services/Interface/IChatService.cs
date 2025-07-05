@@ -14,7 +14,7 @@ public interface IChatService
     
     // Group chat methods
     Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content, List<IFormFile>? files = null, long? replyToMessageId = null);
-    Task<ChatGroup> CreateGroupAsync(int creatorId, string name, string description);
+    Task<ChatGroup> CreateGroupAsync(int creatorId, string name, string description, string avatarUrl, string password, List<int> friendIds);
     Task AddMemberToGroupAsync(int groupId, int userId);
     Task RemoveMemberFromGroupAsync(int groupId, int userId);
     Task<List<GroupMessageViewModel>> GetGroupMessagesAsync(int groupId);
@@ -35,4 +35,15 @@ public interface IChatService
     
     // Group media methods
     Task<(List<MediaViewModel> Images, List<MediaViewModel> Videos, List<MediaViewModel> Files)> GetGroupMediaAsync(int groupId, int limit = 20);
+
+    // New methods for moving controller logic to service
+    Task<(bool Success, string Message, GroupViewModel Group)> CreateGroupWithAvatarAndFriendsAsync(
+        int creatorId, string name, string description, IFormFile avatar, string password, string friendIdsJson);
+
+    Task<(bool Success, string Message)> AddMemberWithValidationAsync(int groupId, int userIdToAdd, int currentUserId);
+
+    Task<List<UserViewModel>> SearchUsersWithGroupFilterAsync(string searchTerm, int currentUserId, int? groupId);
+
+    Task<GroupViewModel> BuildGroupSidebarViewModelAsync(int groupId, int mediaLimit);
+    Task<GroupViewModel> BuildGroupSidebarMediaViewModelAsync(int groupId, int mediaLimit);
 }

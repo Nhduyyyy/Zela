@@ -949,4 +949,24 @@ function hideSidebarMedia() {
             sidebarRight.style.display = 'block';
         }
     }, 300);
-} 
+}
+
+// Toggle member list visibility in group chat sidebar
+$(document).on('click', '#toggle-member-list', function (event) {
+    event.stopPropagation();
+    console.log('Toggle member list clicked!');
+    var $memberList = $('#member-list-box');
+    var $btn = $(this);
+    var expanded = $btn.attr('aria-expanded') === 'true';
+    if (expanded) {
+        $memberList.addClass('collapsed');
+        $btn.attr('aria-expanded', 'false');
+        $btn.find('span').removeClass('bi-eye').addClass('bi-eye-slash');
+        $btn.contents().last()[0].textContent = '';
+    } else {
+        $memberList.removeClass('collapsed');
+        $btn.attr('aria-expanded', 'true');
+        $btn.find('span').removeClass('bi-eye-slash').addClass('bi-eye');
+        $btn.contents().last()[0].textContent = '';
+    }
+}); 

@@ -68,11 +68,10 @@ public class ChatHub : Hub
     public async Task<ChatGroup> CreateGroup(string name, string description)
     {
         int creatorId = int.Parse(Context.UserIdentifier);
-        var group = await _chatService.CreateGroupAsync(creatorId, name, description);
-        
+        // Truyền null cho avatarUrl, password, friendIds (nếu cần có logic khác thì bổ sung sau)
+        var group = await _chatService.CreateGroupAsync(creatorId, name, description, null, null, new List<int>());
         // Tự động tham gia vào nhóm sau khi tạo
         await JoinGroup(group.GroupId);
-        
         return group;
     }
 

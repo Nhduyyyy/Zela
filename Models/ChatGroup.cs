@@ -33,6 +33,8 @@ public class ChatGroup
     [ForeignKey(nameof(CreatorId))]
     public User Creator { get; set; }              // Navigation về User
 
+    public string? Password { get; set; }
+
     public ICollection<GroupMember> Members { get; set; }
     public ICollection<Message> Messages { get; set; }
 }
