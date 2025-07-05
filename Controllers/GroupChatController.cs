@@ -4,6 +4,8 @@ using Microsoft.AspNetCore.Http;
 using Zela.Services;
 using Zela.Models;
 using Zela.ViewModels;
+using System.IO;
+using System.Text.Json;
 
 namespace Zela.Controllers
 {
@@ -76,78 +78,26 @@ namespace Zela.Controllers
             }
         }
 
-        // Tạo nhóm chat mới
+        // Tạo nhóm chat mới (hỗ trợ avatar, password, friendIds)
         [HttpPost]
-        public async Task<IActionResult> CreateGroup(string name, string description)
+        public async Task<IActionResult> CreateGroup([FromForm] string name, [FromForm] string description, [FromForm] IFormFile avatar, [FromForm] string password, [FromForm] string friendIds)
         {
-            try
-            {
-                if (string.IsNullOrEmpty(name?.Trim()))
-                {
-                    return BadRequest(new { message = "Tên nhóm không được để trống" });
-                }
-
-                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
-                if (userId == 0)
-                {
-                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
-                }
-
-                var group = await _chatService.CreateGroupAsync(userId, name.Trim(), description?.Trim());
-                return Json(new { success = true, group = group });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                // Log the error here
-                Console.WriteLine($"Error creating group: {ex.Message}");
-                return StatusCode(500, new { message = "Có lỗi xảy ra khi tạo nhóm. Vui lòng thử lại." });
-            }
+            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var (success, message, groupVm) = await _chatService.CreateGroupWithAvatarAndFriendsAsync(userId, name, description, avatar, password, friendIds);
+            if (!success)
+                return BadRequest(new { message });
+            return Json(new { success = true, group = groupVm });
         }
 
-        // Thêm thành viên vào nhóm
+        // Thêm thành viên vào nhóm (đã chuyển toàn bộ logic sang service)
         [HttpPost]
         public async Task<IActionResult> AddMember(int groupId, int userId)
         {
-            try
-            {
-                int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
-                if (currentUserId == 0)
-                {
-                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
-                }
-
-                // Kiểm tra xem người dùng hiện tại có phải là thành viên của nhóm không
-                var group = await _chatService.GetGroupDetailsAsync(groupId);
-                if (group == null)
-                {
-                    return NotFound(new { message = "Không tìm thấy nhóm" });
-                }
-
-                var isMember = group.Members.Any(m => m.UserId == currentUserId);
-                if (!isMember)
-                {
-                    return BadRequest(new { message = "Bạn không phải thành viên của nhóm này" });
-                }
-
-                // Kiểm tra xem người dùng đã là thành viên chưa
-                var existingMember = group.Members.FirstOrDefault(m => m.UserId == userId);
-                if (existingMember != null)
-                {
-                    return BadRequest(new { message = "Người dùng đã là thành viên của nhóm" });
-                }
-
-                await _chatService.AddMemberToGroupAsync(groupId, userId);
-                return Ok(new { message = "Thêm thành viên thành công" });
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error adding member to group: {ex.Message}");
-                return StatusCode(500, new { message = "Có lỗi xảy ra khi thêm thành viên. Vui lòng thử lại." });
-            }
+            int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var (success, message) = await _chatService.AddMemberWithValidationAsync(groupId, userId, currentUserId);
+            if (!success)
+                return BadRequest(new { message });
+            return Ok(new { message });
         }
 
         // Xóa thành viên khỏi nhóm
@@ -182,138 +132,33 @@ namespace Zela.Controllers
             return Ok();
         }
 
-        // Tìm kiếm người dùng để thêm vào nhóm
+        // Tìm kiếm người dùng để thêm vào nhóm (đã chuyển lọc thành viên sang service)
         [HttpGet]
         public async Task<IActionResult> SearchUsers(string searchTerm, int? groupId = null)
         {
-            try
-            {
-                int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
-                if (currentUserId == 0)
-                {
-                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
-                }
-
-                var users = await _chatService.SearchUsersAsync(searchTerm, currentUserId);
-                
-                // Nếu có groupId, loại bỏ những người dùng đã là thành viên
-                if (groupId.HasValue)
-                {
-                    var group = await _chatService.GetGroupDetailsAsync(groupId.Value);
-                    if (group != null)
-                    {
-                        var existingMemberIds = group.Members.Select(m => m.UserId).ToHashSet();
-                        users = users.Where(u => !existingMemberIds.Contains(u.UserId)).ToList();
-                    }
-                }
-                
-                return Json(users);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error searching users: {ex.Message}");
-                return StatusCode(500, new { message = "Có lỗi xảy ra khi tìm kiếm người dùng" });
-            }
+            int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var users = await _chatService.SearchUsersWithGroupFilterAsync(searchTerm, currentUserId, groupId);
+            return Json(users);
         }
 
-        // Trả về HTML cho sidebar right
+        // Trả về HTML cho sidebar right (dùng service dựng view model)
         [HttpGet]
         public async Task<IActionResult> GetGroupSidebar(int groupId)
         {
-            try
-            {
-                var group = await _chatService.GetGroupDetailsAsync(groupId);
-                if (group == null)
-                {
-                    return NotFound();
-                }
-
-                var members = group.Members?.Select(m => new UserViewModel
-                {
-                    UserId = m.UserId,
-                    FullName = m.User?.FullName ?? "Unknown",
-                    Email = m.User?.Email ?? "",
-                    AvatarUrl = m.User?.AvatarUrl ?? "/images/default-avatar.jpeg",
-                    IsOnline = m.User != null && m.User.LastLoginAt > DateTime.Now.AddMinutes(-3),
-                    LastLoginAt = m.User?.LastLoginAt
-                }).ToList() ?? new List<UserViewModel>();
-
-                // Lấy media của nhóm
-                var (images, videos, files) = await _chatService.GetGroupMediaAsync(groupId, 12); // Giới hạn 12 items cho mỗi loại
-
-                var groupViewModel = new GroupViewModel()
-                {
-                    GroupId = (int)group.GroupId,
-                    Name = group.Name,
-                    Description = group.Description,
-                    AvatarUrl = group.AvatarUrl ?? "/images/default-group-avatar.png",
-                    MemberCount = group.Members?.Count ?? 0,
-                    CreatedAt = group.CreatedAt,
-                    CreatorId = group.CreatorId,
-                    CreatorName = group.Creator?.FullName ?? "Unknown",
-                    Members = members,
-                    Images = images,
-                    Videos = videos,
-                    Files = files
-                };
-
-                return PartialView("_SidebarRight", groupViewModel);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading group sidebar: {ex.Message}");
-                return StatusCode(500, "Có lỗi xảy ra khi tải thông tin nhóm");
-            }
+            var groupViewModel = await _chatService.BuildGroupSidebarViewModelAsync(groupId, 12);
+            if (groupViewModel == null)
+                return NotFound();
+            return PartialView("_SidebarRight", groupViewModel);
         }
 
-        // Trả về HTML cho sidebar media
+        // Trả về HTML cho sidebar media (dùng service dựng view model)
         [HttpGet]
         public async Task<IActionResult> GetGroupSidebarMedia(int groupId)
         {
-            try
-            {
-                var group = await _chatService.GetGroupDetailsAsync(groupId);
-                if (group == null)
-                {
-                    return NotFound();
-                }
-
-                var members = group.Members?.Select(m => new UserViewModel
-                {
-                    UserId = m.UserId,
-                    FullName = m.User?.FullName ?? "Unknown",
-                    Email = m.User?.Email ?? "",
-                    AvatarUrl = m.User?.AvatarUrl ?? "/images/default-avatar.jpeg",
-                    IsOnline = m.User != null && m.User.LastLoginAt > DateTime.Now.AddMinutes(-3),
-                    LastLoginAt = m.User?.LastLoginAt
-                }).ToList() ?? new List<UserViewModel>();
-
-                // Lấy tất cả media của nhóm (không giới hạn số lượng)
-                var (images, videos, files) = await _chatService.GetGroupMediaAsync(groupId, 100); // Lấy nhiều hơn cho sidebar media
-
-                var groupViewModel = new GroupViewModel()
-                {
-                    GroupId = (int)group.GroupId,
-                    Name = group.Name,
-                    Description = group.Description,
-                    AvatarUrl = group.AvatarUrl ?? "/images/default-group-avatar.png",
-                    MemberCount = group.Members?.Count ?? 0,
-                    CreatedAt = group.CreatedAt,
-                    CreatorId = group.CreatorId,
-                    CreatorName = group.Creator?.FullName ?? "Unknown",
-                    Members = members,
-                    Images = images,
-                    Videos = videos,
-                    Files = files
-                };
-
-                return PartialView("_SidebarMedia", groupViewModel);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error loading group sidebar media: {ex.Message}");
-                return StatusCode(500, "Có lỗi xảy ra khi tải media nhóm");
-            }
+            var groupViewModel = await _chatService.BuildGroupSidebarMediaViewModelAsync(groupId, 100);
+            if (groupViewModel == null)
+                return NotFound();
+            return PartialView("_SidebarMedia", groupViewModel);
         }
 
         // Message Reaction Endpoints

@@ -6,7 +6,6 @@
 .friend-list {
     width: 280px;
     border-right: 1px solid var(--theme-border-color);
-    overflow-y: auto;
     height: 100vh;
     background: var(--theme-bg-secondary);
     backdrop-filter: blur(10px);
@@ -128,6 +127,8 @@
 
 /* 2.5 Friend Items Container */
 .friend-items {
+    max-height: 80%;
+    overflow-y: auto !important;
     list-style: none;
     padding: 8px;
     margin: 0;
