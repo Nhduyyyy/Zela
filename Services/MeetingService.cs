@@ -11,27 +11,35 @@ namespace Zela.Services
     public class MeetingService : IMeetingService
     {
         private readonly ApplicationDbContext _db;
-        
-        public MeetingService(ApplicationDbContext db) 
+
+        public MeetingService(ApplicationDbContext db)
             => _db = db;
 
+        // Phương thức tạo một phòng họp mới, trả về mã phòng (code) vừa tạo
         public async Task<string> CreateMeetingAsync(int creatorId)
         {
             string code;
-            do {
-                code = RandomString(10);
-            } while (await _db.VideoRooms.AnyAsync(r => r.Password == code));
+            // Sinh mã phòng ngẫu nhiên 10 ký tự, lặp lại cho đến khi chắc chắn không trùng với bất kỳ phòng nào đã có trong database
+            do
+            {
+                code = RandomString(10); // Tạo chuỗi ngẫu nhiên 10 ký tự
+            } while (await _db.VideoRooms.AnyAsync(r => r.Password == code));  // Kiểm tra xem đã có phòng nào dùng mã này chưa
 
+            // Tạo đối tượng phòng họp mới với các thông tin cần thiết
             var room = new VideoRoom
             {
-                CreatorId = creatorId,
-                IsOpen    = true,
-                CreatedAt = DateTime.UtcNow,
-                Password  = code,
-                Name      = "Meeting-" + code
+                CreatorId = creatorId, // Gán ID người tạo phòng
+                IsOpen = true, // Đánh dấu phòng đang mở
+                CreatedAt = DateTime.UtcNow, // Lưu thời điểm tạo phòng (giờ UTC)
+                Password = code, // Gán mã phòng vừa tạo cho trường Password
+                Name = "Meeting-" + code // Đặt tên phòng theo mẫu "Meeting-xxxxxx"
             };
+
+            // Thêm phòng họp mới vào database
             _db.VideoRooms.Add(room);
+            // Lưu thay đổi vào database (bất đồng bộ)
             await _db.SaveChangesAsync();
+            // Trả về mã phòng để controller/action sử dụng (ví dụ: chuyển hướng người dùng vào phòng họp này)
             return code;
         }
 
@@ -45,13 +53,18 @@ namespace Zela.Services
             var peers = MeetingHub.GetPeersInRoom(password);
             return new JoinResult { Success = true, Peers = peers };
         }
-        
+
+        // Kiểm tra xem user có phải là host (người tạo) của phòng họp với mã phòng (password) cho trước hay không
         public async Task<bool> IsHostAsync(string password, int userId)
         {
-            // Tìm phòng theo password
+            // Tìm phòng họp trong database dựa trên password (mã phòng)
             var room = await _db.VideoRooms
                 .FirstOrDefaultAsync(r => r.Password == password);
-            // Host nếu phòng tồn tại và creatorId trùng
+
+            // Kiểm tra:
+            // - Nếu tìm thấy phòng (room != null)
+            // - Và CreatorId của phòng trùng với userId truyền vào (tức là user này là người tạo phòng)
+            // => Trả về true (user là host), ngược lại trả về false
             return room != null && room.CreatorId == userId;
         }
 
@@ -67,19 +80,19 @@ namespace Zela.Services
         }
 
         // ======== NEW METHODS FOR CALL SESSION MANAGEMENT ========
-        
+
         public async Task<Guid> StartCallSessionAsync(string password)
         {
             var room = await _db.VideoRooms
                 .FirstOrDefaultAsync(r => r.Password == password && r.IsOpen);
-            
-            if (room == null) 
+
+            if (room == null)
                 throw new InvalidOperationException("Room not found or closed");
 
             // Check if there's already an active session
             var existingSession = await _db.CallSessions
                 .FirstOrDefaultAsync(cs => cs.RoomId == room.RoomId && cs.EndedAt == null);
-            
+
             if (existingSession != null)
                 return existingSession.SessionId; // Return existing session
 
@@ -94,7 +107,7 @@ namespace Zela.Services
 
             _db.CallSessions.Add(session);
             await _db.SaveChangesAsync();
-            
+
             return session.SessionId;
         }
 
@@ -102,27 +115,27 @@ namespace Zela.Services
         {
             var room = await _db.VideoRooms
                 .FirstOrDefaultAsync(r => r.Password == password);
-            
+
             if (room == null) return;
 
             // Find active session
             var session = await _db.CallSessions
                 .FirstOrDefaultAsync(cs => cs.RoomId == room.RoomId && cs.EndedAt == null);
-            
+
             if (session != null)
             {
                 session.EndedAt = DateTime.UtcNow;
-                
+
                 // Also update any attendances that haven't left yet
                 var activeAttendances = await _db.Attendances
                     .Where(a => a.SessionId == session.SessionId && a.LeaveTime == null)
                     .ToListAsync();
-                
+
                 foreach (var attendance in activeAttendances)
                 {
                     attendance.LeaveTime = DateTime.UtcNow;
                 }
-                
+
                 await _db.SaveChangesAsync();
             }
         }
@@ -131,7 +144,7 @@ namespace Zela.Services
         {
             var room = await _db.VideoRooms
                 .FirstOrDefaultAsync(r => r.Password == password);
-            
+
             if (room == null) return null;
 
             return await _db.CallSessions
@@ -139,15 +152,15 @@ namespace Zela.Services
         }
 
         // ======== ATTENDANCE TRACKING ========
-        
+
         public async Task TrackUserJoinAsync(Guid sessionId, int userId)
         {
             // Check if user is already in this session (prevent duplicates)
             var existingAttendance = await _db.Attendances
-                .FirstOrDefaultAsync(a => a.SessionId == sessionId && 
-                                   a.UserId == userId && 
+                .FirstOrDefaultAsync(a => a.SessionId == sessionId &&
+                                   a.UserId == userId &&
                                    a.LeaveTime == null);
-            
+
             if (existingAttendance != null) return; // Already joined
 
             var attendance = new Attendance
@@ -164,10 +177,10 @@ namespace Zela.Services
         public async Task TrackUserLeaveAsync(Guid sessionId, int userId)
         {
             var attendance = await _db.Attendances
-                .FirstOrDefaultAsync(a => a.SessionId == sessionId && 
-                               a.UserId == userId && 
+                .FirstOrDefaultAsync(a => a.SessionId == sessionId &&
+                               a.UserId == userId &&
                                a.LeaveTime == null);
-            
+
             if (attendance != null)
             {
                 attendance.LeaveTime = DateTime.UtcNow;
@@ -176,7 +189,7 @@ namespace Zela.Services
         }
 
         // ======== RECORDING MANAGEMENT ========
-        
+
         public async Task SaveRecordingUrlAsync(Guid sessionId, string recordingUrl)
         {
             var session = await _db.CallSessions.FindAsync(sessionId);
@@ -188,12 +201,12 @@ namespace Zela.Services
         }
 
         // ======== STATISTICS & REPORTS ========
-        
+
         public async Task<List<CallSession>> GetCallHistoryAsync(string password)
         {
             var room = await _db.VideoRooms
                 .FirstOrDefaultAsync(r => r.Password == password);
-            
+
             if (room == null) return new List<CallSession>();
 
             return await _db.CallSessions
@@ -217,7 +230,7 @@ namespace Zela.Services
         {
             var room = await _db.VideoRooms
                 .FirstOrDefaultAsync(r => r.Password == password);
-            
+
             if (room == null) return new Dictionary<string, object>();
 
             var sessions = await _db.CallSessions
@@ -229,7 +242,7 @@ namespace Zela.Services
             var totalDuration = sessions
                 .Where(s => s.EndedAt.HasValue)
                 .Sum(s => (s.EndedAt!.Value - s.StartedAt).TotalMinutes);
-            
+
             var totalAttendances = sessions.SelectMany(s => s.Attendances).Count();
             var uniqueParticipants = sessions
                 .SelectMany(s => s.Attendances)
@@ -252,9 +265,9 @@ namespace Zela.Services
                 ["roomCreatedDate"] = room.CreatedAt
             };
         }
-        
+
         // ======== ROOM STATS FOR IN-MEETING VIEW ========
-        
+
         public async Task<RoomStatsDataViewModel> GetRoomStatsDataAsync(string password)
         {
             var room = await _db.VideoRooms.FirstOrDefaultAsync(r => r.Password == password);
@@ -310,29 +323,39 @@ namespace Zela.Services
                     Total = attendances.Count,
                     Active = activeParticipants.Count,
                     Left = leftParticipants.Count,
-                    ActiveList = activeParticipants.Select(a => new ActiveParticipantViewModel {
+                    ActiveList = activeParticipants.Select(a => new ActiveParticipantViewModel
+                    {
                         UserId = a.UserId,
                         UserName = a.User?.FullName ?? "Unknown",
                         JoinTime = a.JoinTime,
                         DurationMinutes = Math.Round((DateTime.UtcNow - a.JoinTime).TotalMinutes, 1)
                     }).OrderBy(p => p.JoinTime).ToList(),
-                    LeftList = leftParticipants.Select(a => new LeftParticipantViewModel {
+                    LeftList = leftParticipants.Select(a => new LeftParticipantViewModel
+                    {
                         UserId = a.UserId,
                         UserName = a.User?.FullName ?? "Unknown",
                         JoinTime = a.JoinTime,
                         LeaveTime = a.LeaveTime,
-                        DurationMinutes = a.LeaveTime.HasValue 
+                        DurationMinutes = a.LeaveTime.HasValue
                             ? Math.Round((a.LeaveTime.Value - a.JoinTime).TotalMinutes, 1)
                             : 0
                     }).OrderByDescending(p => p.LeaveTime).ToList()
                 }
             };
         }
-        
+
         private static string RandomString(int length)
         {
+            // Khai báo chuỗi chứa tất cả các ký tự có thể dùng để sinh mã ngẫu nhiên (chữ hoa và số)
             const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+
+            // Tạo một đối tượng Random để sinh số ngẫu nhiên
             var rng = new Random();
+
+            // Sinh ra một mảng ký tự ngẫu nhiên với độ dài 'length'
+            // Enumerable.Range(0, length): Tạo ra một dãy số từ 0 đến length-1
+            // .Select(_ => chars[rng.Next(chars.Length)]): Với mỗi số trong dãy, chọn ngẫu nhiên một ký tự từ chuỗi chars
+            // .ToArray(): Chuyển kết quả thành mảng ký tự
             return new string(Enumerable.Range(0, length)
                 .Select(_ => chars[rng.Next(chars.Length)]).ToArray());
         }

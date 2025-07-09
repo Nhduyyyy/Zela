@@ -1,16 +1,22 @@
 @{
+        // Đặt tiêu đề trang, sẽ hiển thị trên tab trình duyệt hoặc header của layout
     ViewData["Title"] = "Video Call";
 }
 
+// Section này cho phép chèn thêm CSS riêng cho trang này vào layout
 @section Styles {
     <link rel="stylesheet" href="~/css/pages/video-call-index.css" />
 }
 
 <div class="video-call-index-container">
+        <!-- Hiển thị tiêu đề lớn của trang -->
     <h1>@ViewData["Title"]</h1>
     <div class="action-buttons">
+        <!-- Nút chuyển đến trang tạo cuộc họp mới (action Create của MeetingController) -->
         <a asp-action="Create" class="btn-create">Tạo cuộc họp mới</a>
+        <!-- Nút chuyển đến trang tham gia cuộc họp (action Join của MeetingController) --> 
         <a asp-action="Join"   class="btn-join">Tham gia cuộc họp</a>
+        <!-- Nút chuyển đến trang xem recordings (action Recordings của MeetingController) -->
         <a asp-action="Recordings" class="btn-recordings">🎬 Xem recordings</a>
     </div>
 </div>

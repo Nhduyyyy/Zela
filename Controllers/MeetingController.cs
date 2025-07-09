@@ -11,33 +11,53 @@ namespace Zela.Controllers
 {
     public class MeetingController : Controller
     {
-        private readonly IMeetingService _meetingService;
-        private readonly IRecordingService _recordingService;
+        // Khai báo biến thành viên (field) để lưu các service xử lý logic họp và ghi âm/ghi hình
+        private readonly IMeetingService _meetingService; // Service xử lý các nghiệp vụ liên quan đến Meeting (phòng họp)
+        private readonly IRecordingService _recordingService; // Service xử lý các nghiệp vụ liên quan đến Recording (ghi âm/ghi hình)
 
+        // Constructor của MeetingController, được gọi khi controller này được khởi tạo
         public MeetingController(IMeetingService meetingService, IRecordingService recordingService)
         {
+            // Gán các service được inject từ bên ngoài vào biến thành viên để sử dụng trong các action của controller
             _meetingService = meetingService;
             _recordingService = recordingService;
         }
 
+        // Đánh dấu action này sẽ xử lý các HTTP GET request đến /Meeting hoặc /Meeting/Index
         [HttpGet]
+        // Action method hiển thị trang chính của module Meeting
+        // Khi được gọi, nó sẽ render file Views/Meeting/Index.cshtml cho người dùng
         public IActionResult Index() => View();
 
+        // Đánh dấu action này sẽ xử lý HTTP GET request đến /Meeting/Create
         [HttpGet]
+        // Action method hiển thị form tạo cuộc họp mới
         public IActionResult Create()
         {
-            var vm = new CreateMeetingViewModel {
+            // Tạo một ViewModel cho form tạo meeting, gán CreatorId là user hiện tại (lấy từ claim "UserId")
+            var vm = new CreateMeetingViewModel
+            {
+                // Lấy UserId từ claim của user đang đăng nhập, nếu không có thì dùng 0
                 CreatorId = int.Parse(User.FindFirst("UserId")?.Value ?? "0")
             };
+            // Trả về view Create (Views/Meeting/Create.cshtml), đồng thời truyền ViewModel này xuống view
             return View(vm);
         }
 
+        // Đánh dấu action này sẽ xử lý HTTP POST request khi submit form tạo cuộc họp mới
         [HttpPost]
         public async Task<IActionResult> Create(CreateMeetingViewModel vm)
         {
+            // Kiểm tra dữ liệu form gửi lên có hợp lệ không (dựa vào các validation attribute trong ViewModel)
+            // Nếu không hợp lệ, trả lại view cùng dữ liệu cũ để người dùng sửa lỗi
             if (!ModelState.IsValid) return View(vm);
 
+            // Gọi service để tạo cuộc họp mới, truyền vào CreatorId lấy từ ViewModel (dữ liệu form)
+            // Hàm này trả về mã code của phòng họp vừa tạo
             var code = await _meetingService.CreateMeetingAsync(vm.CreatorId);
+
+            // đồng thời truyền mã code của phòng họp vừa tạo để hiển thị giao diện phòng họp
+            // Chuyển hướng người dùng đến trang Room (phòng họp) với mã code của cuộc họp vừa tạo
             return RedirectToAction(nameof(Room), new { code });
         }
 
@@ -59,26 +79,38 @@ namespace Zela.Controllers
 
             return RedirectToAction(nameof(Room), new { code = vm.Password });
         }
-        
+
         [HttpGet]
+        // Action này xử lý HTTP GET khi người dùng truy cập vào phòng họp (Meeting Room)
+        // Đường dẫn sẽ có dạng: /Meeting/Room?code=xxxxxx
         public async Task<IActionResult> Room(string code)
         {
-            // Lấy userId từ claim "UserId" (vì lúc tạo bạn đã gán claim này)
+            // Lấy userId của người dùng hiện tại từ claim "UserId" (được gán khi đăng nhập)
+            // Nếu không có claim thì gán mặc định là 0 (không hợp lệ)
             int userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
 
-            // 2. Xác định host
+            // Kiểm tra xem user hiện tại có phải là host (người tạo/phụ trách) của phòng họp này không
+            // Kết quả (true/false) được lưu vào ViewBag.IsHost để view có thể hiển thị các chức năng đặc biệt cho host
             ViewBag.IsHost = await _meetingService.IsHostAsync(code, userId);
 
-            // 3. Luôn truyền meeting code và userId
+            // Truyền mã phòng họp (code) cho view để sử dụng (ví dụ: hiển thị, truyền cho JS)
             ViewBag.MeetingCode = code;
+
+            // Truyền userId của người dùng hiện tại cho view (có thể dùng cho các thao tác realtime, phân quyền, ...)
             ViewBag.UserId = userId;
-            ViewBag.code = code; // Keep this for compatibility
-            ViewBag.meetingName = $"Meeting {code}"; // Add meeting name
+
+            // Truyền lại mã phòng họp với tên biến "code" (giữ lại cho tương thích với code cũ hoặc JS phía client)
+            ViewBag.code = code;
+
+            // Truyền tên phòng họp cho view (ví dụ: "Meeting ABC123"), có thể dùng để hiển thị tiêu đề phòng
+            ViewBag.meetingName = $"Meeting {code}";
+
+            // Trả về view mặc định (Views/Meeting/Room.cshtml), các biến ViewBag ở trên sẽ được sử dụng trong view này
             return View();
         }
 
         // ======== IN-ROOM STATISTICS ========
-        
+
 
 
         [HttpGet]
@@ -174,7 +206,7 @@ namespace Zela.Controllers
 
                 // Use RecordingService to save main session recording URL
                 var success = await _recordingService.SaveSessionRecordingUrlAsync(sessionId, recordingUrl);
-                
+
                 if (success)
                 {
                     return Ok(new { message = "Recording URL saved successfully" });
@@ -244,7 +276,7 @@ namespace Zela.Controllers
                 {
                     currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
                 }
-                
+
                 if (currentUserId == 0)
                     return Unauthorized();
 
@@ -259,7 +291,7 @@ namespace Zela.Controllers
                 // Use GetRecordingHistoryAsync instead of GetUserRecordingsAsync
                 // This returns the proper RecordingHistoryItem format that JavaScript expects
                 var recordings = await _recordingService.GetRecordingHistoryAsync(targetUserId, meetingCode);
-                
+
                 // Map to format expected by JavaScript
                 var mappedRecordings = recordings.Select(r => new
                 {
@@ -281,7 +313,7 @@ namespace Zela.Controllers
                     downloadCount = r.DownloadCount,
                     lastAccessedAt = r.LastAccessedAt
                 }).ToList();
-                
+
                 return Json(new { success = true, recordings = mappedRecordings });
             }
             catch (Exception ex)
@@ -301,7 +333,7 @@ namespace Zela.Controllers
                     return Unauthorized();
 
                 var result = await _recordingService.DeleteRecordingAsync(recordingId, userId.Value);
-                
+
                 if (result)
                 {
                     return Json(new { success = true });
@@ -327,7 +359,7 @@ namespace Zela.Controllers
                     return Unauthorized();
 
                 var result = await _recordingService.UpdateRecordingAsync(request.RecordingId, request.Description, request.Tags, userId.Value);
-                
+
                 if (result)
                 {
                     return Json(new { success = true });
@@ -407,7 +439,7 @@ namespace Zela.Controllers
                     return Unauthorized();
 
                 var recording = await _recordingService.GetRecordingByIdAsync(recordingId, userId.Value);
-                
+
                 if (recording == null)
                 {
                     return NotFound("Recording not found or access denied");
@@ -421,19 +453,19 @@ namespace Zela.Controllers
                 {
                     // For cloud storage URLs, we need to proxy the download
                     using var httpClient = new HttpClient();
-                    
+
                     try
                     {
                         var response = await httpClient.GetAsync(recording.FileUrl);
-                        
+
                         if (response.IsSuccessStatusCode)
                         {
                             var fileStream = await response.Content.ReadAsStreamAsync();
                             var contentType = response.Content.Headers.ContentType?.ToString() ?? "application/octet-stream";
-                            
+
                             // Force download with proper headers
                             Response.Headers.Add("Content-Disposition", $"attachment; filename=\"{recording.FileName}\"");
-                            
+
                             return File(fileStream, contentType, recording.FileName);
                         }
                         else
@@ -467,7 +499,7 @@ namespace Zela.Controllers
                     return RedirectToAction("Login", "Account");
 
                 var recording = await _recordingService.GetRecordingByIdAsync(id, userId.Value);
-                
+
                 if (recording == null)
                 {
                     return NotFound("Recording not found or access denied");
@@ -494,7 +526,7 @@ namespace Zela.Controllers
             {
                 userId = HttpContext.Session.GetInt32("UserId") ?? 0;
             }
-            
+
             if (userId == 0)
                 return RedirectToAction("Login", "Account");
 
@@ -510,7 +542,7 @@ namespace Zela.Controllers
             try
             {
                 var validationResult = _recordingService.ValidateRecordingFile(file, type);
-                
+
                 return Ok(new
                 {
                     isValid = validationResult.IsValid,

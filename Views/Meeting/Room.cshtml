@@ -1,240 +1,309 @@
 @{
+    // Đặt tiêu đề trang, sẽ hiển thị trên tab trình duyệt hoặc header của layout
     ViewData["Title"] = "Video Call Room";
 }
 
-<link href="~/css/pages/room-videocall.css" rel="stylesheet" />
-<style>
-    .host-badge {
-        background: linear-gradient(135deg, #ffd700, #ff8c00);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 15px;
-        font-size: 0.8em;
-        font-weight: 600;
-        margin-left: 10px;
-        box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
-        animation: glow 2s ease-in-out infinite alternate;
+@* Section Styles: Chèn CSS riêng cho trang này vào layout tổng thể (nếu layout có @RenderSection("Styles")) *@
+@section Styles {
+    <!-- Load CSS chính cho toàn bộ trang video call -->
+    <link href="~/css/pages/room-videocall.css" rel="stylesheet" />
+    <style>
+        /* Định dạng cho badge "Host" (người chủ phòng) */
+        .host-badge {
+            background: linear-gradient(135deg, #ffd700, #ff8c00);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+            box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        /* Định dạng cho badge "Tham gia" (người tham dự) */
+        .participant-badge {
+            background: linear-gradient(135deg, #4a90e2, #357abd);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+            box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
+        }
+
+        /* ✨ GLOW ANIMATION - Hiệu ứng phát sáng cho host badge */
+        /* Chú ý: Dùng @@ trong Razor để escape thành a trong CSS output */
+        @@keyframes glow {
+                from {
+                    box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3);
+                }
+
+                to {
+                    box-shadow: 0 4px 8px rgba(255, 215, 0, 0.6);
+                }
+            }
+        </style>
     }
-    
-    .participant-badge {
-        background: linear-gradient(135deg, #4a90e2, #357abd);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 15px;
-        font-size: 0.8em;
-        font-weight: 600;
-        margin-left: 10px;
-        box-shadow: 0 2px 4px rgba(74, 144, 226, 0.3);
-    }
-    
-    @@keyframes glow {
-        from { box-shadow: 0 2px 4px rgba(255, 215, 0, 0.3); }
-        to { box-shadow: 0 4px 8px rgba(255, 215, 0, 0.6); }
-    }
-</style>
 
-<div class="videocall-container">
-    <h2>🎥 Phòng họp: @ViewBag.meetingName 
-        @if (ViewBag.IsHost == true)
-        {
-            <span class="host-badge">👑 Host</span>
-        }
-        else
-        {
-            <span class="participant-badge">👤 Tham gia</span>
-        }
-    </h2>
-    
-    <div class="meeting-code-container">
-        <input type="text" id="meeting-code-input" value="@ViewBag.code" readonly>
-        <button id="copy-code-btn">Copy mã phòng</button>
-    </div>
+    <div class="videocall-container">
+        <!-- Tiêu đề phòng họp, hiển thị tên phòng và badge phân biệt host/tham gia -->
+        <h2>🎥 Phòng họp: @ViewBag.meetingName
+            @if (ViewBag.IsHost == true)
+            {
+                <span class="host-badge">👑 Host</span>
+            }
+            else
+            {
+                <span class="participant-badge">👤 Tham gia</span>
+            }
+        </h2>
 
-    <div id="loading-overlay">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <p class="loading-message">Đang kết nối...</p>
+        <!-- Hiển thị mã phòng và nút copy mã phòng -->
+        <div class="meeting-code-container">
+            <!-- Input readonly hiển thị mã phòng từ ViewBag.code 
+                        ID: meeting-code-input → JavaScript sẽ dùng để select text khi copy -->
+            <input type="text" id="meeting-code-input" value="@ViewBag.code" readonly>
+            <!-- Button copy mã phòng vào clipboard
+                 ID: copy-code-btn → JavaScript attach click event -->
+            <button id="copy-code-btn">Copy mã phòng</button>
         </div>
-    </div>
 
-    <div id="error-notification" style="display: none;">
-        <div class="error-content">
-            <span class="error-icon">⚠️</span>
-            <span class="error-message">Có lỗi xảy ra</span>
-            <button class="error-close">&times;</button>
-        </div>
-    </div>
+        <!-- =========================================
+     LOADING & ERROR LAYERS TRÊN MÀN HÌNH ROOM
+     ========================================= -->
 
-    <div id="connection-status" class="connection-status connecting">
-        <span class="status-icon">🔄</span>
-        <span class="status-text">Đang kết nối...</span>
-    </div>
-
-    <div id="controls">
-        <button id="toggle-mic" class="btn">🎤 Micro</button>
-        <button id="toggle-cam" class="btn">📹 Camera</button>
-        <button id="share-screen" class="btn">🖥️ Chia sẻ màn hình</button>
-        <button id="toggle-quality" class="btn btn-info">⚙️ Chất lượng</button>
-        <button id="toggle-recording" class="btn btn-success">🎥 Ghi hình</button>
-        <button id="toggle-whiteboard" class="btn btn-warning">🎨 Whiteboard</button>
-        @if (ViewBag.IsHost == true)
-        {
-            <button id="toggle-stats" class="btn btn-info">📊 Xem thống kê</button>
-        }
-        <button id="btnLeave" class="btn" onclick="window.location.href='/Meeting'">🚪 Rời phòng</button>
-        @if (ViewBag.IsHost == true)
-        {
-            <button id="btnEnd" class="btn" onclick="if(confirm('Bạn có muốn kết thúc cuộc họp cho tất cả mọi người?')) window.location.href='/Meeting'">🔚 Kết thúc cuộc họp</button>
-        }
-    </div>
-
-    <div id="video-grid" data-meeting-code="@ViewBag.code" data-user-id="@ViewBag.UserId"></div>
-
-    <!-- Stats Sidebar -->
-    <div id="stats-sidebar" class="stats-sidebar">
-        <div class="sidebar-header">
-            <h3>📊 Thống kê cuộc họp</h3>
-            <button id="close-stats" class="close-btn">&times;</button>
-        </div>
-        <div class="sidebar-content">
-            <div id="stats-loading" class="loading-spinner">
-                <div class="spinner"></div>
-                <p>Đang tải thống kê...</p>
+<!-- 1️⃣  LOADING OVERLAY  ---------------------------------
+     • ID:    loading-overlay        (JS: showLoading / hideLoading)
+     • Task:  Che toàn bộ màn hình + spinner + thông báo
+     • Mặc định (CSS): display: none  → ẩn ngay khi page render
+     • Khi JS gọi  showLoading()  → display: flex (hiện)
+     • Khi JS gọi  hideLoading()  → display: none (ẩn)
+--------------------------------------------------------->
+        <div id="loading-overlay">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p class="loading-message">Đang kết nối...</p>  <!-- text được JS ghi đè -->
             </div>
-            <div id="stats-data" class="stats-data" style="display: none;">
-                <!-- Stats content will be loaded here -->
-            </div>
-            <div id="stats-error" class="error-message" style="display: none;">
-                <p>❌ Không thể tải thống kê</p>
-                <button id="retry-stats" class="btn btn-sm btn-primary">Thử lại</button>
+        </div> 
+        <!-- 2️⃣  ERROR NOTIFICATION  -------------------------------
+     • ID:    error-notification     (JS: showError / hideError)
+     • Task:  Toast cảnh báo góc phải → báo lỗi cho user
+     • Inline style “display: none”   → ẩn mặc định
+     • Khi JS gọi  showError(msg)     → display: block + đổi nội dung
+     • Khi JS gọi  hideError()        → display: none
+--------------------------------------------------------->
+        <div id="error-notification" style="display: none;">
+            <div class="error-content">
+                <span class="error-icon">⚠️</span>
+                <span class="error-message">Có lỗi xảy ra</span> <!-- text được JS ghi đè -->
+                <button class="error-close">&times;</button> <!-- onclick="hideError()" -->
             </div>
         </div>
-    </div>
 
-    <!-- Quality Control Sidebar -->
-    <div id="quality-sidebar" class="stats-sidebar quality-sidebar">
-        <div class="sidebar-header">
-            <h3>⚙️ Chất lượng Video</h3>
-            <button id="close-quality" class="close-btn">&times;</button>
+        <!-- Hiển thị trạng thái kết nối -->
+        <div id="connection-status" class="connection-status connecting">
+            <span class="status-icon">🔄</span>
+            <span class="status-text">Đang kết nối...</span>
         </div>
-        <div class="sidebar-content">
-            <div id="quality-content">
-                <!-- Quality control content will be loaded here -->
+
+        <!-- Các nút điều khiển phòng họp -->
+        <div id="controls">
+            <button id="toggle-mic" class="btn">🎤 Micro</button>
+            <button id="toggle-cam" class="btn">📹 Camera</button>
+            <button id="share-screen" class="btn">🖥️ Chia sẻ màn hình</button>
+            <button id="toggle-quality" class="btn btn-info">⚙️ Chất lượng</button>
+            <button id="toggle-recording" class="btn btn-success">🎥 Ghi hình</button>
+            <button id="toggle-whiteboard" class="btn btn-warning">🎨 Whiteboard</button>
+            @if (ViewBag.IsHost == true)
+            {
+                <button id="toggle-stats" class="btn btn-info">📊 Xem thống kê</button>
+            }
+            <button id="btnLeave" class="btn" onclick="window.location.href='/Meeting'">🚪 Rời phòng</button>
+            @if (ViewBag.IsHost == true)
+            {
+                <button id="btnEnd" class="btn"
+                    onclick="if(confirm('Bạn có muốn kết thúc cuộc họp cho tất cả mọi người?')) window.location.href='/Meeting'">🔚
+                    Kết thúc cuộc họp</button>
+            }
+        </div>
+
+        <!-- Khu vực hiển thị video call, các video sẽ được JS render động -->
+        <div id="video-grid" data-meeting-code="@ViewBag.code" data-user-id="@ViewBag.UserId"></div>
+
+        <!-- Sidebar thống kê cuộc họp (chỉ host mới xem được) -->
+        <div id="stats-sidebar" class="stats-sidebar">
+            <div class="sidebar-header">
+                <h3>📊 Thống kê cuộc họp</h3>
+                <button id="close-stats" class="close-btn">&times;</button>
+            </div>
+            <div class="sidebar-content">
+                <div id="stats-loading" class="loading-spinner">
+                    <div class="spinner"></div>
+                    <p>Đang tải thống kê...</p>
+                </div>
+                <div id="stats-data" class="stats-data" style="display: none;">
+                    <!-- Nội dung thống kê sẽ được JS load vào đây -->
+                </div>
+                <div id="stats-error" class="error-message" style="display: none;">
+                    <p>❌ Không thể tải thống kê</p>
+                    <button id="retry-stats" class="btn btn-sm btn-primary">Thử lại</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Recording Sidebar -->
-    <div id="recording-sidebar" class="stats-sidebar recording-sidebar">
-        <div class="sidebar-header">
-            <h3>🎥 Ghi hình & Chụp ảnh</h3>
-            <button id="close-recording" class="close-btn">&times;</button>
-        </div>
-        <div class="sidebar-content">
-            <div id="recording-content">
-                <!-- Recording content will be loaded here -->
+        <!-- Sidebar điều chỉnh chất lượng video -->
+        <div id="quality-sidebar" class="stats-sidebar quality-sidebar">
+            <div class="sidebar-header">
+                <h3>⚙️ Chất lượng Video</h3>
+                <button id="close-quality" class="close-btn">&times;</button>
+            </div>
+            <div class="sidebar-content">
+                <div id="quality-content">
+                    <!-- Sidebar điều chỉnh chất lượng video -->
+                </div>
             </div>
         </div>
-    </div>
-    
-    <!-- Sidebar Overlay -->
-    <div id="sidebar-overlay" class="sidebar-overlay"></div>
-    
-    <!-- Whiteboard Container -->
-    <div id="whiteboard-container" class="whiteboard-container" style="display: none;">
-        <!-- Whiteboard content will be loaded here -->
-    </div>
-</div>
 
-@section Scripts {
-    @* SignalR already loaded in _Layout.cshtml *@
-    <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
-    <script>
-        // Set global variables for recording system
-        window.meetingCode = '@ViewBag.code';
-        window.currentUserId = @ViewBag.UserId;
-        window.isHost = @(ViewBag.IsHost?.ToString().ToLower() ?? "false");
-        
-        document.addEventListener('DOMContentLoaded', () => {
-            const btn = document.getElementById('copy-code-btn');
-            const input = document.getElementById('meeting-code-input');
-            btn.addEventListener('click', () => {
-                input.select();
-                document.execCommand('copy');
-                btn.textContent = 'Đã copy!';
-                setTimeout(() => btn.textContent = 'Copy mã phòng', 2000);
+        <!-- Sidebar quản lý ghi hình, chụp ảnh -->
+        <div id="recording-sidebar" class="stats-sidebar recording-sidebar">
+            <div class="sidebar-header">
+                <h3>🎥 Ghi hình & Chụp ảnh</h3>
+                <button id="close-recording" class="close-btn">&times;</button>
+            </div>
+            <div class="sidebar-content">
+                <div id="recording-content">
+                    <!-- Nội dung ghi hình sẽ được JS load vào đây -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Lớp phủ khi sidebar mở -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
+        <!-- Khu vực bảng trắng (whiteboard), ẩn/hiện bằng JS -->
+        <div id="whiteboard-container" class="whiteboard-container" style="display: none;">
+            <!-- Nội dung whiteboard sẽ được JS load vào đây -->
+        </div>
+    </div>
+
+    @section Scripts {
+        @* Đã load SignalR ở _Layout.cshtml *@
+        <script src="https://cdn.jsdelivr.net/npm/simple-peer@9.11.1/simplepeer.min.js"></script>
+        <script>
+            // Đặt các biến toàn cục cho hệ thống video call, ghi hình, quyền host
+            window.meetingCode = '@ViewBag.code';
+            window.currentUserId = @ViewBag.UserId;
+            window.isHost = @(ViewBag.IsHost?.ToString().ToLower() ?? "false");
+
+            document.addEventListener('DOMContentLoaded', () => {
+
+                // ============================================
+                // COPY MEETING CODE FUNCTIONALITY
+                // ============================================
+
+                // 1. LẤY REFERENCES ĐẾN DOM ELEMENTS
+                // Tìm button copy theo ID để attach event listener
+                const btn = document.getElementById('copy-code-btn');
+                // Tìm input chứa meeting code để select text khi copy
+                const input = document.getElementById('meeting-code-input');
+
+                // 2. ĐĂNG KÝ EVENT LISTENER CHO BUTTON CLICK
+                // Khi user click button copy → execute callback function
+                btn.addEventListener('click', () => {
+
+                    // 3. SELECT TEXT TRONG INPUT
+                    // Highlight toàn bộ text trong input field (required để copy)
+                    // Visual: text sẽ được highlight màu xanh
+                    input.select();
+
+                    // 4. COPY TEXT ĐÃ SELECTED VÀO CLIPBOARD
+                    // Sử dụng legacy API để copy text đã selected
+                    // Return: true (success) hoặc false (failed)
+                    document.execCommand('copy');
+
+                    // 5. UI FEEDBACK - THAY ĐỔI TEXT BUTTON
+                    // Thay đổi text button ngay lập tức để user biết copy thành công
+                    // Visual: [Copy mã phòng] → [Đã copy!]
+                    btn.textContent = 'Đã copy!';
+
+                    // 6. RESET BUTTON TEXT SAU 2 GIÂY
+                    // Sau 2000ms (2 giây) → reset button về text ban đầu
+                    // Visual: [Đã copy!] → wait 2s → [Copy mã phòng]
+                    setTimeout(() => btn.textContent = 'Copy mã phòng', 2000);
+                });
+
+                // Reset trạng thái các nút sidebar khi load trang
+                const qualityBtn = document.getElementById('toggle-quality');
+                const recordingBtn = document.getElementById('toggle-recording');
+                const statsBtn = document.getElementById('toggle-stats');
+
+                if (qualityBtn) {
+                    qualityBtn.innerHTML = '⚙️ Chất lượng';
+                    qualityBtn.classList.remove('active');
+                }
+
+                if (recordingBtn) {
+                    recordingBtn.innerHTML = '🎥 Ghi hình';
+                    recordingBtn.classList.remove('active');
+                }
+
+                if (statsBtn) {
+                    statsBtn.innerHTML = '📊 Xem thống kê';
+                    statsBtn.classList.remove('active');
+                }
+
+                // Đảm bảo các sidebar đều đóng khi load trang
+                const qualitySidebar = document.getElementById('quality-sidebar');
+                const recordingSidebar = document.getElementById('recording-sidebar');
+                const statsSidebar = document.getElementById('stats-sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+
+                if (qualitySidebar) qualitySidebar.classList.remove('open');
+                if (recordingSidebar) recordingSidebar.classList.remove('open');
+                if (statsSidebar) statsSidebar.classList.remove('open');
+                if (overlay) overlay.classList.remove('show');
+
+                // Khởi tạo hệ thống video call, quality control, recording, ... sau 0.5s
+                setTimeout(() => {
+                    // Khởi tạo video call
+                    if (typeof initializeVideoCall === 'function') {
+                        initializeVideoCall().then(() => {
+                            console.log('✅ Video Call System initialized');
+                        }).catch(error => {
+                            console.error('❌ Failed to initialize video call:', error);
+                        });
+                    }
+
+                    // Khởi tạo quality control
+                    if (typeof initializeQualityControl === 'function') {
+                        window.qualityController = initializeQualityControl();
+                        console.log('✅ Quality Control System initialized');
+                    }
+
+                    // Khởi tạo recording system
+                    if (typeof initializeRecordingSystem === 'function') {
+                        window.recordingSystem = initializeRecordingSystem();
+                        console.log('✅ Recording System initialized');
+                    }
+                }, 500);
             });
+        </script>
 
-            // Reset button states on page load
-            const qualityBtn = document.getElementById('toggle-quality');
-            const recordingBtn = document.getElementById('toggle-recording');
-            const statsBtn = document.getElementById('toggle-stats');
-            
-            if (qualityBtn) {
-                qualityBtn.innerHTML = '⚙️ Chất lượng';
-                qualityBtn.classList.remove('active');
-            }
-            
-            if (recordingBtn) {
-                recordingBtn.innerHTML = '🎥 Ghi hình';
-                recordingBtn.classList.remove('active');
-            }
-            
-            if (statsBtn) {
-                statsBtn.innerHTML = '📊 Xem thống kê';
-                statsBtn.classList.remove('active');
-            }
-            
-            // Ensure all sidebars are closed initially
-            const qualitySidebar = document.getElementById('quality-sidebar');
-            const recordingSidebar = document.getElementById('recording-sidebar');
-            const statsSidebar = document.getElementById('stats-sidebar');
-            const overlay = document.getElementById('sidebar-overlay');
-            
-            if (qualitySidebar) qualitySidebar.classList.remove('open');
-            if (recordingSidebar) recordingSidebar.classList.remove('open');
-            if (statsSidebar) statsSidebar.classList.remove('open');
-            if (overlay) overlay.classList.remove('show');
+        <!-- Script chính cho video call (phải load đầu tiên) -->
+        <script src="~/js/videocall.js"></script>
 
-            // Initialize video call system first
-            setTimeout(() => {
-                // Initialize video call system
-                if (typeof initializeVideoCall === 'function') {
-                    initializeVideoCall().then(() => {
-                        console.log('✅ Video Call System initialized');
-                    }).catch(error => {
-                        console.error('❌ Failed to initialize video call:', error);
-                    });
-                }
-                
-                // Initialize quality control system
-                if (typeof initializeQualityControl === 'function') {
-                    window.qualityController = initializeQualityControl();
-                    console.log('✅ Quality Control System initialized');
-                }
-                
-                // Initialize recording system
-                if (typeof initializeRecordingSystem === 'function') {
-                    window.recordingSystem = initializeRecordingSystem();
-                    console.log('✅ Recording System initialized');
-                }
-            }, 500);
-        });
-    </script>
-    
-    <!-- Main video call script - Load FIRST -->
-    <script src="~/js/videocall.js"></script>
-    
-    <!-- Quality Control System -->
-    <script src="~/js/quality-control.js"></script>
-    
-    <!-- Recording & Screenshots System -->
-    <script src="~/js/recording-system.js"></script>
-    
-    <!-- Stats Sidebar System -->
-    <script src="~/js/stats-sidebar.js"></script>
-    
-    <!-- Whiteboard System -->
-    <link href="~/css/components/whiteboard.css" rel="stylesheet" />
-    <script src="~/js/whiteboard.js"></script>
-}
+        <!-- Script điều khiển chất lượng video -->
+        <script src="~/js/quality-control.js"></script>
+
+        <!-- Script ghi hình & chụp ảnh -->
+        <script src="~/js/recording-system.js"></script>
+
+        <!-- Script sidebar thống kê -->
+        <script src="~/js/stats-sidebar.js"></script>
+
+        <!-- Whiteboard System -->
+        <link href="~/css/components/whiteboard.css" rel="stylesheet" />
+        <script src="~/js/whiteboard.js"></script>
+    }

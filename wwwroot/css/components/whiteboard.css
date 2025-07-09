@@ -424,31 +424,31 @@
         gap: 15px;
         padding: 15px;
     }
-    
+
     .whiteboard-controls {
         flex-wrap: wrap;
         justify-content: center;
     }
-    
+
     .whiteboard-toolbar {
         flex-direction: column;
         gap: 15px;
         padding: 15px;
     }
-    
+
     .tool-group {
         justify-content: center;
     }
-    
+
     .whiteboard-sidebar {
         width: 100%;
         transform: translateY(100%);
     }
-    
+
     .whiteboard-sidebar.open {
         transform: translateY(0);
     }
-    
+
     #whiteboard-canvas {
         width: 100%;
         height: auto;

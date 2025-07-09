@@ -15,12 +15,12 @@ class WhiteboardSystem {
         this.isConnected = false;
         this.lastActionTime = 0;
         this.actionThrottle = 16; // ~60fps
-        
+
         // Drawing state
         this.lastX = 0;
         this.lastY = 0;
         this.path = [];
-        
+
         // Tools configuration
         this.tools = {
             pen: { name: 'Pen', icon: '✏️' },
@@ -32,20 +32,20 @@ class WhiteboardSystem {
             text: { name: 'Text', icon: '📝' },
             select: { name: 'Select', icon: '👆' }
         };
-        
+
         // Colors palette
         this.colors = [
             '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
             '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080',
             '#008000', '#800000', '#000080', '#808080', '#C0C0C0'
         ];
-        
+
         // Initialize
         this.initializeWhiteboard();
     }
 
     // ======== INITIALIZATION ========
-    
+
     initializeWhiteboard() {
         this.createWhiteboardUI();
         this.setupEventListeners();
@@ -140,7 +140,7 @@ class WhiteboardSystem {
         // Set canvas background
         this.ctx.fillStyle = '#FFFFFF';
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
+
         // Set default styles
         this.ctx.strokeStyle = this.currentColor;
         this.ctx.lineWidth = this.currentSize;
@@ -203,7 +203,7 @@ class WhiteboardSystem {
             this.canvas.addEventListener('mousemove', (e) => this.draw(e));
             this.canvas.addEventListener('mouseup', () => this.stopDrawing());
             this.canvas.addEventListener('mouseout', () => this.stopDrawing());
-            
+
             // Touch events for mobile
             this.canvas.addEventListener('touchstart', (e) => this.startDrawing(e));
             this.canvas.addEventListener('touchmove', (e) => this.draw(e));
@@ -223,7 +223,7 @@ class WhiteboardSystem {
     }
 
     // ======== SIGNALR CONNECTION ========
-    
+
     initializeSignalR() {
         this.connection = new signalR.HubConnectionBuilder()
             .withUrl('/whiteboardHub')
@@ -300,7 +300,7 @@ class WhiteboardSystem {
     }
 
     // ======== SESSION MANAGEMENT ========
-    
+
     async createSession(roomId) {
         try {
             const response = await fetch('/api/whiteboard/session/create', {
@@ -334,7 +334,7 @@ class WhiteboardSystem {
         try {
             await this.connection.invoke('JoinWhiteboardSession', this.sessionId, this.userId);
             console.log('✅ Joined whiteboard session:', this.sessionId);
-            
+
             // Load existing actions
             await this.loadExistingActions();
         } catch (error) {
@@ -346,7 +346,7 @@ class WhiteboardSystem {
         try {
             const response = await fetch(`/api/whiteboard/session/${this.sessionId}/actions`);
             const result = await response.json();
-            
+
             if (result.success && result.actions) {
                 result.actions.forEach(action => {
                     this.handleRemoteDrawAction(action);
@@ -358,14 +358,14 @@ class WhiteboardSystem {
     }
 
     // ======== DRAWING FUNCTIONS ========
-    
+
     startDrawing(e) {
         this.isDrawing = true;
         const pos = this.getMousePos(e);
         this.lastX = pos.x;
         this.lastY = pos.y;
         this.path = [{ x: pos.x, y: pos.y }];
-        
+
         // Update cursor for other users
         this.updateCursor(pos.x, pos.y);
     }
@@ -400,7 +400,7 @@ class WhiteboardSystem {
 
     stopDrawing() {
         if (!this.isDrawing) return;
-        
+
         this.isDrawing = false;
         this.path = [];
     }
@@ -437,16 +437,16 @@ class WhiteboardSystem {
     }
 
     // ======== TOOL FUNCTIONS ========
-    
+
     selectTool(tool) {
         this.currentTool = tool;
-        
+
         // Update UI
         document.querySelectorAll('.tool-btn').forEach(btn => {
             btn.classList.remove('active');
         });
         document.querySelector(`[data-tool="${tool}"]`)?.classList.add('active');
-        
+
         // Update cursor
         this.canvas.style.cursor = this.getToolCursor(tool);
     }
@@ -454,7 +454,7 @@ class WhiteboardSystem {
     selectColor(color) {
         this.currentColor = color;
         this.ctx.strokeStyle = color;
-        
+
         // Update UI
         document.querySelectorAll('.color-btn').forEach(btn => {
             btn.classList.remove('active');
@@ -477,11 +477,11 @@ class WhiteboardSystem {
     }
 
     // ======== REMOTE DRAWING HANDLERS ========
-    
+
     handleRemoteDrawAction(action) {
         try {
             const payload = JSON.parse(action.payload);
-            
+
             switch (action.actionType) {
                 case 'draw':
                     this.drawRemotePath(payload);
@@ -503,22 +503,22 @@ class WhiteboardSystem {
 
     drawRemotePath(payload) {
         const { path, color, size, tool } = payload;
-        
+
         this.ctx.save();
         this.ctx.strokeStyle = color;
         this.ctx.lineWidth = size;
-        
+
         if (tool === 'eraser') {
             this.ctx.globalCompositeOperation = 'destination-out';
         }
-        
+
         this.ctx.beginPath();
         this.ctx.moveTo(path[0].x, path[0].y);
-        
+
         for (let i = 1; i < path.length; i++) {
             this.ctx.lineTo(path[i].x, path[i].y);
         }
-        
+
         this.ctx.stroke();
         this.ctx.restore();
     }
@@ -534,7 +534,7 @@ class WhiteboardSystem {
     }
 
     // ======== COMMUNICATION ========
-    
+
     async sendDrawAction(actionType, payload) {
         if (!this.connection || !this.isConnected || !this.sessionId) {
             return;
@@ -581,7 +581,7 @@ class WhiteboardSystem {
     }
 
     // ======== TEMPLATE & EXPORT ========
-    
+
     async saveAsTemplate() {
         const templateName = prompt('Nhập tên template:');
         if (!templateName) return;
@@ -611,13 +611,13 @@ class WhiteboardSystem {
         try {
             const response = await fetch(`/api/whiteboard/session/${this.sessionId}/export/image?format=png`);
             const blob = await response.blob();
-            
+
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
             a.download = `whiteboard-${this.sessionId}.png`;
             a.click();
-            
+
             window.URL.revokeObjectURL(url);
         } catch (error) {
             console.error('Error exporting whiteboard:', error);
@@ -626,11 +626,11 @@ class WhiteboardSystem {
     }
 
     // ======== ANNOTATIONS ========
-    
+
     async addAnnotation() {
         const input = document.getElementById('annotation-input');
         const text = input?.value?.trim();
-        
+
         if (!text) return;
 
         try {
@@ -659,11 +659,11 @@ class WhiteboardSystem {
     }
 
     // ======== UI FUNCTIONS ========
-    
+
     toggleWhiteboard() {
         const main = document.querySelector('.whiteboard-main');
         const toggleBtn = document.getElementById('toggle-whiteboard');
-        
+
         if (main.style.display === 'none' || !main.style.display) {
             main.style.display = 'flex';
             toggleBtn.textContent = '📋 Đóng Whiteboard';
@@ -677,10 +677,10 @@ class WhiteboardSystem {
     resizeCanvas() {
         const container = this.canvas.parentElement;
         const rect = container.getBoundingClientRect();
-        
+
         this.canvas.width = rect.width - 20;
         this.canvas.height = rect.height - 20;
-        
+
         this.setupCanvas();
     }
 
@@ -689,9 +689,9 @@ class WhiteboardSystem {
         const notification = document.createElement('div');
         notification.className = `notification notification-${type}`;
         notification.textContent = message;
-        
+
         document.body.appendChild(notification);
-        
+
         // Auto remove after 3 seconds
         setTimeout(() => {
             notification.remove();
@@ -699,7 +699,7 @@ class WhiteboardSystem {
     }
 
     // ======== UTILITY FUNCTIONS ========
-    
+
     getCurrentUserId() {
         // This should match the method used in other parts of the app
         const userIdElement = document.querySelector('[data-user-id]');
