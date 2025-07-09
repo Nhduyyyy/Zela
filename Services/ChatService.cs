@@ -1,6 +1,8 @@
+using System.Text;
 using Zela.Models;
 using Microsoft.EntityFrameworkCore;
 using Zela.DbContext;
+using Zela.Enum;
 using Zela.ViewModels;
 
 namespace Zela.Services;
@@ -26,7 +28,8 @@ public class ChatService : IChatService
             Content = content ?? "",
             SentAt = DateTime.Now,
             IsEdited = false,
-            Media = new List<Media>()
+            Media = new List<Media>(),
+            MessageStatus = MessageStatus.Sent      // Default MessageStatus value = sent
         };
 
         if (files != null && files.Count > 0)
@@ -147,7 +150,7 @@ public class ChatService : IChatService
     public async Task<List<MessageViewModel>> GetMessagesAsync(int userId, int friendId)
     {
         // Truy vấn bảng Messages với eager loading các navigation properties
-        return await _dbContext.Messages
+        var message = await _dbContext.Messages
             // Eager-load các bảng ngoại liên quan (navigation properties) dựa trên khóa ngoại:
             // - SenderId => bảng Users (đối tượng Sender)
             // - RecipientId => bảng Users (đối tượng Recipient)
@@ -165,19 +168,34 @@ public class ChatService : IChatService
                 (m.SenderId == friendId && m.RecipientId == userId))
             // Sắp xếp theo thời gian gửi tăng dần (cũ tới mới) để hiển thị hội thoại đúng thứ tự
             .OrderBy(m => m.SentAt)
-            // Ánh xạ Message entity thành MessageViewModel để trả về client
-            .Select(m => new MessageViewModel
+            // Thực thi truy vấn bất đồng bộ, trả về danh sách MessageViewModel
+            .ToListAsync();
+        
+        // Cập nhật các tin nhắn "đã gửi" thành "đã nhận"
+        var deliveredMessages = message
+            .Where(m => m.RecipientId == userId && m.MessageStatus == MessageStatus.Sent)
+            .ToList();
+
+        foreach (var msg in deliveredMessages)
+        {
+            msg.MessageStatus = MessageStatus.Delivered;
+        }
+
+        await _dbContext.SaveChangesAsync();
+        
+        // Ánh xạ Message entity thành MessageViewModel để trả về client
+        return message.Select(m => new MessageViewModel
             {
                 MessageId = m.MessageId,
                 SenderId = m.SenderId,
                 RecipientId = m.RecipientId ?? 0,
-                SenderName = m.Sender.FullName,  // Được load sẵn qua Include
-                AvatarUrl = m.Sender.AvatarUrl,  // Được load sẵn qua Include
+                SenderName = m.Sender.FullName, // Được load sẵn qua Include
+                AvatarUrl = m.Sender.AvatarUrl, // Được load sẵn qua Include
                 Content = m.Content,
                 SentAt = m.SentAt,
                 IsMine = m.SenderId == userId,
                 IsEdited = m.IsEdited,
-                
+
                 // Chuyển từng Media entity thành MediaViewModel
                 Media = m.Media.Select(md => new MediaViewModel
                 {
@@ -187,10 +205,10 @@ public class ChatService : IChatService
                 }).ToList(),
                 // Lấy sticker đầu tiên nếu có, sử dụng navigation property đã include:
                 StickerUrl = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerUrl : null,
-                StickerType = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerType : null
+                StickerType = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerType : null,
+                Status = m.MessageStatus
             })
-            // Thực thi truy vấn bất đồng bộ, trả về danh sách MessageViewModel
-            .ToListAsync();
+            .ToList();
     }
 
     // Lưu message mới
@@ -897,5 +915,103 @@ public class ChatService : IChatService
     {
         // For sidebar media, just call the above with a higher limit
         return await BuildGroupSidebarViewModelAsync(groupId, mediaLimit);
+    }
+    
+    public async Task<List<MessageViewModel>> SearchMessagesAsync(int userId, int friendId, string keyword)
+    {
+        if (string.IsNullOrWhiteSpace(keyword))
+            return new List<MessageViewModel>();
+        
+        var rawMessages = await _dbContext.Messages
+            .Include(m => m.Sender)
+            .Include(m => m.Recipient)
+            .Where(m =>
+                ((m.SenderId == userId && m.RecipientId == friendId) ||
+                 (m.SenderId == friendId && m.RecipientId == userId)) &&
+                m.Content != null
+            )
+            .OrderByDescending(m => m.SentAt)
+            .Take(200) // Lấy nhiều hơn để lọc sau
+            .ToListAsync();
+
+        // Chuẩn hóa keyword
+        var plainKeyword = RemoveVietnameseDiacritics(keyword.ToLowerInvariant());
+
+        var messages = rawMessages
+            .Where(m => RemoveVietnameseDiacritics(m.Content.ToLowerInvariant()).Contains(plainKeyword))
+            .Take(50) // Giới hạn kết quả sau lọc
+            .Select(m => new MessageViewModel
+            {
+                MessageId = m.MessageId,
+                SenderId = m.SenderId,
+                RecipientId = m.RecipientId ?? 0,
+                SenderName = m.Sender.FullName,
+                Content = m.Content,
+                SentAt = m.SentAt,
+                IsEdited = m.IsEdited
+            })
+            .Take(50)
+            .ToList();
+        return messages;
+    }
+
+    // MessageStatus change
+    // chuyển trạng thái của các tin nhắn đã đánh dấu là đã nhận, đã gửi nếu tin nhắn mới hơn có trạng thái là đã xem
+    public async Task<List<long>> MarkAsSeenAsync(long messageId, int userId)
+    {
+        var message = await _dbContext.Messages.FindAsync(messageId);
+        if (message == null || message.RecipientId != userId) return [];
+
+        var messagesToUpdate = await _dbContext.Messages
+            .Where(m =>
+                m.RecipientId == userId &&
+                m.SenderId == message.SenderId &&
+                m.MessageStatus != MessageStatus.Seen &&
+                m.SentAt <= message.SentAt)
+            .ToListAsync();
+
+        foreach (var msg in messagesToUpdate)
+        {
+            msg.MessageStatus = MessageStatus.Seen;
+        }
+
+        await _dbContext.SaveChangesAsync();
+        return messagesToUpdate.Select(m => m.MessageId).ToList();
+    }
+
+    // chuyển trạng thái của các tin nhắn đã đánh dấu là đã gửi nếu tin nhắn mới hơn có trạng thái là đã nhận
+    public async Task<List<long>> MarkAsDeliveredAsync(long messageId, int userId)
+    {
+        var message = await _dbContext.Messages.FindAsync(messageId);
+        if (message == null || message.RecipientId != userId || message.MessageStatus != MessageStatus.Sent) return [];
+
+        var messagesToUpdate = await _dbContext.Messages
+            .Where(m =>
+                m.RecipientId == userId &&
+                m.SenderId == message.SenderId &&
+                m.MessageStatus == MessageStatus.Sent &&
+                m.SentAt <= message.SentAt)
+            .ToListAsync();
+
+        foreach (var msg in messagesToUpdate)
+        {
+            msg.MessageStatus = MessageStatus.Delivered;
+        }
+
+        await _dbContext.SaveChangesAsync();
+        return messagesToUpdate.Select(m => m.MessageId).ToList();
+    }
+
+    private static string RemoveVietnameseDiacritics(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        var normalized = text.Normalize(System.Text.NormalizationForm.FormD);
+        var sb = new StringBuilder();
+        foreach (var c in normalized)
+        {
+            if (System.Globalization.CharUnicodeInfo.GetUnicodeCategory(c) != System.Globalization.UnicodeCategory.NonSpacingMark)
+                sb.Append(c);
+        }
+        return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
     }
 }

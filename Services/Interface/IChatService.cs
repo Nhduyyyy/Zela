@@ -46,4 +46,8 @@ public interface IChatService
 
     Task<GroupViewModel> BuildGroupSidebarViewModelAsync(int groupId, int mediaLimit);
     Task<GroupViewModel> BuildGroupSidebarMediaViewModelAsync(int groupId, int mediaLimit);
+    
+    Task<List<MessageViewModel>> SearchMessagesAsync(int userId, int friendId, string keyword);
+    Task<List<long>> MarkAsSeenAsync(long messageId, int userId);
+    Task<List<long>> MarkAsDeliveredAsync(long messageId, int userId);
 }

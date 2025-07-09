@@ -127,7 +127,7 @@ public class StickerService : IStickerService
             RecipientId = recipientId,
             SenderName = sender?.FullName ?? "",
             AvatarUrl = sender?.AvatarUrl ?? "",
-            Content = "Sticker",
+            Content = "",
             SentAt = message.SentAt,
             IsMine = true,
             IsEdited = false,

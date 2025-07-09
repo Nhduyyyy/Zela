@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Zela.Enum;
 
 namespace Zela.Models;
 
@@ -24,6 +25,9 @@ public class Message
     public long? ReplyToMessageId { get; set; }   // FK -> Message được reply (nullable)
     [ForeignKey(nameof(ReplyToMessageId))]
     public Message ReplyToMessage { get; set; }
+    
+    // add MessageStatus
+    public MessageStatus MessageStatus { get; set; } = MessageStatus.Sent;
 
     [ForeignKey(nameof(SenderId))]
     public User Sender { get; set; }

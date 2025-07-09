@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="~/css/pages/chat.css?v=@DateTime.Now.Ticks"/>
     <link rel="stylesheet" href="~/css/pages/chat/_reactions.css"/>
     <link rel="stylesheet" href="~/css/pages/chat/_group-chat-messages.css"/>
+    <link rel="stylesheet" href="~/css/pages/chat/_chat-sidebar.css">
 }
 
 <section class="chat-window">
@@ -60,7 +61,7 @@
             <div class="chat-actions">
                 <i class="bi bi-telephone"></i>
                 <i class="bi bi-camera-video"></i>
-                <i class="bi bi-search"></i>
+                @* <i class="bi bi-search"></i> *@
                 <i class="bi bi-three-dots-vertical toggle-sidebar-btn" style="cursor: pointer;"></i>
             </div>
         </div>
@@ -113,6 +114,7 @@
     </script>
     <script src="~/js/chat-window.js"></script>
     <script src="~/js/chat-search.js"></script>
+    <script src="~/js/search-message.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const toggleBtn = document.querySelector(".toggle-sidebar-btn");

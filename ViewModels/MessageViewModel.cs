@@ -1,3 +1,5 @@
+using Zela.Enum;
+
 namespace Zela.ViewModels;
 
 public class MessageViewModel
@@ -18,6 +20,15 @@ public class MessageViewModel
     // sticker
     public string StickerUrl { get; set; }
     public string StickerType { get; set; }
+    // add MessageStatus
+    public MessageStatus Status { get; set; }
+    public string StatusText => Status switch
+    {
+        MessageStatus.Sent => "Đã gửi",
+        MessageStatus.Delivered => "Đã nhận",
+        MessageStatus.Seen => "Đã xem",
+        _ => ""
+    };
 }
 
 public class MediaViewModel

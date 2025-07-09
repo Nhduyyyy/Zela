@@ -36,7 +36,19 @@
             <button class="btn">
                 <i class="bi bi-camera-video me-1"></i>Gọi video
             </button>
+            <a>Tìm kiếm tin nhắn</a>
         </div>
+    </div>
+    
+    @* search message *@
+    <div class="search-message-section">
+        <div class="search-message-input-group">
+            <input type="text" id="searchMessageInput" class="form-control" placeholder="Tìm kiếm tin nhắn...">
+            <button id="searchMessageBtn" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+        <div id="searchMessageResults" class="search-message-results"></div>
     </div>
 
     <div class="info-section">
@@ -95,3 +107,7 @@
         </ul>
     </div>
 </div>
+
+@section Scripts {
+    <script src="~/js/search-message.js"></script>
+}

@@ -1,0 +1,236 @@
+/* Tổng thể khung sidebar */
+.chat-info-panel {
+    width: 100%;
+    max-width: 340px;
+    padding: 16px;
+    background-color: var(--theme-primary-color);
+    border-left: 1px solid #dee2e6;
+    height: 100%;
+    overflow-y: auto;
+    font-size: 14px;
+}
+
+/* Header */
+.chat-info-panel .info-header {
+    border-bottom: 1px solid #dee2e6;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+}
+
+/* Phần user avatar và trạng thái */
+.chat-info-panel .user-avatar-container {
+    margin-bottom: 8px;
+}
+
+.chat-info-panel .user-avatar {
+    width: auto;
+    object-fit: cover;
+    border: 2px solid #ccc;
+}
+
+.chat-info-panel .user-name {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.chat-info-panel .user-status {
+    font-size: 13px;
+}
+
+.chat-info-panel .user-status.online i {
+    color: #28a745;
+}
+
+.chat-info-panel .user-status.offline i {
+    color: #6c757d;
+}
+
+/* Thời gian hoạt động */
+.chat-info-panel .user-last-seen {
+    font-size: 12px;
+}
+
+/* Các hành động */
+.chat-info-panel .group-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.chat-info-panel .group-actions .btn {
+    flex: 1 1 48%;
+    font-size: 13px;
+    background-color: #f1f3f5;
+    border: none;
+    color: #333;
+    padding: 6px 8px;
+    border-radius: 6px;
+}
+
+.chat-info-panel .group-actions .btn:hover {
+    background-color: #e2e6ea;
+}
+
+/* Mỗi mục section trong sidebar */
+.chat-info-panel .info-section {
+    margin-top: 20px;
+}
+
+.chat-info-panel .info-section h6 {
+    font-weight: 600;
+    font-size: 14px;
+    color: #495057;
+    margin-bottom: 8px;
+}
+
+/* Danh sách tin tức / bảng tin */
+.chat-info-panel .info-section ul {
+    padding-left: 0;
+    list-style: none;
+}
+
+.chat-info-panel .info-section ul li {
+    padding: 6px 0;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+}
+
+.chat-info-panel .info-section ul li i {
+    font-size: 16px;
+    margin-right: 8px;
+}
+
+/* Phần media grid */
+.chat-info-panel .media-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+}
+
+.chat-info-panel .media-grid img {
+    width: 100%;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+/* Link "Xem tất cả" */
+.chat-info-panel .view-all-link {
+    display: inline-block;
+    font-size: 13px;
+    color: #007bff;
+    text-decoration: none;
+}
+
+.chat-info-panel .view-all-link:hover {
+    text-decoration: underline;
+}
+
+/* Danh sách file */
+.chat-info-panel .file-list {
+    list-style: none;
+    padding-left: 0;
+}
+
+.chat-info-panel .file-item {
+    display: flex;
+    align-items: center;
+    padding: 6px 0;
+    font-size: 13px;
+}
+
+.chat-info-panel .file-item i {
+    font-size: 18px;
+    margin-right: 8px;
+}
+
+.chat-info-panel .file-details {
+    flex: 1;
+}
+
+.chat-info-panel .file-name {
+    margin: 0;
+    font-weight: 500;
+    color: #343a40;
+}
+
+.chat-info-panel .file-size {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.search-message-input-group {
+    display: flex;
+}
+
+.search-message-results {
+    scrollbar-color: #f8f9fa var(--theme-primary-color);
+}
+
+/* Tìm kiếm tin nhắn */
+.search-message-section .search-message-input-group input {
+    background-color: #f8f9fa;
+    border-radius: 6px;
+    border: 1px solid #ced4da;
+    font-size: 14px;
+}
+
+.search-message-results {
+    max-height: 250px;
+    overflow-y: auto;
+    padding-top: 8px;
+    background: transparent;
+
+}
+
+.search-results-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+}
+
+.search-result-item {
+    padding: 8px 10px;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.search-result-item:hover {
+    background-color: var(--theme-accent-green-alt);
+}
+
+.search-result-item small {
+    color: #6c757d;
+    font-size: 11px;
+}
+
+/* Highlight khi scroll tới tin nhắn */
+.highlight {
+    background-color: #ffffcc !important;
+    transition: background-color 1s ease;
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+.btn .btn-sm .btn-outline-primary{
+    position: absolute;
+    right: 25px;
+    top: 398px;
+    border: none;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

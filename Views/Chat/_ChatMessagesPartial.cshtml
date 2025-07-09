@@ -1,7 +1,7 @@
 @model List<Zela.ViewModels.MessageViewModel>
 @foreach (var msg in Model)
 {
-    <div class="message @(msg.IsMine ? "right" : "left")">
+    <div class="message @(msg.IsMine ? "right" : "left")" data-message-id="@msg.MessageId">
         @if (msg.IsMine)
         {
             <!-- Người GỬI: thời gian -> media -> tin nhắn -> avatar -->
@@ -37,6 +37,7 @@
                 {
                     <span class="message-bubble">@msg.Content</span>
                 }
+                <span class="messsage-status">@msg.StatusText</span>
             </div>
         }
         else
