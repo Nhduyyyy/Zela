@@ -156,5 +156,18 @@ namespace Zela.Controllers
             // Trả về partial view sidebar
             return PartialView("_SidebarRight", friendViewModel);
         }
+        
+        [HttpGet]
+        public async Task<IActionResult> SearchMessages(int friendId, string keyword)
+        {
+            {
+                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                if (userId == 0 || friendId == 0 || string.IsNullOrWhiteSpace(keyword))
+                    return Json(new List<MessageViewModel>());
+
+                var messages = await _chatService.SearchMessagesAsync(userId, friendId, keyword);
+                return Json (messages);
+            }
+        }
     }
 }

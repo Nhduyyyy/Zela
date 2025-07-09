@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
+using Zela.Enum;
 using Zela.Models;
 using Zela.Services;
-using ZelaTestDemo.ViewModels;
+using Zela.ViewModels;
 
 public class ChatHub : Hub
 {
@@ -97,5 +98,47 @@ public class ChatHub : Hub
         int senderId = int.Parse(Context.UserIdentifier);
         var stickerVm = await _chatService.SendGroupStickerAsync(senderId, groupId, url);
         await Clients.Group(groupId.ToString()).SendAsync("ReceiveGroupSticker", stickerVm);
+    }
+    
+    // Search Message history
+    public async Task<List<MessageViewModel>> SearchMessages(int friendId, string keyword)
+    {
+        // Lấy userId từ context
+        var userId = int.Parse(Context.UserIdentifier);
+        var messages = await _chatService.SearchMessagesAsync(userId, friendId, keyword);
+        return messages;
+    }
+    
+    // Mark message as seen
+    public async Task MarkAsSeen(long messageId)
+    {
+        int userId = int.Parse(Context.UserIdentifier);
+        var messageIds = await _chatService.MarkAsSeenAsync(messageId, userId);
+
+        if (messageIds.Any())
+        {
+            await Clients.User(Context.UserIdentifier).SendAsync("MessageStatusUpdated", new
+            {
+                messageIds,
+                newStatus = MessageStatus.Seen,
+                statusText = "Đã xem"
+            });
+        }
+    }
+
+    public async Task MarkAsDelivered(long messageId)
+    {
+        int userId = int.Parse(Context.UserIdentifier);
+        var messageIds = await _chatService.MarkAsDeliveredAsync(messageId, userId);
+
+        if (messageIds.Any())
+        {
+            await Clients.User(Context.UserIdentifier).SendAsync("MessageStatusUpdated", new
+            {
+                messageIds,
+                newStatus = MessageStatus.Delivered,
+                statusText = "Đã nhận"
+            });
+        }
     }
 }

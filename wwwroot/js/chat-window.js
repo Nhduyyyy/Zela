@@ -1,6 +1,6 @@
 (() => {
     // ID của friend đang chat
-    let currentFriendId = null;
+    currentFriendId = null;
     let stickerPanelVisible = false;
     let availableStickers = [];
     let selectedFiles = []; // Array để lưu nhiều file
@@ -31,6 +31,27 @@
                 previewEl.innerHTML = '';
                 previewEl.style.display = 'none';
             }
+
+            if (msg.senderId !== currentUserId && msg.senderId === cid) {
+                // Đánh dấu là đã nhận
+                connection.invoke("MarkAsDelivered", msg.messageId)
+                    .catch(err => console.error('MarkAsDelivered error:', err));
+
+                // Nếu đang mở đúng tab chat, đánh dấu là đã xem
+                connection.invoke("MarkAsSeen", msg.messageId)
+                    .catch(err => console.error('MarkAsSeen error:', err));
+            }
+        }
+    });
+
+    // MessageStatus update
+    connection.on("MessageStatusUpdated", function (info) {
+        console.log("Cập nhật trạng thái:", info);
+
+        // Tìm message DOM theo messageId và cập nhật
+        const el = document.querySelector(`.message[data-id="${info.messageId}"] .message-status`);
+        if (el) {
+            el.textContent = info.statusText;
         }
     });
 
@@ -255,25 +276,33 @@
             textHtml = ""; // Không render bubble nếu không có nội dung
         }
 
+        // Trạng thái (chỉ hiển thị nếu là tin nhắn của mình)
+        let statusHtml = '';
+        if (isMine && msg.statusText) {
+            statusHtml = `<span class="message-status">${msg.statusText}</span>`;
+        }
+
         if (isMine) {
             return `
-        <div class="message ${side}">
+        <div class="message ${side}" data-id="${msg.messageId}">
           <div class="message-content">
             <span class="message-time">${time}</span>
             ${mediaHtml}
             ${stickerHtml}
             ${textHtml}
+            ${statusHtml}
           </div>
         </div>`;
         } else {
             return `
-        <div class="message ${side}">
+        <div class="message ${side}" data-id="${msg.messageId}"/>
           <img src="${msg.avatarUrl}" class="message-avatar" />
           <div class="message-content">
             <span class="message-time">${time}</span>
             ${mediaHtml}
             ${stickerHtml}
             ${textHtml}
+            ${statusHtml}
           </div>
         </div>`;
         }
@@ -839,6 +868,9 @@
                 const sidebarRight = document.getElementById('sidebar-right');
                 if (sidebarRight) {
                     sidebarRight.innerHTML = html;
+                    if (typeof setupSearchMessage) {
+                        setupSearchMessage();
+                    }
                 }
             } else {
                 console.error('Failed to load friend sidebar info');
