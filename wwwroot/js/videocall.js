@@ -56,32 +56,59 @@ const connection = new signalR.HubConnectionBuilder()
 // Expose connection globally for other components
 window.connection = connection;
 
-// ======== GET USER ID ========
+/**
+ * Lấy User-ID của người đang truy cập cho phần video-call.
+ * Ưu tiên lấy từ DOM → sessionStorage → sinh tạm (fallback).
+ *
+ * Trả về: Number (userId)
+ */
 function getCurrentUserId() {
-    // Try to get from session or any available source
-    const userIdElement = document.querySelector('[data-user-id]');
+    // 1️⃣  ƯU TIÊN LẤY TỪ DOM (do server Razor render)
+    //    Ví dụ Room.cshtml có:
+    //      <body data-user-id="@User.Id">    const userIdElement = document.querySelector('[data-user-id]');
     if (userIdElement) {
         return parseInt(userIdElement.getAttribute('data-user-id'));
     }
-    
-    // Alternative: check if it's stored somewhere else
+
+    // 2️⃣  THỬ LẤY TỪ sessionStorage (đã lưu khi login/page trước)
     const sessionUserId = sessionStorage.getItem('userId');
     if (sessionUserId) {
         return parseInt(sessionUserId);
     }
-    
-    // Fallback: generate a temporary ID (not ideal for production)
+
+    // 3️⃣  FALLBACK: KHÔNG TÌM THẤY → TẠO ID TẠM (client-only)
+    //    Không dùng cho production vì:
+    //      • Không trùng khớp DB
+    //      • Mất khi reload
     console.warn('User ID not found, using temporary ID');
-    return Math.floor(Math.random() * 1000000);
+    return Math.floor(Math.random() * 1000000);  // ← ID tạm (0–999 999)
 }
 
-// ======== UI HELPERS ========
+// ======================================================
+// ===============  UI HELPERS – LOADING  ===============
+// ======================================================
+/**
+ * Hiển thị overlay loading ở giữa màn hình.
+ * @param {string} message - Thông báo hiển thị dưới spinner (mặc định: "Đang tải...")
+ */
 function showLoading(message = 'Đang tải...') {
+    // Tìm overlay đã có sẵn trong DOM; nếu chưa có thì tạo mới.
+    //  - Ưu tiên dùng template HTML (nếu Room.cshtml đã render sẵn)
+    //  - Nếu không tìm thấy => fallback sang hàm createLoadingOverlay()
     const loadingDiv = document.getElementById('loading-overlay') || createLoadingOverlay();
+
+    // Cập nhật nội dung thông báo mỗi lần hiển thị
     loadingDiv.querySelector('.loading-message').textContent = message;
+
+    // Hiển thị overlay (flex giúp căn giữa spinner + text)
     loadingDiv.style.display = 'flex';
 }
 
+/**
+ * Ẩn overlay loading nếu đang hiển thị.
+ * Lưu ý: chỉ ẩn (`display: none`) chứ không xoá khỏi DOM,
+ *        để lần sau có thể tái sử dụng ngay.
+ */
 function hideLoading() {
     const loadingDiv = document.getElementById('loading-overlay');
     if (loadingDiv) {
@@ -89,34 +116,62 @@ function hideLoading() {
     }
 }
 
+/**
+ * Tạo overlay loading mới (chỉ gọi khi không tìm thấy element trong DOM).
+ * Trả về element vừa tạo để hàm gọi có thể tiếp tục thao tác.
+ */
 function createLoadingOverlay() {
+    // 1️⃣  Tạo phần tử container
     const overlay = document.createElement('div');
     overlay.id = 'loading-overlay';
+
+    // 2️⃣  Bơm HTML bên trong: spinner + message
     overlay.innerHTML = `
         <div class="loading-content">
             <div class="loading-spinner"></div>
             <div class="loading-message">Đang tải...</div>
         </div>
     `;
+
+    // 3️⃣  Gán CSS inline để tự hoạt động kể cả thiếu file CSS ngoài
     overlay.style.cssText = `
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         background: rgba(0,0,0,0.8); display: flex; align-items: center;
         justify-content: center; z-index: 9999; color: white;
     `;
+    // 4️⃣  Gắn overlay vào cuối <body>
     document.body.appendChild(overlay);
+    // 5️⃣  Trả về element để caller có thể sử dụng ngay
     return overlay;
 }
 
+// ======================================================
+// ============  UI HELPERS – ERROR NOTIFICATION ========
+// ======================================================
+
+/**
+ * Hiển thị thông báo lỗi (toast) ở góc phải trên màn hình.
+ *
+ * @param {string}  message      - Nội dung lỗi cần hiển thị.
+ * @param {boolean} isTemporary  - Nếu true, tự động ẩn sau 5 s.
+ */
 function showError(message, isTemporary = false) {
+    // 1️⃣  Tìm div thông báo đã có; nếu chưa có thì tạo mới (lazy-create)
     const errorDiv = document.getElementById('error-notification') || createErrorNotification();
+    // 2️⃣  Cập nhật nội dung lỗi
     errorDiv.querySelector('.error-message').textContent = message;
+    // 3️⃣  Hiển thị (block = inline-block với chiều rộng tự động)
     errorDiv.style.display = 'block';
-    
+    // 4️⃣  Nếu tạm thời ➜ tự động ẩn sau 5 giây
     if (isTemporary) {
         setTimeout(() => hideError(), 5000);
     }
 }
 
+/**
+ * Ẩn thông báo lỗi nếu đang hiển thị.
+ * Không xoá khỏi DOM – giữ lại để tái sử dụng và tránh tạo mới.
+ */
 function hideError() {
     const errorDiv = document.getElementById('error-notification');
     if (errorDiv) {
@@ -124,9 +179,18 @@ function hideError() {
     }
 }
 
+/**
+ * Tạo phần tử thông báo lỗi mới.
+ * Hàm chỉ được gọi khi không tìm thấy template trong DOM.
+ *
+ * @returns {HTMLElement}  Phần tử vừa được tạo.
+ */
 function createErrorNotification() {
+    // 1️⃣  Tạo container
     const errorDiv = document.createElement('div');
     errorDiv.id = 'error-notification';
+
+    // 2️⃣  Bơm HTML: icon ⚠️, text, nút đóng ×
     errorDiv.innerHTML = `
         <div class="error-content">
             <i class="error-icon">⚠️</i>
@@ -134,38 +198,45 @@ function createErrorNotification() {
             <button class="error-close" onclick="hideError()">×</button>
         </div>
     `;
+    // 3️⃣  Gán CSS inline (đảm bảo hiển thị kể cả thiếu stylesheet ngoài)
     errorDiv.style.cssText = `
         position: fixed; top: 20px; right: 20px; background: #ff4444;
         color: white; padding: 15px; border-radius: 5px; display: none;
         z-index: 10000; max-width: 400px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);
     `;
+    // 4️⃣  Thêm vào DOM & trả về
     document.body.appendChild(errorDiv);
     return errorDiv;
 }
 
+// ======== CẬP-NHẬT BADGE TRẠNG THÁI KẾT NỐI =========
 function updateConnectionStatus(status) {
-    connectionState = status;
+    connectionState = status; // Lưu trạng thái hiện tại để module khác tra cứu
+    // Tìm phần tử badge (#connection-status) render sẵn trong Room.cshtml.
+    // Nếu không có (page khác) ➜ tự tạo bằng createConnectionStatus().
     const statusDiv = document.getElementById('connection-status') || createConnectionStatus();
+    // Hai node con cần cập nhật: icon & text
     const statusText = statusDiv.querySelector('.status-text');
     const statusIcon = statusDiv.querySelector('.status-icon');
-    
+
+    // Đổi UI theo 4 trạng thái chính
     switch (status) {
-        case 'connected':
+        case 'connected':    // Khi SignalR & WebRTC đều OK
             statusText.textContent = 'Đã kết nối';
             statusIcon.textContent = '🟢';
-            statusDiv.className = 'connection-status connected';
+            statusDiv.className = 'connection-status connected'; // CSS đổi màu nền/vòng sáng
             break;
-        case 'connecting':
+        case 'connecting':   // Đang xin quyền camera, đang start SignalR…
             statusText.textContent = 'Đang kết nối...';
             statusIcon.textContent = '🟡';
             statusDiv.className = 'connection-status connecting';
             break;
-        case 'disconnected':
+        case 'disconnected': // Mất mạng hoặc server đóng
             statusText.textContent = 'Mất kết nối';
             statusIcon.textContent = '🔴';
             statusDiv.className = 'connection-status disconnected';
             break;
-        case 'reconnecting':
+        case 'reconnecting': // SignalR onreconnecting
             statusText.textContent = 'Đang kết nối lại...';
             statusIcon.textContent = '🟡';
             statusDiv.className = 'connection-status reconnecting';
@@ -173,6 +244,7 @@ function updateConnectionStatus(status) {
     }
 }
 
+// ======== FALLBACK – TẠO BADGE NẾU TRANG CHƯA CÓ =========
 function createConnectionStatus() {
     const statusDiv = document.createElement('div');
     statusDiv.id = 'connection-status';
@@ -180,47 +252,60 @@ function createConnectionStatus() {
         <span class="status-icon"></span>
         <span class="status-text"></span>
     `;
-    // Let CSS handle all positioning and styling
-    // statusDiv.style.cssText removed to prevent CSS conflicts
+    // Để CSS xử lý tất cả các vị trí và kiểu dáng
+    // statusDiv.style.cssText đã xóa để tránh xung đột CSS
     document.body.appendChild(statusDiv);
     return statusDiv;
 }
 
 // ======== KHI DOM ĐÃ SẴN SÀNG ========
 document.addEventListener('DOMContentLoaded', () => {
+    // Lấy ID user hiện tại từ HTML
     currentUserId = getCurrentUserId();
     console.log('Current User ID:', currentUserId);
-    
+
+    // Setup các nút điều khiển (mute, camera, screen share...)
     setupControls();
-    
-    // NOTE: initializeVideoCall() is called from Room.cshtml to avoid double initialization
+
+    // Chờ Room.cshtml gọi initializeVideoCall() để tránh double init
     console.log('✅ videocall.js DOM ready, waiting for Room.cshtml to initialize...');
 });
 
 // ======== KHỞI TẠO VIDEO CALL ========
-let isInitializing = false; // Flag to prevent double initialization
+// -------------------------------------------------------------
+// Cờ chống khởi tạo lặp – đảm bảo initializeVideoCall chỉ
+// chạy một luồng tại một thời điểm (tránh double-click, race-condition)
+// -------------------------------------------------------------
+let isInitializing = false;
 async function initializeVideoCall() {
-    // Prevent double initialization
+    // 1️⃣  Không thực thi nếu đã có luồng khởi tạo khác
     if (isInitializing) {
         console.log('⚠️ initializeVideoCall already in progress, skipping...');
         return;
     }
-    
+
+    // 2️⃣  Chỉ tiếp tục khi HubConnection đang hoàn toàn NGẮT (Disconnected)
     if (connection.state !== signalR.HubConnectionState.Disconnected) {
         console.log('⚠️ Connection not in Disconnected state:', connection.state);
         return;
     }
-    
+
+    // 3️⃣  Đặt cờ "đang khởi tạo" để khóa các lời gọi khác
     isInitializing = true;
     try {
+        // 4️⃣  Hiển thị overlay loading cho người dùng
         showLoading('Đang khởi tạo cuộc họp...');
+        // 5️⃣  Gọi hàm trung tâm start() (mở cam ➜ kết nối SignalR ➜ JoinRoom)
         await start();
+        // 6️⃣  Khởi tạo thành công ➜ ẩn overlay
         hideLoading();
         console.log('✅ Video call initialized successfully');
     } catch (error) {
+        // ❌ Gặp lỗi ➜ ẩn overlay & hiển thị thông báo thân thiện
         hideLoading();
         handleError(error, 'Không thể khởi tạo cuộc họp');
     } finally {
+        // 7️⃣  Luôn hạ cờ để lần sau có thể khởi tạo lại
         isInitializing = false;
     }
 }
@@ -228,53 +313,62 @@ async function initializeVideoCall() {
 // ======== 1. HÀM KHỞI ĐỘNG CUỘC GỌI ========
 async function start() {
     try {
+        // 🟡 0. Báo UI: đang kết nối
         updateConnectionStatus('connecting');
-        
-        // 1.1 LẤY STREAM CAMERA + MIC với retry
-        showLoading('Đang truy cập camera và microphone...');
-        localStream = await getUserMediaWithRetry();
-        addVideo(localStream, 'self');
 
-        // 1.2 ĐĂNG KÝ CÁC EVENT TỪ HUB
+        // 1️⃣ LẤY CAMERA + MIC  (có cơ chế thử-lại & fallback)
+        showLoading('Đang truy cập camera và microphone...');
+        localStream = await getUserMediaWithRetry(); // xin quyền ⇢ stream
+        addVideo(localStream, 'self');   // hiển thị video của chính mình
+
+        // 2️⃣ ĐĂNG KÝ CÁC SỰ KIỆN SignalR (Peers, Signal, CallEnded…)
         setupSignalREvents();
 
-        // 1.3 KẾT NỐI SIGNALR với retry
+        // 3️⃣ MỞ KẾT NỐI SIGNALR  (tự retry & back-off)
         showLoading('Đang kết nối đến server...');
         await connectSignalRWithRetry();
-        
-        // 1.4 JOIN ROOM với user tracking
+
+        // 4️⃣ THAM GIA PHÒNG (JoinRoom) + theo dõi user
         showLoading('Đang tham gia phòng họp...');
         const meetingCode = document.getElementById('video-grid')?.dataset?.meetingCode;
         if (!meetingCode) {
             throw new Error(ERROR_TYPES.MEETING_NOT_FOUND);
         }
-        
+
         // Join room with user ID for tracking
         await connection.invoke('JoinRoom', meetingCode, currentUserId);
         console.log('Joined room', meetingCode, 'with user ID', currentUserId);
-        
+
+        // 🟢 Thành công: cập-nhật badge & tắt loading
         updateConnectionStatus('connected');
         hideLoading();
 
     } catch (error) {
+        // 🔴 Gặp lỗi bất kỳ → báo UI “mất kết nối”
         updateConnectionStatus('disconnected');
         throw error;
     }
 }
 
 // ======== RETRY MECHANISM FOR MEDIA ACCESS ========
+// Hàm này thực hiện chiến lược fallback để lấy quyền truy cập camera/microphone
+// Nếu không lấy được cả hai, sẽ thử từng cái một
 async function getUserMediaWithRetry(constraints = { video: true, audio: true }) {
-    let lastError;
-    
-    // Try with both video and audio
+    let lastError; // Lưu lỗi cuối cùng để phân loại sau này
+
+    // BƯỚC 1: Thử lấy cả video và audio (trường hợp lý tưởng nhất)
     try {
+        // getUserMedia() là API của browser để xin quyền truy cập camera/mic
+        // await đợi user cho phép hoặc từ chối
         return await navigator.mediaDevices.getUserMedia(constraints);
     } catch (error) {
+        // Nếu lỗi, lưu lại để phân loại sau
         lastError = error;
+        // console.warn() in ra warning (không dừng chương trình)
         console.warn('Failed to get video+audio, trying audio only:', error);
     }
-    
-    // Try with audio only
+
+    // BƯỚC 2: Nếu lỗi → thử chỉ lấy audio (bỏ video)
     try {
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
         showError('Không thể truy cập camera. Chỉ có âm thanh.', true);
@@ -282,7 +376,7 @@ async function getUserMediaWithRetry(constraints = { video: true, audio: true })
     } catch (error) {
         console.warn('Failed to get audio, trying video only:', error);
     }
-    
+
     // Try with video only
     try {
         const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
@@ -291,7 +385,7 @@ async function getUserMediaWithRetry(constraints = { video: true, audio: true })
     } catch (error) {
         console.error('Failed to get any media:', error);
     }
-    
+
     // If all fail, determine error type
     if (lastError.name === 'NotAllowedError') {
         throw new Error(ERROR_TYPES.MEDIA_ACCESS_DENIED);
@@ -317,11 +411,11 @@ async function connectSignalRWithRetry() {
             return;
         }
     }
-    
+
     // Set lock
     isConnecting = true;
     let attempts = 0;
-    
+
     try {
         while (attempts < MAX_RETRIES) {
             try {
@@ -348,11 +442,11 @@ async function connectSignalRWithRetry() {
             } catch (error) {
                 attempts++;
                 console.warn(`❌ SignalR connection attempt ${attempts} failed:`, error);
-                
+
                 if (attempts >= MAX_RETRIES) {
                     throw new Error(ERROR_TYPES.SIGNALR_CONNECTION_FAILED);
                 }
-                
+
                 // Stop connection if it's in a bad state
                 try {
                     if (connection.state !== signalR.HubConnectionState.Disconnected) {
@@ -362,7 +456,7 @@ async function connectSignalRWithRetry() {
                 } catch (stopError) {
                     console.warn('⚠️ Error stopping connection:', stopError);
                 }
-                
+
                 // Exponential backoff
                 const delay = Math.pow(2, attempts) * 1000;
                 showLoading(`Đang thử kết nối lại... (${attempts}/${MAX_RETRIES})`);
@@ -397,27 +491,27 @@ function setupSignalREvents() {
     });
 
     // Meeting events
-        connection.on('Peers', list => {
-            console.log('Peers:', list);
+    connection.on('Peers', list => {
+        console.log('Peers:', list);
         try {
             list.forEach(id => initPeer(id, true));
         } catch (error) {
             console.error('Error initializing peers:', error);
             showError('Lỗi khi kết nối với người tham gia khác', true);
         }
-        });
+    });
 
-        connection.on('NewPeer', id => {
-            console.log('NewPeer:', id);
+    connection.on('NewPeer', id => {
+        console.log('NewPeer:', id);
         try {
             initPeer(id, false);
         } catch (error) {
             console.error('Error initializing new peer:', error);
             showError('Lỗi khi kết nối với người tham gia mới', true);
         }
-        });
+    });
 
-        connection.on('Signal', (from, data) => {
+    connection.on('Signal', (from, data) => {
         try {
             if (peers[from]) {
                 peers[from].signal(data);
@@ -425,15 +519,15 @@ function setupSignalREvents() {
         } catch (error) {
             console.error('Error handling signal:', error);
         }
-        });
+    });
 
-        connection.on('CallEnded', () => {
+    connection.on('CallEnded', () => {
         showError('Cuộc gọi đã kết thúc', false);
         setTimeout(() => {
             stopAll();
             window.location.href = '/Meeting/Index';
         }, 2000);
-        });
+    });
 
     // ======== NEW: STATISTICS EVENTS ========
     connection.on('CallHistory', (history) => {
@@ -452,11 +546,11 @@ function initPeer(peerId, initiator) {
     if (peers[peerId]) return; // đã khởi tạo rồi
 
     try {
-    const peer = new SimplePeer({
-        initiator,
-        stream: localStream,
-        config: { iceServers: ICE_SERVERS }
-    });
+        const peer = new SimplePeer({
+            initiator,
+            stream: localStream,
+            config: { iceServers: ICE_SERVERS }
+        });
 
         // Error handling for peer
         peer.on('error', (error) => {
@@ -474,15 +568,15 @@ function initPeer(peerId, initiator) {
             removePeer(peerId);
         });
 
-    // 2.1 Khi có offer/answer/ICE mới
-    peer.on('signal', data => {
+        // 2.1 Khi có offer/answer/ICE mới
+        peer.on('signal', data => {
             connection.invoke('Signal', peerId, data).catch(error => {
                 console.error('Error sending signal:', error);
                 showError('Lỗi khi gửi tín hiệu', true);
             });
-    });
+        });
 
-    // 2.2 Khi nhận stream của peer
+        // 2.2 Khi nhận stream của peer
         peer.on('stream', stream => {
             try {
                 addVideo(stream, peerId);
@@ -492,7 +586,7 @@ function initPeer(peerId, initiator) {
             }
         });
 
-    peers[peerId] = peer;
+        peers[peerId] = peer;
 
     } catch (error) {
         console.error('Error initializing peer:', error);
@@ -503,13 +597,13 @@ function initPeer(peerId, initiator) {
 // ======== PEER ERROR HANDLING ========
 function handlePeerError(peerId, error) {
     console.error(`Peer ${peerId} error:`, error);
-    
+
     // Remove failed peer
     removePeer(peerId);
-    
+
     // Show user-friendly error
     showError(`Mất kết nối với một người tham gia`, true);
-    
+
     // Optional: Attempt to reconnect
     setTimeout(() => {
         if (connectionState === 'connected') {
@@ -528,7 +622,7 @@ function removePeer(peerId) {
         }
         delete peers[peerId];
     }
-    
+
     // Remove video element
     const container = document.getElementById('container-' + peerId);
     if (container) {
@@ -540,23 +634,23 @@ function removePeer(peerId) {
 // ======== 3. HIỂN THỊ VIDEO VỚI ERROR HANDLING ========
 function addVideo(stream, id) {
     try {
-    const grid = document.getElementById('video-grid');
+        const grid = document.getElementById('video-grid');
         if (!grid) {
             throw new Error('Video grid not found');
         }
 
-    let container = document.getElementById('container-' + id);
-    let video;
+        let container = document.getElementById('container-' + id);
+        let video;
 
-    if (!container) {
-        container = document.createElement('div');
-        container.className = 'video-container';
-        container.id = 'container-' + id;
+        if (!container) {
+            container = document.createElement('div');
+            container.className = 'video-container';
+            container.id = 'container-' + id;
 
-        video = document.createElement('video');
-        video.id = id;
-        video.autoplay = true;
-        video.playsInline = true;
+            video = document.createElement('video');
+            video.id = id;
+            video.autoplay = true;
+            video.playsInline = true;
             video.muted = (id === 'self'); // Mute own video
 
             // Add error handling for video element
@@ -565,14 +659,14 @@ function addVideo(stream, id) {
                 showError('Lỗi khi phát video', true);
             };
 
-        container.appendChild(video);
-        grid.appendChild(container);
-    } else {
-        video = container.querySelector('video');
-    }
+            container.appendChild(video);
+            grid.appendChild(container);
+        } else {
+            video = container.querySelector('video');
+        }
 
-    video.srcObject = stream;
-        
+        video.srcObject = stream;
+
         // Add stream ended handler
         stream.addEventListener('ended', () => {
             console.log(`Stream ${id} ended`);
@@ -599,19 +693,19 @@ function stopAll() {
         }
 
         // Stop local stream
-    if (localStream) {
+        if (localStream) {
             localStream.getTracks().forEach(track => {
                 try {
                     track.stop();
                 } catch (error) {
                     console.error('Error stopping track:', error);
-    }
+                }
             });
             localStream = null;
         }
 
         // Stop screen stream
-    if (screenStream) {
+        if (screenStream) {
             screenStream.getTracks().forEach(track => {
                 try {
                     track.stop();
@@ -701,16 +795,16 @@ function setupControls() {
                 } catch (error) {
                     console.error('Screen share error:', error);
                     handleScreenShareError(error);
-        }
-    });
+                }
+            });
         }
 
         if (leaveBtn) {
             leaveBtn.addEventListener('click', () => {
                 try {
                     if (confirm('Bạn có chắc muốn rời cuộc họp?')) {
-        stopAll();
-        window.location.href = '/Meeting/Index';
+                        stopAll();
+                        window.location.href = '/Meeting/Index';
                     }
                 } catch (error) {
                     console.error('Error leaving meeting:', error);
@@ -745,26 +839,26 @@ function setupControls() {
 async function startScreenShare(button) {
     try {
         showLoading('Đang khởi tạo chia sẻ màn hình...');
-        
-        screenStream = await navigator.mediaDevices.getDisplayMedia({ 
+
+        screenStream = await navigator.mediaDevices.getDisplayMedia({
             video: true,
             audio: true // Try to capture system audio
         });
-        
+
         const screenTrack = screenStream.getVideoTracks()[0];
         await replaceTrack(screenTrack);
-        
+
         button.textContent = 'Dừng chia sẻ';
         button.classList.add('active');
-        
+
         // Handle screen share ended by user
         screenTrack.onended = () => {
             console.log('Screen share ended by user');
             stopScreenShare(button);
         };
-        
+
         hideLoading();
-        
+
     } catch (error) {
         hideLoading();
         throw error;
@@ -784,21 +878,21 @@ function handleScreenShareError(error) {
 // ======== 6. THAY THẾ VIDEO TRACK CHO SCREEN SHARE VỚI ERROR HANDLING ========
 async function replaceTrack(newTrack) {
     try {
-    // 6.1 Thay trong localStream
+        // 6.1 Thay trong localStream
         const oldTrack = localStream?.getVideoTracks()[0];
         if (oldTrack) {
             localStream.removeTrack(oldTrack);
             oldTrack.stop();
         }
-        
+
         if (localStream) {
-    localStream.addTrack(newTrack);
+            localStream.addTrack(newTrack);
         }
 
-    // 6.2 Thay cho từng peer
+        // 6.2 Thay cho từng peer
         const replacePromises = Object.values(peers).map(async (peer) => {
             try {
-                const sender = peer._pc?.getSenders()?.find(s => 
+                const sender = peer._pc?.getSenders()?.find(s =>
                     s.track && s.track.kind === newTrack.kind
                 );
                 if (sender) {
@@ -810,7 +904,7 @@ async function replaceTrack(newTrack) {
         });
 
         await Promise.all(replacePromises);
-        
+
     } catch (error) {
         console.error('Error replacing track:', error);
         showError('Lỗi khi thay đổi video', true);
@@ -820,8 +914,8 @@ async function replaceTrack(newTrack) {
 // ======== 7. DỪNG CHIA SẺ MÀN HÌNH VỚI ERROR HANDLING ========
 function stopScreenShare(button) {
     try {
-    if (!screenStream) return;
-        
+        if (!screenStream) return;
+
         // Stop screen sharing tracks
         screenStream.getTracks().forEach(track => {
             try {
@@ -830,12 +924,12 @@ function stopScreenShare(button) {
                 console.error('Error stopping screen track:', error);
             }
         });
-    screenStream = null;
+        screenStream = null;
 
         // Get camera back
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(async (camStream) => {
-        const camTrack = camStream.getVideoTracks()[0];
+                const camTrack = camStream.getVideoTracks()[0];
                 await replaceTrack(camTrack);
                 button.textContent = 'Chia sẻ màn hình';
                 button.classList.remove('active');
@@ -843,10 +937,10 @@ function stopScreenShare(button) {
             .catch(error => {
                 console.error('Error getting camera back:', error);
                 showError('Không thể khôi phục camera', true);
-        button.textContent = 'Chia sẻ màn hình';
-        button.classList.remove('active');
+                button.textContent = 'Chia sẻ màn hình';
+                button.classList.remove('active');
             });
-            
+
     } catch (error) {
         console.error('Error stopping screen share:', error);
         showError('Lỗi khi dừng chia sẻ màn hình', true);
@@ -856,9 +950,9 @@ function stopScreenShare(button) {
 // ======== GENERAL ERROR HANDLER ========
 function handleError(error, context = '') {
     console.error('Error:', error, 'Context:', context);
-    
+
     let errorMessage = 'Đã xảy ra lỗi không xác định';
-    
+
     // Map specific errors to user-friendly messages
     if (error.message && ERROR_MESSAGES[error.message]) {
         errorMessage = ERROR_MESSAGES[error.message];
@@ -869,7 +963,7 @@ function handleError(error, context = '') {
     } else if (context) {
         errorMessage = `${context}: ${error.message || 'Lỗi không xác định'}`;
     }
-    
+
     showError(errorMessage, false);
 }
 
@@ -938,7 +1032,7 @@ function getCallStatistics() {
 // ======== QUALITY CONTROL INTEGRATION FUNCTIONS ========
 function setQualityController(controller) {
     qualityController = controller;
-    
+
     // Set up quality change callbacks
     if (qualityController) {
         qualityController.onQualityChange = (type, quality) => {
@@ -947,7 +1041,7 @@ function setQualityController(controller) {
                 updateVideoQualityForPeers(quality);
             }
         };
-        
+
         qualityController.onStatsUpdate = (stats) => {
             console.log('📊 Connection stats updated:', stats);
             // Additional stats processing if needed
@@ -957,10 +1051,10 @@ function setQualityController(controller) {
 
 function updateVideoQualityForPeers(quality) {
     if (!qualityController || !localStream) return;
-    
+
     const profile = qualityController.qualityProfiles[quality];
     if (!profile || quality === 'auto') return;
-    
+
     // Apply constraints to local stream
     const videoTrack = localStream.getVideoTracks()[0];
     if (videoTrack) {
@@ -997,7 +1091,7 @@ window.localStream = () => localStream; // Function to get current localStream
 function updateVideoGridLayout() {
     const videoGrid = document.getElementById('video-grid');
     if (!videoGrid) return;
-    
+
     const videoCount = videoGrid.querySelectorAll('.video-container').length;
     videoGrid.setAttribute('data-count', videoCount);
 }
