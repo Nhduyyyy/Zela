@@ -65,7 +65,8 @@ window.connection = connection;
 function getCurrentUserId() {
     // 1️⃣  ƯU TIÊN LẤY TỪ DOM (do server Razor render)
     //    Ví dụ Room.cshtml có:
-    //      <body data-user-id="@User.Id">    const userIdElement = document.querySelector('[data-user-id]');
+    //      <body data-user-id="@User.Id"> 
+    const userIdElement = document.querySelector('[data-user-id]');
     if (userIdElement) {
         return parseInt(userIdElement.getAttribute('data-user-id'));
     }
@@ -370,28 +371,39 @@ async function getUserMediaWithRetry(constraints = { video: true, audio: true })
 
     // BƯỚC 2: Nếu lỗi → thử chỉ lấy audio (bỏ video)
     try {
+        // Chỉ xin quyền microphone, không xin camera
         const audioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+        // showError() hiển thị thông báo lỗi cho user biết
         showError('Không thể truy cập camera. Chỉ có âm thanh.', true);
+        // Trả về stream chỉ có audio
         return audioStream;
     } catch (error) {
+        // Nếu audio cũng lỗi, tiếp tục thử video
         console.warn('Failed to get audio, trying video only:', error);
     }
 
-    // Try with video only
+    // BƯỚC 3: Nếu lỗi → thử chỉ lấy video (bỏ audio)
     try {
+        // Chỉ xin quyền camera, không xin microphone
         const videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        // Thông báo cho user biết chỉ có video
         showError('Không thể truy cập microphone. Chỉ có video.', true);
+        // Trả về stream chỉ có video
         return videoStream;
     } catch (error) {
+        // Nếu video cũng lỗi, in error và tiếp tục
         console.error('Failed to get any media:', error);
     }
 
-    // If all fail, determine error type
+    // BƯỚC 4: Nếu tất cả đều lỗi → phân loại lỗi để xử lý phù hợp
     if (lastError.name === 'NotAllowedError') {
+        // User đã từ chối cấp quyền truy cập
         throw new Error(ERROR_TYPES.MEDIA_ACCESS_DENIED);
     } else if (lastError.name === 'NotFoundError') {
+        // Không tìm thấy thiết bị camera/mic
         throw new Error(ERROR_TYPES.MEDIA_NOT_FOUND);
     } else {
+        // Lỗi khác (mạng, hệ thống...)
         throw new Error(ERROR_TYPES.NETWORK_ERROR);
     }
 }
@@ -542,43 +554,54 @@ function setupSignalREvents() {
 }
 
 // ======== 2. KHỞI TẠO PEER VỚI ERROR HANDLING ========
+// Hàm này tạo kết nối peer-to-peer với một người khác trong cuộc gọi video
+// peerId: ID của người cần kết nối (ví dụ: 'user123')
+// initiator: true nếu bạn là người khởi tạo kết nối, false nếu bạn là người nhận
 function initPeer(peerId, initiator) {
+    // Nếu đã có kết nối với peer này rồi thì không tạo lại nữa (tránh duplicate)
     if (peers[peerId]) return; // đã khởi tạo rồi
 
     try {
+         // Tạo một đối tượng SimplePeer để kết nối WebRTC
         const peer = new SimplePeer({
-            initiator,
-            stream: localStream,
-            config: { iceServers: ICE_SERVERS }
+            initiator,  // Bạn là người khởi tạo (offer) hay không (answer)
+            stream: localStream,  // Stream video/audio của bạn để gửi cho peer
+            config: { iceServers: ICE_SERVERS } // Danh sách STUN/TURN server để hỗ trợ kết nối
         });
 
-        // Error handling for peer
+        // ===== Error handling cho peer =====
+        // Nếu có lỗi trong quá trình kết nối hoặc truyền dữ liệu
         peer.on('error', (error) => {
             console.error(`Peer ${peerId} error:`, error);
-            handlePeerError(peerId, error);
+            handlePeerError(peerId, error); // Xử lý lỗi và dọn dẹp
         });
 
-        // Connection state monitoring
+        // ===== Theo dõi trạng thái kết nối =====
+        // Khi kết nối peer-to-peer thành công
         peer.on('connect', () => {
             console.log(`Peer ${peerId} connected`);
         });
 
+        // Khi kết nối peer-to-peer bị đóng (peer rời phòng hoặc mất kết nối)
         peer.on('close', () => {
             console.log(`Peer ${peerId} connection closed`);
-            removePeer(peerId);
+            removePeer(peerId);  // Xóa peer khỏi danh sách và UI
         });
 
-        // 2.1 Khi có offer/answer/ICE mới
+        // ===== 2.1 Khi có offer/answer/ICE mới =====
+        // Khi SimplePeer tạo ra tín hiệu (offer, answer, ICE candidate)
         peer.on('signal', data => {
+            // Gửi tín hiệu này lên server để chuyển tiếp cho peer còn lại
             connection.invoke('Signal', peerId, data).catch(error => {
                 console.error('Error sending signal:', error);
                 showError('Lỗi khi gửi tín hiệu', true);
             });
         });
 
-        // 2.2 Khi nhận stream của peer
+        // ===== 2.2 Khi nhận stream video/audio từ peer =====
         peer.on('stream', stream => {
             try {
+                // Hiển thị video của peer lên UI
                 addVideo(stream, peerId);
             } catch (error) {
                 console.error('Error adding video:', error);
@@ -586,96 +609,136 @@ function initPeer(peerId, initiator) {
             }
         });
 
+        // Lưu peer vào object để quản lý (truy cập lại khi cần)
         peers[peerId] = peer;
 
     } catch (error) {
+        // Nếu có lỗi khi khởi tạo peer, log lỗi và báo cho user
         console.error('Error initializing peer:', error);
         showError('Lỗi khi kết nối với người tham gia', true);
     }
 }
 
 // ======== PEER ERROR HANDLING ========
+// Hàm này xử lý lỗi khi kết nối peer-to-peer với một người bị lỗi
+// Được gọi khi có lỗi trong quá trình kết nối hoặc duy trì kết nối với peer
 function handlePeerError(peerId, error) {
+    // Log lỗi chi tiết ra console để developer debug
+    // peerId: ID của người bị lỗi (ví dụ: 'user123')
+    // error: Thông tin lỗi chi tiết từ WebRTC
     console.error(`Peer ${peerId} error:`, error);
 
-    // Remove failed peer
+    // Xóa peer bị lỗi khỏi danh sách và dọn dẹp tài nguyên
+    // removePeer() sẽ: xóa video, hủy kết nối, xóa khỏi peers object
     removePeer(peerId);
 
-    // Show user-friendly error
+    // Hiển thị thông báo thân thiện cho user
+    // Thông báo này sẽ tự động ẩn sau 5 giây (isTemporary = true)
     showError(`Mất kết nối với một người tham gia`, true);
 
-    // Optional: Attempt to reconnect
+    // Thử kết nối lại sau 5 giây (optional feature)
     setTimeout(() => {
+        // Chỉ thử kết nối lại nếu SignalR vẫn connected
+        // Tránh thử kết nối khi đã mất kết nối server
         if (connectionState === 'connected') {
             console.log(`Attempting to reconnect to peer ${peerId}`);
-            // Could implement peer reconnection logic here
+            // TODO: Có thể implement logic reconnect peer ở đây
+            // Ví dụ: gọi lại initPeer(peerId, false) để tạo kết nối mới
         }
-    }, 5000);
+    }, 5000); // Đợi 5 giây trước khi thử kết nối lại
 }
 
+// ======== XÓA PEER VÀ VIDEO ========
+// Hàm này xóa hoàn toàn kết nối peer và video của một người khỏi cuộc gọi
+// Được gọi khi người đó rời phòng, bị lỗi kết nối, hoặc bạn rời phòng
 function removePeer(peerId) {
+    // Kiểm tra xem có kết nối peer với người này không
     if (peers[peerId]) {
         try {
+            // Hủy kết nối WebRTC với người này
+            // destroy() sẽ: dừng streams, đóng connection, giải phóng tài nguyên
             peers[peerId].destroy();
         } catch (error) {
+            // Nếu có lỗi khi hủy kết nối, log lỗi nhưng không dừng
             console.error('Error destroying peer:', error);
         }
+        // Xóa peer khỏi danh sách peers object
+        // Ví dụ: peers = { 'user123': peer, 'user456': peer } 
+        // Sau delete: peers = { 'user456': peer }
         delete peers[peerId];
     }
 
-    // Remove video element
+    // Tìm và xóa video element của người này khỏi màn hình
+    // container-user123, container-user456, etc.
     const container = document.getElementById('container-' + peerId);
     if (container) {
+        // Xóa container video khỏi DOM
+        // User sẽ không còn thấy video của người này
         container.remove();
+
+        // Cập nhật layout video grid sau khi xóa
+        // Điều chỉnh kích thước video còn lại cho phù hợp
         updateVideoGridLayout();
     }
 }
 
-// ======== 3. HIỂN THỊ VIDEO VỚI ERROR HANDLING ========
+/// ======== 3. HIỂN THỊ VIDEO VỚI ERROR HANDLING ========
+// Hàm này tạo và hiển thị video element để xem camera của chính mình và người khác
 function addVideo(stream, id) {
     try {
+        // Tìm container chính chứa tất cả video
         const grid = document.getElementById('video-grid');
         if (!grid) {
             throw new Error('Video grid not found');
         }
 
+        // Tìm container cho video này (ví dụ: container-self, container-user123)
         let container = document.getElementById('container-' + id);
         let video;
 
+        // Nếu container chưa tồn tại → tạo mới
         if (!container) {
+            // Tạo div container cho video
             container = document.createElement('div');
-            container.className = 'video-container';
-            container.id = 'container-' + id;
+            container.className = 'video-container';  // CSS class để style
+            container.id = 'container-' + id;   // ID duy nhất
 
+            // Tạo element video
             video = document.createElement('video');
-            video.id = id;
-            video.autoplay = true;
-            video.playsInline = true;
-            video.muted = (id === 'self'); // Mute own video
+            video.id = id;   // ID video: self, user123
+            video.autoplay = true;  // Tự động phát khi có stream
+            video.playsInline = true;  // Phát inline, không fullscreen
+            video.muted = (id === 'self'); // Tắt âm video của chính mình (tránh echo)
 
-            // Add error handling for video element
+            // Xử lý lỗi khi video không phát được
             video.onerror = (e) => {
                 console.error('Video element error:', e);
                 showError('Lỗi khi phát video', true);
             };
 
+            // Gắn video vào container, rồi gắn container vào grid
             container.appendChild(video);
             grid.appendChild(container);
         } else {
+            // Nếu container đã tồn tại → lấy video element bên trong
             video = container.querySelector('video');
         }
 
+        // Gán stream vào video để hiển thị
         video.srcObject = stream;
 
-        // Add stream ended handler
+        // Lắng nghe khi stream kết thúc (người dùng rời phòng)
         stream.addEventListener('ended', () => {
             console.log(`Stream ${id} ended`);
+            // Chỉ xóa video người khác, không xóa video của chính mình
             if (id !== 'self') {
-                removePeer(id);
+                removePeer(id);  // Xóa video người khác khỏi màn hình
             }
         });
 
     } catch (error) {
+
+        // Xử lý lỗi nếu có vấn đề khi tạo/hiển thị video
         console.error('Error adding video:', error);
         showError('Lỗi khi hiển thị video', true);
     }
@@ -1084,15 +1147,35 @@ function getConnectionMetrics() {
 }
 
 // ======== EXPOSE FUNCTIONS FOR QUALITY CONTROLLER ========
-window.peers = peers; // Make peers accessible to quality controller
-window.localStream = () => localStream; // Function to get current localStream
+// Mở rộng (expose) các biến và hàm để các file JavaScript khác có thể sử dụng
+// Cho phép quality-control.js, recording-system.js, etc. truy cập vào dữ liệu của videocall.js
+
+// Cho phép file khác truy cập danh sách tất cả peer connections
+// Ví dụ: quality-control.js có thể dùng window.peers để điều chỉnh chất lượng cho từng peer
+window.peers = peers; 
+
+// Cho phép file khác lấy stream video/audio hiện tại thông qua function
+// Dùng function thay vì expose trực tiếp để bảo mật và linh hoạt hơn
+// File khác có thể gọi: window.localStream() để lấy stream hiện tại
+window.localStream = () => localStream; 
+
 
 // ======== UPDATE VIDEO GRID LAYOUT ========
+// Hàm này cập nhật thông tin số lượng video trong grid và hỗ trợ CSS điều chỉnh layout
+// Được gọi khi thêm hoặc xóa video để đảm bảo layout hiển thị đúng
 function updateVideoGridLayout() {
+    // Tìm container chính chứa tất cả video
     const videoGrid = document.getElementById('video-grid');
-    if (!videoGrid) return;
+    if (!videoGrid) return; // Nếu không tìm thấy → thoát
 
+    // Đếm số lượng video containers hiện tại
+    // querySelectorAll('.video-container') tìm tất cả element có class video-container
+    // .length trả về số lượng video
     const videoCount = videoGrid.querySelectorAll('.video-container').length;
+
+    // Cập nhật data-count attribute với số lượng video
+    // CSS có thể dùng data-count để điều chỉnh layout
+    // Ví dụ: data-count="1" → 1 video, data-count="3" → 3 video
     videoGrid.setAttribute('data-count', videoCount);
 }
 
