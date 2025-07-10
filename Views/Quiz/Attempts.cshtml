@@ -1,0 +1,44 @@
+@model List<Zela.ViewModels.QuizAttemptListItemViewModel>
+@{
+    ViewBag.Title = "Danh sách bài làm";
+    var quizId = ViewBag.QuizId;
+}
+<link rel="stylesheet" href="~/css/pages/quiz/quiz-index.css" />
+<div style="max-width: 900px; margin: 2rem auto; background: var(--quiz-bg-card, #fff); border-radius: var(--quiz-radius-md, 12px); box-shadow: 0 2px 16px var(--quiz-shadow-card, rgba(0,0,0,0.08)); padding: 2rem;">
+    <h2>Danh sách làm bài - @ViewBag.QuizTitle</h2>
+    @if (Model.Count == 0)
+    {
+        <div>Chưa có ai làm bài quiz này.</div>
+    }
+    else
+    {
+        <table class="table quiz-attempts-table">
+            <thead>
+                <tr>
+                    <th>STT</th>
+                    <th>Học sinh</th>
+                    <th>Bắt đầu</th>
+                    <th>Kết thúc</th>
+                    <th>Điểm số</th>
+                    <th>Xem chi tiết</th>
+                </tr>
+            </thead>
+            <tbody>
+            @for (int i = 0; i < Model.Count; i++)
+            {
+                <tr>
+                    <td>@(i + 1)</td>
+                    <td>@Model[i].UserFullName</td>
+                    <td>@Model[i].StartedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@Model[i].EndedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                    <td>@Model[i].Score</td>
+                    <td>
+                        <a href="@Url.Action("AttemptDetail", "Quiz", new { attemptId = Model[i].AttemptId, quizId = quizId })" class="btn btn-sm btn-info">Chi tiết</a>
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    }
+    <a href="@Url.Action("Index", "Quiz")" class="btn btn-secondary" style="margin-top: 1rem;">Quay lại danh sách Quiz</a>
+</div> 

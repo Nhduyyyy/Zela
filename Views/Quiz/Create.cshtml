@@ -1,0 +1,139 @@
+@model Zela.Models.Quiz
+@{
+    ViewData["Title"] = "Tạo Quiz mới";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/quiz/quiz-index.css"/>
+}
+
+<div class="quiz-window">
+    <!-- Quiz Header -->
+    <div class="quiz-header">
+        <div class="quiz-header-left">
+            <h2 class="quiz-title">
+                <i class="bi bi-plus-circle me-2"></i>
+                Tạo Quiz mới
+            </h2>
+        </div>
+        
+        <div class="quiz-header-right">
+            <a href="@Url.Action("Index", "Quiz")" class="btn btn-outline-secondary me-2">
+                <i class="bi bi-arrow-left me-1"></i>
+                Quay lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Quiz Content -->
+    <div class="quiz-content">
+        <!-- Validation Errors -->
+        @if (!ViewData.ModelState.IsValid)
+        {
+            <div class="alert alert-danger">
+                <h5>Lỗi xác thực:</h5>
+                <ul>
+                    @foreach (var modelState in ViewData.ModelState.Values)
+                    {
+                        foreach (var error in modelState.Errors)
+                        {
+                            <li>@error.ErrorMessage</li>
+                        }
+                    }
+                </ul>
+            </div>
+        }
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card" style="background: var(--quiz-bg-card); border: 1px solid var(--quiz-border-primary);">
+                    <div class="card-header" style="background: var(--quiz-bg-card); border-bottom: 1px solid var(--quiz-border-primary);">
+                        <h5 class="card-title mb-0" style="color: var(--quiz-text-primary);">
+                            <i class="bi bi-info-circle me-2"></i>
+                            Thông tin Quiz
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <form asp-action="Create" method="post" id="createQuizForm">
+                            @Html.AntiForgeryToken()
+                            
+                            <div class="mb-3">
+                                <label asp-for="Title" class="form-label" style="color: var(--quiz-text-primary);">
+                                    <i class="bi bi-type me-1"></i>
+                                    Tiêu đề Quiz <span class="text-danger">*</span>
+                                </label>
+                                <input asp-for="Title" class="form-control" 
+                                       style="background: var(--quiz-bg-input); border: 1px solid var(--quiz-border-primary); color: var(--quiz-text-primary);"
+                                       placeholder="Nhập tiêu đề quiz..." required />
+                                <span asp-validation-for="Title" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="Description" class="form-label" style="color: var(--quiz-text-primary);">
+                                    <i class="bi bi-text-paragraph me-1"></i>
+                                    Mô tả <span class="text-danger">*</span>
+                                </label>
+                                <textarea asp-for="Description" class="form-control" rows="3"
+                                          style="background: var(--quiz-bg-input); border: 1px solid var(--quiz-border-primary); color: var(--quiz-text-primary);"
+                                          placeholder="Nhập mô tả quiz..." required></textarea>
+                                <span asp-validation-for="Description" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <label asp-for="TimeLimit" class="form-label" style="color: var(--quiz-text-primary);">
+                                    <i class="bi bi-clock me-1"></i>
+                                    Thời gian làm bài (phút)
+                                </label>
+                                <input asp-for="TimeLimit" type="number" class="form-control" min="0" max="300" value="30"
+                                       style="background: var(--quiz-bg-input); border: 1px solid var(--quiz-border-primary); color: var(--quiz-text-primary);"
+                                       placeholder="0 = không giới hạn thời gian" />
+                                <small class="form-text" style="color: var(--quiz-text-secondary);">
+                                    Để trống hoặc 0 để không giới hạn thời gian
+                                </small>
+                                <span asp-validation-for="TimeLimit" class="text-danger"></span>
+                            </div>
+
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="ShowScoreAfterSubmit" name="ShowScoreAfterSubmit" checked>
+                                    <label class="form-check-label" for="ShowScoreAfterSubmit">
+                                        Hiện điểm ngay sau khi nộp bài
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <a href="@Url.Action("Index", "Quiz")" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>
+                                    Hủy
+                                </a>
+                                <button type="submit" class="btn btn-primary" id="submitBtn">
+                                    <i class="bi bi-check-circle me-1"></i>
+                                    Tạo Quiz
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(document).ready(function() {
+            $('#createQuizForm').on('submit', function(e) {
+                // Disable submit button to prevent double submission
+                $('#submitBtn').prop('disabled', true);
+            });
+            
+            // Re-enable button if form validation fails
+            $('#createQuizForm').on('invalid', function() {
+                $('#submitBtn').prop('disabled', false);
+            });
+        });
+    </script>
+} 

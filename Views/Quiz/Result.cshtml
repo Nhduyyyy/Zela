@@ -1,0 +1,141 @@
+@model Zela.ViewModels.QuizResultViewModel
+@{
+    ViewData["Title"] = "Kết quả bài làm";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/quiz/quiz-index.css"/>
+    <link rel="stylesheet" href="~/css/pages/quiz/quiz-result.css"/>
+}
+
+<div class="result-container">
+    <!-- Header -->
+    <div class="result-header">
+        <h1><i class="bi bi-trophy me-2"></i>Kết quả bài làm</h1>
+        <p>@Model.QuizTitle</p>
+    </div>
+
+    <!-- Summary -->
+    <div class="result-summary">
+        <div class="score-display">
+            <div class="score-circle bg-@Model.GradeColor">
+                @Model.Score.ToString("0.#")%
+            </div>
+            <div class="grade-badge bg-@Model.GradeColor text-white">
+                @Model.Grade
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Tổng câu hỏi</h3>
+                <div class="value">@Model.TotalQuestions</div>
+            </div>
+            <div class="stat-card">
+                <h3>Đáp án đúng</h3>
+                <div class="value">@Model.CorrectAnswers</div>
+            </div>
+            <div class="stat-card">
+                <h3>Thời gian làm</h3>
+                <div class="value">
+                    @{
+                        if (Model.Duration <= 0)
+                        {
+                            @("Không xác định")
+                        }
+                        else
+                        {
+                            var minutes = Model.Duration / 60;
+                            var seconds = Model.Duration % 60;
+                            @($"{minutes}:{seconds:D2}")
+                        }
+                    }
+                </div>
+            </div>
+            <div class="stat-card">
+                <h3>Người làm</h3>
+                <div class="value">@Model.UserName</div>
+            </div>
+        </div>
+
+        @if (Model.EssayQuestionsCount > 0)
+        {
+            <div class="alert alert-info text-center">
+                <i class="bi bi-info-circle me-2"></i>
+                <strong>Lưu ý:</strong> Quiz này có @Model.EssayQuestionsCount câu hỏi tự luận sẽ được chấm điểm thủ công.
+            </div>
+        }
+    </div>
+
+    <!-- Details -->
+    <div class="result-details">
+        <h3 class="mb-3">
+            <i class="bi bi-list-check me-2"></i>
+            Chi tiết từng câu hỏi
+        </h3>
+
+        @foreach (var detail in Model.Details)
+        {
+            <div class="question-item">
+                <div class="question-header">
+                    <span class="question-number">Câu @detail.QuestionNumber</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="question-type">@detail.QuestionType</span>
+                        <span class="status-badge bg-@detail.StatusColor">@detail.Status</span>
+                    </div>
+                </div>
+                
+                <div class="question-content">
+                    <p class="mb-0">@detail.QuestionContent</p>
+                </div>
+                
+                <div class="answers-section">
+                    <div class="answer-item">
+                        <h5>Đáp án đúng</h5>
+                        <p>@detail.CorrectAnswer</p>
+                    </div>
+                    <div class="answer-item">
+                        <h5>Đáp án của bạn</h5>
+                        <p>@(string.IsNullOrEmpty(detail.UserAnswer) ? "Chưa trả lời" : detail.UserAnswer)</p>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <!-- Actions -->
+    <div class="result-actions">
+        <a href="@Url.Action("Index", "Quiz")" class="btn-result btn btn-outline-secondary me-2">
+            <i class="bi bi-house"></i>
+            Về trang chủ
+        </a>
+        <a href="@Url.Action("Attempts", "Quiz", new { quizId = Model.QuizId })" class="btn-result btn btn-outline-primary me-2">
+            <i class="bi bi-list-ul"></i>
+            Xem tất cả bài làm
+        </a>
+        <a href="@Url.Action("Take", "Quiz", new { id = Model.QuizId })" class="btn-result btn btn-success">
+            <i class="bi bi-arrow-clockwise"></i>
+            Làm lại
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Thêm hiệu ứng animation cho score circle
+        document.addEventListener('DOMContentLoaded', function() {
+            const scoreCircle = document.querySelector('.score-circle');
+            if (scoreCircle) {
+                scoreCircle.style.opacity = '0';
+                scoreCircle.style.transform = 'scale(0.5)';
+                
+                setTimeout(() => {
+                    scoreCircle.style.transition = 'all 0.8s ease';
+                    scoreCircle.style.opacity = '1';
+                    scoreCircle.style.transform = 'scale(1)';
+                }, 300);
+            }
+        });
+    </script>
+} 

@@ -1,0 +1,74 @@
+@model Zela.ViewModels.QuizStatisticsViewModel
+@{
+    ViewBag.Title = "Thống kê Quiz";
+}
+<link rel="stylesheet" href="~/css/pages/quiz/quiz-index.css" />
+<div style="max-width: 900px; margin: 2rem auto; background: var(--quiz-bg-card, #fff); border-radius: var(--quiz-radius-md, 12px); box-shadow: 0 2px 16px var(--quiz-shadow-card, rgba(0,0,0,0.08)); padding: 2rem;">
+    <h2>Thống kê Quiz: @Model.QuizTitle</h2>
+    <div style="margin-bottom: 1.5rem;">
+        <strong>Tổng số lượt làm:</strong> @Model.TotalAttempts<br />
+        <strong>Số học sinh hoàn thành:</strong> @Model.UniqueUsers<br />
+        <strong>Số lần làm lại nhiều nhất:</strong> @Model.MaxAttemptsPerUser<br />
+        <strong>Điểm trung bình:</strong> @Model.AverageScore.ToString("0.##")<br />
+        <strong>Điểm cao nhất:</strong> @Model.MaxScore.ToString("0.##")<br />
+        <strong>Điểm thấp nhất:</strong> @Model.MinScore.ToString("0.##")<br />
+    </div>
+    <div style="margin-bottom: 2rem;">
+        <canvas id="scoreChart" height="80"></canvas>
+    </div>
+    <h4>Tỷ lệ đúng/sai từng câu hỏi</h4>
+    <table class="table quiz-attempts-table">
+        <thead>
+            <tr>
+                <th>STT</th>
+                <th>Nội dung câu hỏi</th>
+                <th>Loại</th>
+                <th>Tổng lượt trả lời</th>
+                <th>Số lượt đúng</th>
+                <th>Tỷ lệ đúng (%)</th>
+            </tr>
+        </thead>
+        <tbody>
+        @for (int i = 0; i < Model.QuestionStats.Count; i++)
+        {
+            <tr>
+                <td>@(i + 1)</td>
+                <td>@Model.QuestionStats[i].Content</td>
+                <td>@Model.QuestionStats[i].QuestionType</td>
+                <td>@Model.QuestionStats[i].TotalAnswers</td>
+                <td>@Model.QuestionStats[i].CorrectAnswers</td>
+                <td>@(Model.QuestionStats[i].CorrectRate > 0 ? (Model.QuestionStats[i].CorrectRate * 100).ToString("0.##") : "0")%</td>
+            </tr>
+        }
+        </tbody>
+    </table>
+    <a href="@Url.Action("Details", "Quiz", new { id = Model.QuizId })" class="btn btn-secondary" style="margin-top: 1rem;">Quay lại chi tiết Quiz</a>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const ctx = document.getElementById('scoreChart').getContext('2d');
+    const scores = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.ScoreDistribution));
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: scores.map((s, i) => `Lần ${i + 1}`),
+            datasets: [{
+                label: 'Điểm số',
+                data: scores,
+                backgroundColor: 'rgba(41, 182, 246, 0.7)',
+                borderColor: 'rgba(41, 182, 246, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Phân phối điểm số' }
+            },
+            scales: {
+                y: { beginAtZero: true, max: 10 }
+            }
+        }
+    });
+</script> 
