@@ -1,0 +1,198 @@
+@model List<Zela.ViewModels.QuizAttemptDetailViewModel>
+@{
+    ViewBag.Title = "Chi tiết bài làm";
+    var quizId = ViewBag.QuizId;
+    var quizCreatorId = ViewBag.QuizCreatorId as int?;
+    var currentUserId = Context.Session.GetInt32("UserId");
+    var isCreator = quizCreatorId.HasValue && currentUserId.HasValue && quizCreatorId.Value == currentUserId.Value;
+    var isAuthorized = isCreator; // Chỉ người tạo quiz mới được xem chi tiết đáp án
+    var typeStats = ViewBag.QuestionTypeStats as IEnumerable<dynamic>;
+}
+<link rel="stylesheet" href="~/css/pages/quiz/quiz-index.css" />
+<div class="attempt-detail-container">
+    <div class="attempt-detail-header">
+        <h2><i class="bi bi-clipboard-check"></i>Chi tiết bài làm</h2>
+    </div>
+    
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Lỗi:</strong> @TempData["ErrorMessage"]
+            @if (isAuthorized)
+            {
+                <form method="post" action="@Url.Action("RepairAttemptData", "Quiz", new { attemptId = ViewBag.AttemptId, quizId = quizId })" style="display: inline;">
+                    <button type="submit" class="btn btn-warning btn-sm ms-2">
+                        <i class="bi bi-tools"></i>
+                        Thử sửa chữa
+                    </button>
+                </form>
+            }
+        </div>
+    }
+    
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            <i class="bi bi-check-circle me-2"></i>
+            <strong>Thành công:</strong> @TempData["SuccessMessage"]
+        </div>
+    }
+    
+    @if (isAuthorized)
+    {
+        <div class="attempt-summary">
+            <div class="summary-card">
+                <h4>Tổng số câu hỏi</h4>
+                <div class="value">@Model.Count</div>
+            </div>
+            <div class="summary-card">
+                <h4>Đáp án đúng</h4>
+                <div class="value correct">@Model.Count(m => m.IsCorrect)</div>
+            </div>
+            <div class="summary-card">
+                <h4>Đáp án sai</h4>
+                <div class="value incorrect">@Model.Count(m => !m.IsCorrect)</div>
+            </div>
+            <div class="summary-card">
+                <h4>Tỷ lệ đúng</h4>
+                <div class="value">@(Model.Count > 0 ? $"{Model.Count(m => m.IsCorrect) * 100 / Model.Count}%" : "0%")</div>
+            </div>
+        </div>
+        
+        @if (Model.Count == 0)
+        {
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                <strong>Chú ý:</strong> Không có dữ liệu chi tiết cho bài làm này. 
+                Điều này có thể do lỗi khi lưu dữ liệu hoặc bài làm được tạo không đúng cách.
+                <form method="post" action="@Url.Action("RepairAttemptData", "Quiz", new { attemptId = ViewBag.AttemptId, quizId = quizId })" style="display: inline;">
+                    <button type="submit" class="btn btn-warning btn-sm ms-2">
+                        <i class="bi bi-tools"></i>
+                        Thử sửa chữa dữ liệu
+                    </button>
+                </form>
+                <button type="button" class="btn btn-info btn-sm ms-2" onclick="showDebugInfo()">
+                    <i class="bi bi-bug"></i>
+                    Xem thông tin debug
+                </button>
+            </div>
+        }
+    }
+    
+    @if (isAuthorized)
+    {
+        if (Model.Count == 0)
+        {
+            <div>Không có dữ liệu chi tiết cho bài làm này.</div>
+        }
+        else
+        {
+            <div class="attempt-detail-table">
+                <table class="table">
+                <thead>
+                    <tr>
+                        <th>STT</th>
+                        <th>Câu hỏi</th>
+                        <th>Đáp án đúng</th>
+                        <th>Đáp án học sinh</th>
+                        <th>Kết quả</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for (int i = 0; i < Model.Count; i++)
+                {
+                    <tr>
+                        <td>@(i + 1)</td>
+                        <td class="question-content">@Model[i].QuestionContent</td>
+                        <td class="answer-content">@Model[i].CorrectAnswer</td>
+                        <td class="answer-content">@Model[i].UserAnswer</td>
+                        <td>
+                            @if (Model[i].IsCorrect)
+                            {
+                                <span class="status-badge status-correct">Đúng</span>
+                            }
+                            else
+                            {
+                                <span class="status-badge status-incorrect">Sai</span>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-exclamation-triangle me-2"></i>
+            <strong>Thông báo:</strong> Bạn không có quyền xem chi tiết câu hỏi và đáp án của bài làm này.
+        </div>
+        <div class="attempt-summary">
+            <div class="summary-card">
+                <h4>Tổng số câu hỏi</h4>
+                <div class="value">@Model.Count</div>
+            </div>
+            @if (typeStats != null)
+            {
+                foreach (var t in typeStats)
+                {
+                    <div class="summary-card">
+                        <h4>@t.Type</h4>
+                        <div class="value">@t.Count câu</div>
+                    </div>
+                }
+            }
+        </div>
+    }
+    <div class="attempt-detail-actions">
+        <a href="@Url.Action("Attempts", "Quiz", new { quizId = quizId })" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i>
+            Quay lại danh sách bài làm
+        </a>
+    </div>
+</div>
+
+<script>
+function showDebugInfo() {
+    fetch('@Url.Action("GetAttemptDebugInfo", "Quiz", new { attemptId = ViewBag.AttemptId, quizId = quizId })')
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) {
+                alert('Lỗi: ' + data.error);
+                return;
+            }
+            
+            let debugText = '=== THÔNG TIN DEBUG ===\n';
+            debugText += `Attempt ID: ${data.attemptId}\n`;
+            debugText += `Quiz ID: ${data.quizId}\n`;
+            debugText += `User ID: ${data.userId}\n`;
+            debugText += `User Name: ${data.userName}\n`;
+            debugText += `Score: ${data.score}\n`;
+            debugText += `Started At: ${data.startedAt}\n`;
+            debugText += `Ended At: ${data.endedAt}\n`;
+            debugText += `Duration: ${data.duration} seconds\n`;
+            debugText += `Details Count: ${data.detailsCount}\n`;
+            debugText += `Questions Count: ${data.questionsCount}\n`;
+            debugText += `Correct Count: ${data.correctCount}\n`;
+            debugText += '\n=== CHI TIẾT ĐÁP ÁN ===\n';
+            
+            if (data.details && data.details.length > 0) {
+                data.details.forEach((detail, index) => {
+                    debugText += `${index + 1}. QuestionID: ${detail.questionId}, Answer: "${detail.answer}", IsCorrect: ${detail.isCorrect}\n`;
+                });
+            } else {
+                debugText += 'Không có chi tiết đáp án\n';
+            }
+            
+            console.log(debugText);
+            alert(debugText);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Lỗi khi lấy thông tin debug: ' + error.message);
+        });
+}
+</script> 

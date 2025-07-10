@@ -49,6 +49,8 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<Quiz> Quizzes { get; set; }
     public DbSet<QuizQuestion> QuizQuestions { get; set; }
     public DbSet<QuizAttempt> QuizAttempts { get; set; }
+    
+    public DbSet<QuizAttemptDetail> QuizAttemptDetail { get; set; }
 
     // ------------ Collaboration & Whiteboard ------------
     public DbSet<WhiteboardSession> WhiteboardSessions { get; set; }
@@ -380,5 +382,19 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
             .IsUnique();
         
         #endregion
+        
+        // QuizAttemptDetail 
+        // Cấu hình tránh multiple cascade paths cho QuizAttemptDetail
+        modelBuilder.Entity<QuizAttemptDetail>()
+            .HasOne(qad => qad.Question)
+            .WithMany()
+            .HasForeignKey(qad => qad.QuestionId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<QuizAttemptDetail>()
+            .HasOne(qad => qad.Attempt)
+            .WithMany(a => a.Details)
+            .HasForeignKey(qad => qad.AttemptId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

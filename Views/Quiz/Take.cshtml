@@ -1,0 +1,149 @@
+@model Zela.Models.Quiz
+@{
+    ViewData["Title"] = "Làm bài: " + Model.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/quiz/quiz-take.css"/>
+}
+
+<div class="quiz-take-window">
+    <!-- Quiz Header -->
+    <div class="quiz-take-header">
+        <div class="quiz-take-header-content">
+            <div class="quiz-take-header-left">
+                <h2 class="quiz-take-title">
+                    <i class="bi bi-ui-checks"></i>
+                    @Model.Title
+                </h2>
+                <p class="quiz-take-description">@Model.Description</p>
+            </div>
+            
+            <div class="quiz-take-header-right">
+                <div class="quiz-take-timer" id="quizTimer">
+                    <i class="bi bi-clock"></i>
+                    <span id="timeRemaining">--:--</span>
+                </div>
+                <div class="quiz-take-progress">
+                    <span id="currentQuestion">1</span> / <span id="totalQuestions">@Model.Questions.Count</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Content -->
+    <div class="quiz-take-content">
+        <div class="quiz-take-container">
+            <!-- Main Question Area -->
+            <div class="question-main-area">
+                <!-- Question Display -->
+                <div class="question-display" id="questionDisplay">
+                    <div class="question-header">
+                        <h3 class="question-title">
+                            <span class="question-number" id="questionNumber">1</span>
+                            <span class="question-text" id="questionText">Đang tải câu hỏi...</span>
+                        </h3>
+                        <div class="question-type-badge" id="questionType">Trắc nghiệm</div>
+                    </div>
+                    
+                    <div class="question-content" id="questionContent">
+                        <!-- Choices will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Bottom Navigation -->
+                <div class="quiz-navigation">
+                    <button class="btn btn-outline-secondary" id="prevBtn" data-action="previous-question">
+                        <i class="bi bi-arrow-left"></i>
+                        Câu trước
+                    </button>
+                    
+                    <button class="btn btn-primary" id="nextBtn" data-action="next-question">
+                        Câu tiếp
+                        <i class="bi bi-arrow-right"></i>
+                    </button>
+                    
+                    <button class="btn btn-success" id="submitBtn" data-action="submit-quiz">
+                        <i class="bi bi-check-circle"></i>
+                        Nộp bài
+                    </button>
+                </div>
+            </div>
+
+            <!-- Right Sidebar -->
+            <div class="quiz-sidebar">
+                <div class="sidebar-header">
+                    <h4>Danh sách câu hỏi</h4>
+                    <div class="progress-info">
+                        <span id="currentQuestion">1</span> / <span id="totalQuestions">@Model.Questions.Count</span>
+                    </div>
+                </div>
+                
+                <div class="question-indicators" id="questionIndicators">
+                    <!-- Question indicators will be generated here -->
+                </div>
+                
+                <div class="sidebar-actions">
+                    <button class="btn btn-outline-danger btn-sm" data-action="exit-quiz">
+                        <i class="bi bi-box-arrow-right"></i>
+                        Thoát
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Section -->
+        <div class="quiz-submit-section" id="submitSection" style="display: none;">
+            <!-- Không cần thiết nữa vì nút "Nộp bài" đã có trong navigation -->
+        </div>
+    </div>
+</div>
+
+<!-- Quiz Data (Hidden) -->
+<input type="hidden" id="quizId" value="@Model.QuizId" />
+<input type="hidden" id="timeLimit" value="@Model.TimeLimit" />
+<input type="hidden" id="totalQuestionsCount" value="@Model.Questions.Count" />
+<input type="hidden" id="quizIsHomework" value="@Model.IsHomework" />
+<input type="hidden" id="quizStartTime" value="@Model.StartTime?.ToString("yyyy-MM-ddTHH:mm:ss")" />
+<input type="hidden" id="quizEndTime" value="@Model.EndTime?.ToString("yyyy-MM-ddTHH:mm:ss")" />
+
+<script>
+    var showScoreAfterSubmit = @(TempData["ShowScoreAfterSubmit"] != null ? TempData["ShowScoreAfterSubmit"].ToString().ToLower() : "true");
+</script>
+
+@section Scripts {
+    <script src="~/js/quiz-take.js"></script>
+    <script>
+        // Auto-submit cho homework quiz
+        document.addEventListener('DOMContentLoaded', function() {
+            var isHomework = document.getElementById('quizIsHomework').value === 'True' || document.getElementById('quizIsHomework').value === 'true';
+            if (isHomework) {
+                var endTimeStr = document.getElementById('quizEndTime').value;
+                if (endTimeStr) {
+                    var endTime = new Date(endTimeStr);
+                    var timerSpan = document.getElementById('timeRemaining');
+                    var submitBtn = document.getElementById('submitBtn');
+                    var interval = setInterval(function() {
+                        var now = new Date();
+                        var diff = Math.floor((endTime - now) / 1000);
+                        if (diff <= 0) {
+                            timerSpan.innerText = '00:00';
+                            clearInterval(interval);
+                            if (submitBtn && !submitBtn.disabled) {
+                                submitBtn.disabled = true;
+                                submitBtn.innerText = 'Đang nộp...';
+                                // Gọi sự kiện nộp bài tự động
+                                submitBtn.click();
+                            }
+                        } else {
+                            var m = Math.floor(diff / 60);
+                            var s = diff % 60;
+                            timerSpan.innerText = (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+                        }
+                    }, 1000);
+                }
+            }
+        });
+    </script>
+} 

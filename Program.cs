@@ -124,6 +124,8 @@ builder.Services.AddScoped<IRecordingService, RecordingService>();
 // add Whiteboard
 builder.Services.AddScoped<IWhiteboardService, WhiteboardService>();
 
+//add Quiz
+builder.Services.AddScoped<IQuizService, QuizService>();
 // Configure form options for file uploads
 builder.Services.Configure<FormOptions>(options =>
 {

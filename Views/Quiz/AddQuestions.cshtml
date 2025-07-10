@@ -1,0 +1,277 @@
+@model Zela.Models.Quiz
+@{
+    ViewData["Title"] = "Thêm câu hỏi - " + Model.Title;
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/quiz/quiz-questions.css"/>
+}
+
+@{
+    string GetQuestionTypeDisplayName(string questionType)
+    {
+        return questionType switch
+        {
+            "MultipleChoice" => "Trắc nghiệm",
+            "TrueFalse" => "Đúng/Sai", 
+            "ShortAnswer" => "Câu trả lời ngắn",
+            "Essay" => "Tự luận",
+            _ => questionType
+        };
+    }
+}
+
+<div class="quiz-questions-window">
+    <!-- Quiz Header -->
+    <div class="quiz-questions-header">
+        <div class="quiz-questions-header-content">
+            <div class="quiz-questions-header-left">
+                <h2 class="quiz-questions-title">
+                    <i class="bi bi-plus-circle"></i>
+                    Thêm câu hỏi cho: @Model.Title
+                </h2>
+            </div>
+            
+            <div class="quiz-questions-header-right">
+                <a href="@Url.Action("Edit", "Quiz", new { id = Model.QuizId })" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Quay lại
+                </a>
+                @if (Model.Questions != null && Model.Questions.Any())
+                {
+                    <a href="@Url.Action("Take", "Quiz", new { id = Model.QuizId })" class="btn btn-success me-2">
+                        <i class="bi bi-play-circle"></i>
+                        Làm bài
+                    </a>
+                }
+                <button type="button" class="btn btn-primary" data-action="add-question">
+                    <i class="bi bi-plus-circle"></i>
+                    Thêm câu hỏi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quiz Content -->
+    <div class="quiz-questions-content">
+        <!-- Notifications -->
+        @if (TempData["SuccessMessage"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert" style="background: var(--quiz-success); border: none; color: white; margin-bottom: var(--quiz-spacing-lg);">
+                <i class="bi bi-check-circle me-2"></i>
+                @TempData["SuccessMessage"]
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        
+        @if (TempData["ErrorMessage"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert" style="background: var(--quiz-accent); border: none; color: white; margin-bottom: var(--quiz-spacing-lg);">
+                <i class="bi bi-exclamation-triangle me-2"></i>
+                @TempData["ErrorMessage"]
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- Quiz Info -->
+        <div class="quiz-info-card">
+            <div class="quiz-info-header">
+                <div class="quiz-info-content">
+                    <h5 class="quiz-info-title">@Model.Title</h5>
+                    <p class="quiz-info-description">@Model.Description</p>
+                </div>
+                <div class="quiz-info-stats">
+                    <div class="quiz-stat-item">
+                        <span class="quiz-stat-value" id="questionCount">0</span>
+                        <span class="quiz-stat-label">Câu hỏi</span>
+                    </div>
+                    <div class="quiz-stat-item">
+                        <span class="quiz-stat-value">@(Model.TimeLimit > 0 ? $"{Model.TimeLimit} phút" : "∞")</span>
+                        <span class="quiz-stat-label">Thời gian</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Upload Section -->
+        <div class="quiz-upload-section" style="margin-bottom: 2rem;">
+            <form asp-action="UploadQuestions" asp-controller="Quiz" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="quizId" value="@Model.QuizId" />
+                <label for="questionsFile" class="form-label">Nhập câu hỏi từ file (.csv, .txt, .docx):</label>
+                <input type="file" name="questionsFile" id="questionsFile" accept=".csv,.txt,.docx" class="form-control" required style="max-width: 350px; display: inline-block; margin-right: 1rem;" />
+                <button type="submit" class="btn btn-info">Tải lên &amp; nhập câu hỏi</button>
+            </form>
+            <div style="font-size: 0.95em; color: var(--quiz-text-muted); margin-top: 0.5rem;">
+                <strong>Mẫu CSV/TXT:</strong> <br />
+                <code>Content,QuestionType,Choices,AnswerKey</code><br />
+                <ul style="margin: 0.5em 0 0 1.5em; padding: 0; font-size: 0.97em;">
+                    <li><b>Content</b>: Nội dung câu hỏi (bắt buộc). Nếu có dấu phẩy, đặt trong dấu ngoặc kép: <code>"Tơ nilon-6,6 là sản phẩm của phản ứng?"</code></li>
+                    <li><b>QuestionType</b>: Loại câu hỏi (MultipleChoice, TrueFalse, ShortAnswer, Essay)</li>
+                    <li><b>Choices</b>: <b>Mỗi đáp án trên 1 dòng</b> (dùng dấu xuống dòng trong cùng một ô, ví dụ khi nhập bằng Excel hoặc Google Sheets, nhấn Alt+Enter để xuống dòng trong ô)</li>
+                    <li><b>AnswerKey</b>: Đáp án đúng (ví dụ: "A" hoặc "Đúng" hoặc đáp án tự luận)</li>
+                </ul>
+                <b>Ví dụ:</b><br />
+                <code>"Tơ nilon-6,6 là sản phẩm của phản ứng?",MultipleChoice,"Trùng ngưng\nTrùng hợp\nEste hóa\nXà phòng hóa",Trùng ngưng</code><br />
+                <code>"2+2 bằng mấy?",MultipleChoice,"2\n3\n4\n5",4</code><br />
+                <code>"Chọn tập nghiệm",MultipleChoice,"(2;3)\n(1;2)\n(0;1)","(2;3)"</code><br />
+                <code>"Trái đất hình tròn?",TrueFalse,,Đúng</code><br />
+                <code>"Viết tên thủ đô Việt Nam",ShortAnswer,,Hà Nội</code>
+                <br/>
+                <strong>Mẫu file DOCX:</strong><br/>
+                <span>Mỗi bảng trong file DOCX là một danh sách câu hỏi. Dòng đầu tiên là tiêu đề cột: Content | QuestionType | Choices | AnswerKey.<br/>Mỗi dòng tiếp theo là một câu hỏi.<br/>Nếu không có bảng, mỗi đoạn văn là một câu hỏi, các trường cách nhau bởi dấu tab hoặc xuống dòng.</span>
+            </div>
+        </div>
+
+        <!-- Questions List -->
+        <div class="questions-list-card">
+            <div class="questions-list-header">
+                <h5 class="questions-list-title">
+                    <i class="bi bi-list-check"></i>
+                    Danh sách câu hỏi
+                </h5>
+                <div class="questions-list-actions" style="display: flex; align-items: center; gap: 1rem; margin-top: 0.5rem;">
+                    <input type="checkbox" id="selectAllQuestions" title="Chọn tất cả" style="margin-right: 0.5rem;" />
+                    <label for="selectAllQuestions" style="margin-bottom: 0; margin-right: 1rem; cursor:pointer;">Chọn tất cả</label>
+                    <button id="deleteSelectedQuestions" class="btn btn-danger btn-sm" type="button">
+                        <i class="bi bi-trash"></i> Xóa đã chọn
+                    </button>
+                    <button id="deleteAllQuestions" class="btn btn-outline-danger btn-sm" type="button">
+                        <i class="bi bi-x-circle"></i> Xóa toàn bộ
+                    </button>
+                </div>
+            </div>
+            <div class="questions-list-body">
+                <div id="questionsList">
+                    @if (Model.Questions != null && Model.Questions.Any())
+                    {
+                        @foreach (var question in Model.Questions.OrderBy(q => q.QuestionId).Select((q, index) => new { Question = q, Index = index }))
+                        {
+                            <div class="question-item" data-question-id="@question.Question.QuestionId">
+                                <div class="question-header">
+                                    <input type="checkbox" class="question-checkbox" value="@question.Question.QuestionId" style="margin-right: 1rem;" />
+                                    <div class="question-content">
+                                        <h6 class="question-title">Câu @(question.Index + 1): @question.Question.Content</h6>
+                                        <span class="question-type-badge">@GetQuestionTypeDisplayName(question.Question.QuestionType)</span>
+                                    </div>
+                                    <div class="question-actions">
+                                        <button class="question-action-btn edit" data-action="edit-question" data-question-id="@question.Question.QuestionId" title="Chỉnh sửa">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+                                        <button class="question-action-btn delete" data-action="delete-question" data-question-id="@question.Question.QuestionId" title="Xóa">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                                @if (!string.IsNullOrEmpty(question.Question.Choices) || !string.IsNullOrEmpty(question.Question.AnswerKey))
+                                {
+                                    <div class="question-details">
+                                        @if (!string.IsNullOrEmpty(question.Question.Choices))
+                                        {
+                                            <div class="question-detail-item">
+                                                <span class="question-detail-label">Lựa chọn</span>
+                                                <div class="question-detail-value">@Html.Raw(question.Question.Choices.Replace("\\n", "<br/>").Replace("\n", "<br/>"))</div>
+                                            </div>
+                                        }
+                                        <div class="question-detail-item">
+                                            <span class="question-detail-label">Đáp án</span>
+                                            <div class="question-detail-value question-answer">@question.Question.AnswerKey</div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="questions-empty-state">
+                            <i class="bi bi-question-circle questions-empty-icon"></i>
+                            <h5 class="questions-empty-title">Chưa có câu hỏi nào</h5>
+                            <p class="questions-empty-description">Bắt đầu thêm câu hỏi cho quiz này</p>
+                            <button class="btn btn-primary" data-action="add-question">
+                                <i class="bi bi-plus-circle"></i>
+                                Thêm câu hỏi đầu tiên
+                            </button>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/quiz-questions.js"></script>
+    <script>
+        // Update question count
+        function updateQuestionCount() {
+            const count = document.querySelectorAll('.question-item').length;
+            document.getElementById('questionCount').textContent = count;
+        }
+        
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updateQuestionCount();
+            const selectAll = document.getElementById('selectAllQuestions');
+            const checkboxes = () => document.querySelectorAll('.question-checkbox');
+            if (selectAll) {
+                selectAll.addEventListener('change', function() {
+                    checkboxes().forEach(cb => cb.checked = selectAll.checked);
+                });
+            }
+            // Nếu bỏ chọn từng cái, bỏ chọn tổng
+            document.getElementById('questionsList').addEventListener('change', function(e) {
+                if (e.target.classList.contains('question-checkbox')) {
+                    if (!e.target.checked) selectAll.checked = false;
+                    else if ([...checkboxes()].every(cb => cb.checked)) selectAll.checked = true;
+                }
+            });
+            // Xóa đã chọn
+            document.getElementById('deleteSelectedQuestions').addEventListener('click', async function() {
+                const ids = [...checkboxes()].filter(cb => cb.checked).map(cb => parseInt(cb.value));
+                if (ids.length === 0) { alert('Chưa chọn câu hỏi nào!'); return; }
+                if (!confirm('Bạn chắc chắn muốn xóa các câu hỏi đã chọn?')) return;
+                try {
+                    const res = await fetch('/Quiz/DeleteQuestions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(ids)
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        ids.forEach(id => {
+                            const el = document.querySelector('.question-item[data-question-id="'+id+'"]');
+                            if (el) el.remove();
+                        });
+                        updateQuestionCount();
+                        selectAll.checked = false;
+                        alert('Đã xóa các câu hỏi đã chọn!');
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra!');
+                    }
+                } catch (err) { alert('Có lỗi xảy ra!'); }
+            });
+            // Xóa toàn bộ
+            document.getElementById('deleteAllQuestions').addEventListener('click', async function() {
+                if (!confirm('Bạn chắc chắn muốn xóa toàn bộ câu hỏi?')) return;
+                try {
+                    const quizId = @Model.QuizId;
+                    const res = await fetch('/Quiz/DeleteAllQuestions', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(quizId)
+                    });
+                    const data = await res.json();
+                    if (data.success) {
+                        document.getElementById('questionsList').innerHTML = '<div class="questions-empty-state"><i class="bi bi-question-circle questions-empty-icon"></i><h5 class="questions-empty-title">Chưa có câu hỏi nào</h5><p class="questions-empty-description">Bắt đầu thêm câu hỏi cho quiz này</p><button class="btn btn-primary" data-action="add-question"><i class="bi bi-plus-circle"></i>Thêm câu hỏi đầu tiên</button></div>';
+                        updateQuestionCount();
+                        selectAll.checked = false;
+                        alert('Đã xóa toàn bộ câu hỏi!');
+                    } else {
+                        alert(data.message || 'Có lỗi xảy ra!');
+                    }
+                } catch (err) { alert('Có lỗi xảy ra!'); }
+            });
+        });
+    </script>
+} 

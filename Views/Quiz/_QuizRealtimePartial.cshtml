@@ -1,0 +1,116 @@
+@{
+    var isTeacher = ViewData["IsTeacher"] as bool? ?? false;
+    var quizId = ViewData["QuizId"] as int? ?? 0;
+    var roomCode = ViewData["RoomCode"] as string ?? "";
+    var quizTitle = ViewData["QuizTitle"] as string ?? "";
+    var quizDescription = ViewData["QuizDescription"] as string ?? "";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/quiz/quiz-take.css" />
+    <link rel="stylesheet" href="~/css/pages/quiz/quiz-realtime.css" />
+}
+
+<div class="quiz-take-window quiz-realtime-root">
+    <div class="quiz-realtime-status mb-3">
+        <span id="quizStatusBadge" class="badge badge-warning" style="font-size:1.1rem;">Đang chờ giáo viên bắt đầu</span>
+        <span class="ml-3">Mã phòng: <span id="roomCodeDisplay" style="font-weight:bold;font-size:1.2rem;color:#4f8cff;">@roomCode</span></span>
+        <button class="btn btn-outline-secondary btn-sm ml-2" id="copyRoomCodeBtn" type="button"><i class="bi bi-clipboard"></i> Sao chép</button>
+    </div>
+    @if (isTeacher)
+    {
+        <div id="teacherControls" class="mb-3">
+            <button class="btn btn-primary" id="startQuizBtn">Bắt đầu Quiz</button>
+            <button class="btn btn-info" id="nextQuestionBtn" style="display:none;">Câu tiếp</button>
+            <button class="btn btn-danger" id="endQuizBtn" style="display:none;">Kết thúc</button>
+            <a class="btn btn-success mt-2" id="exportResultBtn" href="@Url.Action("ExportQuizResult", "Quiz", new { quizId = quizId })" target="_blank" style="display:none;">Xuất kết quả</a>
+        </div>
+    }
+    <!-- Join Room Section -->
+    @if (!isTeacher)
+    {
+        <div id="joinRoomSection">
+            <h2>Tham gia phòng Quiz</h2>
+            <div class="form-group">
+                <label for="displayName">Tên hiển thị của bạn:</label>
+                <input type="text" id="displayName" class="form-control" maxlength="30" placeholder="Nhập tên của bạn..." />
+            </div>
+            <div class="form-group">
+                <label for="roomCode">Mã phòng:</label>
+                <input type="text" id="roomCode" class="form-control" maxlength="10" placeholder="Nhập mã phòng..." value="@roomCode" />
+            </div>
+            <button class="btn btn-primary" id="joinRoomBtn">Tham gia</button>
+        </div>
+    }
+    <!-- Quiz Content Section (ẩn khi chưa join) -->
+    <div id="quizContentSection" style="display:none;">
+        <div class="quiz-take-header">
+            <div class="quiz-take-header-content">
+                <div class="quiz-take-header-left">
+                    <h2 class="quiz-take-title" id="quizTitle">@quizTitle</h2>
+                    <p class="quiz-take-description" id="quizDescription">@quizDescription</p>
+                </div>
+                <div class="quiz-take-header-right">
+                    <div class="quiz-take-timer" id="quizTimer">
+                        <i class="bi bi-clock"></i>
+                        <span id="timeRemaining">--:--</span>
+                    </div>
+                    <div class="quiz-take-progress">
+                        <span id="currentQuestion">1</span> / <span id="totalQuestions">?</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="quiz-take-content">
+            <div class="quiz-take-container">
+                <div class="question-main-area">
+                    <div class="question-display" id="questionDisplay">
+                        <div class="question-header">
+                            <h3 class="question-title">
+                                <span class="question-number" id="questionNumber">1</span>
+                                <span class="question-text" id="questionText">Đang chờ giáo viên bắt đầu...</span>
+                            </h3>
+                            <div class="question-type-badge" id="questionType">--</div>
+                        </div>
+                        <div class="question-content" id="questionContent">
+                            <!-- Choices sẽ được render ở đây -->
+                        </div>
+                    </div>
+                    <div class="quiz-navigation">
+                        <button class="btn btn-success" id="submitAnswerBtn" style="display:none;">
+                            <i class="bi bi-check-circle"></i> Gửi đáp án
+                        </button>
+                    </div>
+                </div>
+                <div class="quiz-sidebar">
+                    <div class="sidebar-header">
+                        <h4>Bảng xếp hạng</h4>
+                    </div>
+                    <div class="quiz-realtime-leaderboard" id="leaderboard">
+                        <!-- Leaderboard sẽ được render ở đây -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <button class="btn btn-outline-secondary mb-2" id="closeQuizRealtimeBtn" type="button">
+        <i class="bi bi-arrow-left"></i> Quay lại
+    </button>
+</div>
+
+@section Scripts {
+    <script>
+        window.quizId = @quizId;
+        window.roomCode = '@roomCode';
+        window.isTeacher = @(isTeacher.ToString().ToLower());
+        if (document.getElementById('closeQuizRealtimeBtn')) {
+            document.getElementById('closeQuizRealtimeBtn').onclick = function() {
+                document.getElementById('quizRealtimePanel').style.display = 'none';
+            };
+        }
+        if (typeof initQuizRealtimePanel === 'function') {
+            initQuizRealtimePanel();
+        }
+    </script>
+    <script src="~/js/quiz-realtime.js"></script>
+} 
