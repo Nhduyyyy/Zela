@@ -96,10 +96,10 @@ function showLoading(message = 'Đang tải...') {
     // Tìm overlay đã có sẵn trong DOM; nếu chưa có thì tạo mới.
     //  - Ưu tiên dùng template HTML (nếu Room.cshtml đã render sẵn)
     //  - Nếu không tìm thấy => fallback sang hàm createLoadingOverlay()
-    const loadingDiv = document.getElementById('loading-overlay') || createLoadingOverlay();
+    const loadingDiv = document.getElementById('videocall-loading-overlay') || createLoadingOverlay();
 
     // Cập nhật nội dung thông báo mỗi lần hiển thị
-    loadingDiv.querySelector('.loading-message').textContent = message;
+    loadingDiv.querySelector('.videocall-loading-message').textContent = message;
 
     // Hiển thị overlay (flex giúp căn giữa spinner + text)
     loadingDiv.style.display = 'flex';
@@ -111,7 +111,7 @@ function showLoading(message = 'Đang tải...') {
  *        để lần sau có thể tái sử dụng ngay.
  */
 function hideLoading() {
-    const loadingDiv = document.getElementById('loading-overlay');
+    const loadingDiv = document.getElementById('videocall-loading-overlay');
     if (loadingDiv) {
         loadingDiv.style.display = 'none';
     }
@@ -124,22 +124,19 @@ function hideLoading() {
 function createLoadingOverlay() {
     // 1️⃣  Tạo phần tử container
     const overlay = document.createElement('div');
-    overlay.id = 'loading-overlay';
+    overlay.id = 'videocall-loading-overlay';
+    overlay.className = 'videocall-loading-overlay';
 
     // 2️⃣  Bơm HTML bên trong: spinner + message
     overlay.innerHTML = `
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-message">Đang tải...</div>
+        <div class="videocall-loading-content">
+            <div class="videocall-loading-spinner"></div>
+            <div class="videocall-loading-message">Đang tải...</div>
         </div>
     `;
 
-    // 3️⃣  Gán CSS inline để tự hoạt động kể cả thiếu file CSS ngoài
-    overlay.style.cssText = `
-        position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8); display: flex; align-items: center;
-        justify-content: center; z-index: 9999; color: white;
-    `;
+    // Chỉ set display, không set style khác
+    overlay.style.display = 'flex';
     // 4️⃣  Gắn overlay vào cuối <body>
     document.body.appendChild(overlay);
     // 5️⃣  Trả về element để caller có thể sử dụng ngay

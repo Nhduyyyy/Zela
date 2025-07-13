@@ -1,11 +1,10 @@
 :root {
-    --primary-color: #FF8558;
-    --primary-dark: #096B68;
-    --secondary-color: #FFFBDE;
-    --accent-color: #90D1CA;
-    --text-primary: #096B68;
-    --text-secondary: #129990;
-    
+    --primary-color: #477495;
+    --primary-dark: #232b5d;
+    --secondary-color: #92ABB1;
+    --accent-color: #CC6058;
+    --text-primary: #51395B;
+    --text-secondary: #92ABB1;
     /* Social Colors */
     --google-color: #ea4335;
     --github-color: #333;
@@ -21,7 +20,7 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background: linear-gradient(168deg, #0B68AB, #041C35);
+    background: linear-gradient(135deg, #63A3B4 0%, #477495 100%);
     height: 100vh;
     display: flex;
     justify-content: center;
@@ -30,12 +29,13 @@ body {
 
 .login-wrapper {
     width: 100%;
-    max-width: 480px; /* to hơn */
-    background: #d7ebff;
+    max-width: 480px;
+    background: #fafdff;
     padding: 50px 40px;
     border-radius: 25px;
-    box-shadow: 0 12px 50px rgba(0, 0, 0, 0.08);
+    box-shadow: 0 12px 50px rgba(71, 116, 149, 0.10);
     text-align: center;
+    border: 1px solid #92ABB1;
 }
 
 /* Logo Circle với animation */
@@ -48,7 +48,7 @@ body {
     justify-content: center;
     align-items: center;
     margin: 0 auto 25px;
-    box-shadow: 0 4px 20px rgba(18, 153, 144, 0.3);
+    box-shadow: 0 4px 20px rgba(76, 163, 180, 0.18);
 }
 
 .logo-circle i {
@@ -72,10 +72,14 @@ body {
 
 /* Heading & Subtext */
 .login-box h2 {
-    color: var(--primary-dark);
-    font-weight: 600;
+    color: var(--primary-color);
+    font-weight: 700;
     margin-bottom: 10px;
     font-size: 24px;
+    background: linear-gradient(135deg, #477495 0%, #8B4263 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
 .login-box p {
@@ -104,6 +108,9 @@ body {
     text-decoration: none;
     transition: all 0.3s ease;
     cursor: pointer;
+    background: #fafdff;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
 }
 
 .btn-oauth i {

@@ -4,7 +4,7 @@
 
 /* Background và base styling */
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #63A3B4 0%, #477495 100%);
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     margin: 0;
@@ -13,14 +13,12 @@ body {
 
 /* Container chính */
 .container {
-    background: rgba(255, 255, 255, 0.95);
+    background: #fafdff;
     border-radius: 24px;
     padding: 2.5rem;
-    box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.1),
-        0 0 0 1px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 20px 40px rgba(71, 116, 149, 0.10), 0 0 0 1px #92ABB1;
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid #92ABB1;
     margin-top: 2rem;
     margin-bottom: 2rem;
     animation: slideInUp 0.6s ease-out;
@@ -35,20 +33,20 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+    background: linear-gradient(90deg, #477495 0%, #CC6058 100%);
     background-size: 400% 400%;
     animation: gradientShift 3s ease infinite;
 }
 
 /* Header styling */
 h2 {
-    color: #2d3748;
+    color: #51395B;
     font-weight: 800;
     font-size: 2.5rem;
     text-align: center;
     margin-bottom: 2rem;
     position: relative;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #477495 0%, #8B4263 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -62,20 +60,20 @@ h2::after {
     transform: translateX(-50%);
     width: 60px;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #477495 0%, #CC6058 100%);
     border-radius: 2px;
 }
 
 /* Section headers */
 h4 {
-    color: #2d3748;
+    color: #51395B;
     font-weight: 700;
     font-size: 1.3rem;
     margin-bottom: 1.5rem;
     padding: 1rem 1.5rem;
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    background: linear-gradient(135deg, #eaf6ff 0%, #92ABB1 100%);
     border-radius: 16px;
-    border-left: 4px solid #667eea;
+    border-left: 4px solid #477495;
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -90,29 +88,29 @@ h4::before {
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #477495 0%, #CC6058 100%);
 }
 
 h4 .count {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, #477495 0%, #CC6058 100%);
+    color: #fff;
     border-radius: 20px;
     padding: 0.3rem 0.8rem;
     font-size: 0.8rem;
     font-weight: 600;
     margin-left: auto;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 2px 8px rgba(204, 96, 88, 0.15);
     animation: pulse 2s infinite;
 }
 
 /* Alert styling */
 .alert-danger {
-    background: linear-gradient(135deg, rgba(245, 87, 108, 0.1), rgba(240, 147, 251, 0.1));
-    border: 1px solid rgba(245, 87, 108, 0.3);
-    color: #e53e3e;
+    background: linear-gradient(135deg, rgba(204,96,88,0.10), rgba(139,66,99,0.10));
+    border: 1px solid #CC6058;
+    color: #CC6058;
     border-radius: 16px;
     padding: 1rem 1.5rem;
-    border-left: 4px solid #f5576c;
+    border-left: 4px solid #CC6058;
     font-weight: 500;
     margin-bottom: 1.5rem;
 }
@@ -126,14 +124,14 @@ h4 .count {
 }
 
 .list-group-item {
-    background: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(102, 126, 234, 0.1);
-    color: #2d3748;
+    background: #fafdff;
+    border: 1px solid #92ABB1;
+    color: #51395B;
     margin-bottom: 0.75rem;
     border-radius: 16px !important;
     padding: 1.5rem;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.08);
+    box-shadow: 0 4px 12px rgba(99, 163, 180, 0.08);
     position: relative;
     overflow: hidden;
     backdrop-filter: blur(10px);
@@ -146,16 +144,16 @@ h4 .count {
     left: 0;
     width: 4px;
     height: 100%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #477495 0%, #CC6058 100%);
     transform: scaleY(0);
     transition: transform 0.3s ease;
 }
 
 .list-group-item:hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: rgba(102, 126, 234, 0.3);
+    background: #fff;
+    border-color: #CC6058;
     transform: translateY(-4px);
-    box-shadow: 0 12px 30px rgba(102, 126, 234, 0.15);
+    box-shadow: 0 12px 30px rgba(204, 96, 88, 0.15);
 }
 
 .list-group-item:hover::before {
@@ -163,23 +161,23 @@ h4 .count {
 }
 
 .list-group-item.text-muted {
-    color: #718096 !important;
+    color: #92ABB1 !important;
     font-style: italic;
     text-align: center;
     padding: 2.5rem;
-    background: rgba(113, 128, 150, 0.05);
-    border: 2px dashed rgba(113, 128, 150, 0.2);
+    background: #eaf6ff;
+    border: 2px dashed #92ABB1;
 }
 
 /* User info trong list items */
 .list-group-item strong {
-    color: #2d3748;
+    color: #51395B;
     font-weight: 700;
     font-size: 1.1rem;
 }
 
 .list-group-item small {
-    color: #718096;
+    color: #92ABB1;
     font-size: 0.85rem;
     font-weight: 500;
 }
@@ -213,47 +211,47 @@ h4 .count {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, #477495 0%, #CC6058 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.15);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #5a67d8, #6b46c1);
+    background: linear-gradient(135deg, #8B4263 0%, #CC6058 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.25);
+    color: #fff;
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #38a169, #48bb78);
-    color: white;
-    box-shadow: 0 4px 15px rgba(56, 161, 105, 0.3);
+    background: linear-gradient(135deg, #5cbf7a 0%, #63A3B4 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(92, 191, 122, 0.15);
 }
 
 .btn-success:hover {
-    background: linear-gradient(135deg, #2f855a, #38a169);
+    background: linear-gradient(135deg, #63A3B4 0%, #5cbf7a 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(56, 161, 105, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px rgba(92, 191, 122, 0.25);
+    color: #fff;
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #f5576c, #f093fb);
-    color: white;
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+    background: linear-gradient(135deg, #CC6058 0%, #8B4263 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.15);
 }
 
 .btn-danger:hover {
-    background: linear-gradient(135deg, #e53e3e, #ed64a6);
+    background: linear-gradient(135deg, #8B4263 0%, #CC6058 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.25);
+    color: #fff;
 }
 
 .btn-warning {
-    background: linear-gradient(135deg, #d69e2e, #f6e05e);
-    color: #2d3748;
+    background: linear-gradient(135deg, #ffe066 0%, #8B4263 100%);
+    color: #51395B;
     box-shadow: 0 4px 15px rgba(214, 158, 46, 0.3);
 }
 
@@ -265,16 +263,16 @@ h4 .count {
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #718096, #a0aec0);
-    color: white;
-    box-shadow: 0 4px 15px rgba(113, 128, 150, 0.3);
+    background: linear-gradient(135deg, #92ABB1 0%, #477495 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(71, 116, 149, 0.15);
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #4a5568, #718096);
+    background: linear-gradient(135deg, #477495 0%, #92ABB1 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(113, 128, 150, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px rgba(71, 116, 149, 0.25);
+    color: #fff;
 }
 
 .btn-sm {
@@ -327,18 +325,18 @@ form {
 }
 
 .badge-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, #477495 0%, #CC6058 100%);
+    color: #fff;
 }
 
 .badge-success {
-    background: linear-gradient(135deg, #38a169, #48bb78);
-    color: white;
+    background: linear-gradient(135deg, #5cbf7a 0%, #63A3B4 100%);
+    color: #fff;
     }
 
 .badge-warning {
-    background: linear-gradient(135deg, #d69e2e, #f6e05e);
-    color: #2d3748;
+    background: linear-gradient(135deg, #ffe066 0%, #8B4263 100%);
+    color: #51395B;
     }
 
 /* Animations */

@@ -17,17 +17,22 @@
 }
 
 :root {
-    /* Quality Control specific variables */
-    --quality-panel-bg: rgba(255, 255, 255, 0.98);
-    --quality-header-bg: linear-gradient(135deg, var(--primary), var(--accent));
-    --quality-accent: #6366f1;
-    --quality-success: #10b981;
-    --quality-warning: #f59e0b;
-    --quality-danger: #ef4444;
-    --quality-text: #1f2937;
-    --quality-text-light: #4b5563;
-    --quality-border: rgba(102, 126, 234, 0.3);
-    --quality-hover: rgba(102, 126, 234, 0.15);
+    /* Quality Control specific variables - Forest Dawn Theme */
+    --quality-panel-bg: var(--secondary-bg, #92ABB1);
+    --quality-header-bg: linear-gradient(135deg, var(--header-bg, #477495), var(--accent, #CC6058));
+    --quality-accent: var(--accent, #CC6058);
+    --quality-success: #5cbf7a;
+    --quality-warning: #e6b86a;
+    --quality-danger: var(--accent, #CC6058);
+    --quality-text: var(--text, #51395B);
+    --quality-text-light: #7a6e8b;
+    --quality-border: var(--border-color, #51395B);
+    --quality-hover: rgba(140, 66, 99, 0.10);
+    --radius: 16px;
+    --radius-lg: 20px;
+    --shadow-md: 0 8px 25px rgba(99, 163, 180, 0.13);
+    --shadow-lg: 0 20px 40px rgba(81, 57, 91, 0.10);
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* ======== MAIN PANEL ======== */
@@ -519,11 +524,11 @@
 /* ======== DARK MODE SUPPORT ======== */
 @media (prefers-color-scheme: dark) {
     :root {
-        --quality-panel-bg: rgba(26, 32, 44, 0.98);
+        --quality-panel-bg: rgba(81, 57, 91, 0.98);
         --quality-text: #f7fafc;
         --quality-text-light: #e2e8f0;
-        --quality-border: rgba(102, 126, 234, 0.4);
-        --quality-hover: rgba(102, 126, 234, 0.25);
+        --quality-border: var(--border-color, #51395B);
+        --quality-hover: rgba(140, 66, 99, 0.18);
     }
     
     .stat-label {

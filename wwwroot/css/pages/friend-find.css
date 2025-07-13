@@ -4,7 +4,7 @@
 
 /* Background và base styling */
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #63A3B4 0%, #477495 100%);
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     margin: 0;
@@ -13,14 +13,12 @@ body {
 
 /* Container chính */
 .container {
-    background: rgba(255, 255, 255, 0.95);
+    background: #fafdff;
     border-radius: 24px;
     padding: 2.5rem;
-    box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.1),
-        0 0 0 1px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 20px 40px rgba(71, 116, 149, 0.10), 0 0 0 1px #92ABB1;
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid #92ABB1;
     animation: slideInUp 0.6s ease-out;
     position: relative;
     overflow: hidden;
@@ -35,20 +33,20 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+    background: linear-gradient(90deg, #477495 0%, #CC6058 100%);
     background-size: 400% 400%;
     animation: gradientShift 3s ease infinite;
 }
 
 /* Header styling */
 h2 {
-    color: #1a202c; /* Màu fallback đậm hơn */
+    color: #51395B; /* Màu fallback đậm hơn */
     font-weight: 800;
     font-size: 2.5rem;
     text-align: center;
     margin-bottom: 2rem;
     position: relative;
-    background: linear-gradient(135deg, #5a67d8, #6b46c1); /* Gradient đậm hơn */
+    background: linear-gradient(135deg, #477495 0%, #8B4263 100%); /* Gradient đậm hơn */
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -62,17 +60,17 @@ h2::after {
     transform: translateX(-50%);
     width: 60px;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, #477495 0%, #CC6058 100%);
     border-radius: 2px;
 }
 
 /* Search section styling */
 .search-section {
-    background: rgba(102, 126, 234, 0.05);
+    background: #eaf6ff;
     border-radius: 20px;
     padding: 1.5rem;
     margin-bottom: 2rem;
-    border: 1px solid rgba(102, 126, 234, 0.1);
+    border: 1px solid #92ABB1;
 }
 
 .search-container {
@@ -92,69 +90,67 @@ h2::after {
 
 /* Search input styling */
 .form-control {
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid rgba(102, 126, 234, 0.2);
+    background: #fafdff;
+    border: 2px solid #92ABB1;
     border-radius: 16px;
     padding: 1rem 1.5rem;
     padding-left: 3.5rem;
     font-size: 1.1rem;
-    color: #2d3748;
+    color: #51395B;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 4px 12px rgba(99, 163, 180, 0.10);
     position: relative;
 }
 
 .form-control:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 
-        0 0 0 4px rgba(102, 126, 234, 0.1),
-        0 8px 24px rgba(102, 126, 234, 0.2);
-    background: rgba(255, 255, 255, 1);
+    border-color: #477495;
+    box-shadow: 0 0 0 4px #47749522, 0 8px 24px #47749522;
+    background: #fff;
     transform: translateY(-2px);
 }
 
 .form-control::placeholder {
-    color: #a0aec0;
+    color: #92ABB1;
     font-weight: 500;
 }
 
 .form-control:hover {
-    border-color: rgba(102, 126, 234, 0.4);
+    border-color: #477495;
 }
 
 /* Search stats */
 .search-stats {
     margin-top: 1rem;
     padding: 0.5rem;
-    background: rgba(102, 126, 234, 0.05);
+    background: #eaf6ff;
     border-radius: 12px;
-    border: 1px solid rgba(102, 126, 234, 0.1);
+    border: 1px solid #92ABB1;
 }
 
 .search-stats small {
     font-weight: 600;
-    color: #667eea;
+    color: #CC6058;
 }
 
 /* Alert styling */
 .alert-danger {
-    background: linear-gradient(135deg, rgba(245, 87, 108, 0.1), rgba(240, 147, 251, 0.1));
-    border: 1px solid rgba(245, 87, 108, 0.3);
-    color: #e53e3e;
+    background: linear-gradient(135deg, rgba(204,96,88,0.10), rgba(139,66,99,0.10));
+    border: 1px solid #CC6058;
+    color: #CC6058;
     border-radius: 16px;
     padding: 1rem 1.5rem;
-    border-left: 4px solid #f5576c;
+    border-left: 4px solid #CC6058;
     font-weight: 500;
 }
 
 .alert-success {
-    background: linear-gradient(135deg, rgba(56, 161, 105, 0.1), rgba(72, 187, 120, 0.1));
-    border: 1px solid rgba(56, 161, 105, 0.3);
-    color: #38a169;
+    background: linear-gradient(135deg, rgba(92,191,122,0.10), rgba(99,163,180,0.10));
+    border: 1px solid #5cbf7a;
+    color: #5cbf7a;
     border-radius: 16px;
     padding: 1rem 1.5rem;
-    border-left: 4px solid #38a169;
+    border-left: 4px solid #5cbf7a;
     font-weight: 500;
 }
 
@@ -163,9 +159,9 @@ h2::after {
     border-radius: 20px;
     overflow-x: auto; /* Cho phép scroll ngang khi cần */
     overflow-y: visible; /* Đảm bảo tooltip có thể hiển thị */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 30px rgba(71, 116, 149, 0.10);
     margin-top: 2rem;
-    background: rgba(255, 255, 255, 0.9);
+    background: #fafdff;
     backdrop-filter: blur(10px);
     -webkit-overflow-scrolling: touch; /* Smooth scrolling trên iOS */
     position: relative; /* Để tooltip có thể hiển thị đúng */
@@ -180,8 +176,8 @@ h2::after {
 }
 
 .table thead th {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, #477495 0%, #CC6058 100%);
+    color: #fff;
     font-weight: 700;
     font-size: 0.9rem;
     text-transform: uppercase;
@@ -242,24 +238,24 @@ h2::after {
 .table tbody td {
     padding: 1.2rem 1rem;
     border: none;
-    color: #1a202c; /* Màu đậm hơn từ #2d3748 */
+    color: #51395B; /* Màu đậm hơn từ #2d3748 */
     font-weight: 600; /* Tăng độ đậm từ 500 lên 600 */
     text-align: center;
     vertical-align: middle;
-    background: rgba(255, 255, 255, 0.9); /* Tăng độ trong suốt để text rõ hơn */
+    background: #fafdff; /* Tăng độ trong suốt để text rõ hơn */
     transition: all 0.3s ease;
 }
 
 .table tbody tr {
-    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    border-bottom: 1px solid #92ABB1;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative; /* Để tooltip có thể hiển thị */
 }
 
 .table tbody tr:hover {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    background: linear-gradient(135deg, #eaf6ff 0%, #92ABB1 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    box-shadow: 0 8px 25px rgba(99, 163, 180, 0.15);
 }
 
 .table tbody tr:last-child td:first-child {
@@ -273,8 +269,8 @@ h2::after {
 /* User info styling */
 .user-id {
     font-family: 'Monaco', 'Consolas', monospace;
-    background: rgba(90, 103, 216, 0.15); /* Background đậm hơn */
-    color: #5a67d8; /* Màu đậm hơn */
+    background: #eaf6ff;
+    color: #477495;
     padding: 0.3rem 0.6rem;
     border-radius: 8px;
     font-size: 0.8rem;
@@ -296,15 +292,15 @@ h2::after {
     height: 45px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid rgba(102, 126, 234, 0.2);
+    border: 3px solid #92ABB1;
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    box-shadow: 0 2px 8px rgba(99, 163, 180, 0.15);
 }
 
 .avatar-img:hover {
-    border-color: #667eea;
+    border-color: #477495;
     transform: scale(1.05);
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 16px rgba(99, 163, 180, 0.3);
 }
 
 .user-details {
@@ -315,7 +311,7 @@ h2::after {
 }
 
 .user-details strong {
-    color: #1a202c; /* Màu đậm hơn cho tên user */
+    color: #51395B; /* Màu đậm hơn cho tên user */
     font-size: 1.1rem;
     display: block;
     margin-bottom: 0.2rem;
@@ -323,7 +319,7 @@ h2::after {
 }
 
 .user-details small {
-    color: #4a5568; /* Màu đậm hơn từ #718096 */
+    color: #92ABB1; /* Màu đậm hơn từ #718096 */
     font-size: 0.8rem;
     font-weight: 600; /* Tăng từ 500 lên 600 */
     /* Email truncation styling */
@@ -397,46 +393,46 @@ h2::after {
 
 /* Status styling */
 .text-muted {
-    color: #4a5568 !important; /* Màu đậm hơn */
+    color: #92ABB1 !important; /* Màu đậm hơn */
     font-weight: 700; /* Tăng độ đậm */
     padding: 0.4rem 1rem;
-    background: rgba(74, 85, 104, 0.15); /* Background đậm hơn một chút */
+    background: #eaf6ff; /* Background đậm hơn một chút */
     border-radius: 20px;
     font-size: 0.85rem;
 }
 
 .text-info {
-    color: #2c5aa0 !important; /* Màu xanh đậm hơn */
+    color: #477495 !important; /* Màu xanh đậm hơn */
     font-weight: 700; /* Tăng độ đậm */
     padding: 0.4rem 1rem;
-    background: rgba(44, 90, 160, 0.15); /* Background đậm hơn */
+    background: #eaf6ff; /* Background đậm hơn */
     border-radius: 20px;
     font-size: 0.85rem;
 }
 
 .text-warning {
-    color: #b7791f !important; /* Màu vàng đậm hơn */
+    color: #ffe066 !important; /* Màu vàng đậm hơn */
     font-weight: 700; /* Tăng độ đậm */
     padding: 0.4rem 1rem;
-    background: rgba(183, 121, 31, 0.15); /* Background đậm hơn */
+    background: #fffbe6; /* Background đậm hơn */
     border-radius: 20px;
     font-size: 0.85rem;
 }
 
 .text-success {
-    color: #2f855a !important; /* Màu xanh lá đậm hơn */
+    color: #5cbf7a !important; /* Màu xanh lá đậm hơn */
     font-weight: 700; /* Tăng độ đậm */
     padding: 0.4rem 1rem;
-    background: rgba(47, 133, 90, 0.15); /* Background đậm hơn */
+    background: #eaf6ff; /* Background đậm hơn */
     border-radius: 20px;
     font-size: 0.85rem;
 }
 
 .text-secondary {
-    color: #4a5568 !important; /* Màu xám đậm hơn */
+    color: #92ABB1 !important; /* Màu xám đậm hơn */
     font-weight: 700; /* Tăng độ đậm */
     padding: 0.4rem 1rem;
-    background: rgba(74, 85, 104, 0.15); /* Background đậm hơn */
+    background: #eaf6ff; /* Background đậm hơn */
     border-radius: 20px;
     font-size: 0.85rem;
 }
@@ -450,8 +446,8 @@ h2::after {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, #477495 0%, #CC6058 100%);
+    color: #fff;
     padding: 0.5rem 1rem;
     border-radius: 20px;
     font-weight: 600;
@@ -464,8 +460,8 @@ h2::after {
 
 .mutual-friends-badge:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    color: white;
+    box-shadow: 0 4px 12px rgba(204, 96, 88, 0.3);
+    color: #fff;
     text-decoration: none;
 }
 
@@ -474,7 +470,7 @@ h2::after {
 }
 
 .mutual-friends-count {
-    background: rgba(255, 255, 255, 0.2);
+    background: #eaf6ff;
     padding: 0.2rem 0.5rem;
     border-radius: 10px;
     font-weight: 700;
@@ -482,7 +478,7 @@ h2::after {
 
 /* Không có bạn chung */
 .no-mutual-friends {
-    color: #a0aec0;
+    color: #92ABB1;
     font-style: italic;
     font-size: 0.85rem;
 }
@@ -545,61 +541,61 @@ h2::after {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, #477495 0%, #CC6058 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.15);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #5a67d8, #6b46c1);
+    background: linear-gradient(135deg, #8B4263 0%, #CC6058 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.25);
+    color: #fff;
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #38a169, #48bb78);
-    color: white;
-    box-shadow: 0 4px 15px rgba(56, 161, 105, 0.3);
+    background: linear-gradient(135deg, #5cbf7a 0%, #63A3B4 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(92, 191, 122, 0.15);
 }
 
 .btn-success:hover {
-    background: linear-gradient(135deg, #2f855a, #38a169);
+    background: linear-gradient(135deg, #63A3B4 0%, #5cbf7a 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(56, 161, 105, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px rgba(92, 191, 122, 0.25);
+    color: #fff;
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #f5576c, #f093fb);
-    color: white;
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+    background: linear-gradient(135deg, #CC6058 0%, #8B4263 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.15);
 }
 
 .btn-danger:hover {
-    background: linear-gradient(135deg, #e53e3e, #ed64a6);
+    background: linear-gradient(135deg, #8B4263 0%, #CC6058 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.25);
+    color: #fff;
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #718096, #a0aec0);
-    color: white;
-    box-shadow: 0 4px 15px rgba(113, 128, 150, 0.3);
+    background: linear-gradient(135deg, #92ABB1 0%, #477495 100%);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(71, 116, 149, 0.15);
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #4a5568, #718096);
+    background: linear-gradient(135deg, #477495 0%, #92ABB1 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(113, 128, 150, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px rgba(71, 116, 149, 0.25);
+    color: #fff;
 }
 
 .btn-chat {
-    background: linear-gradient(135deg, #00d4aa, #00b894) !important;
-    color: white !important;
-    box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+    background: linear-gradient(135deg, #63A3B4 0%, #CC6058 100%) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(99, 163, 180, 0.15);
     border: none !important;
     border-radius: 12px !important;
     position: relative;
@@ -628,10 +624,9 @@ h2::after {
 }
 
 .btn-chat:hover {
-    background: linear-gradient(135deg, #00b894, #00a085);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 212, 170, 0.4);
-    color: white;
+    background: linear-gradient(135deg, #CC6058 0%, #63A3B4 100%) !important;
+    box-shadow: 0 8px 25px rgba(99, 163, 180, 0.25);
+    color: #fff;
 }
 
 .btn-chat:active {
@@ -1050,10 +1045,8 @@ form.mb-0 {
 
 /* Search highlight */
 .search-highlight {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    font-weight: 600;
+    background: linear-gradient(135deg, #eaf6ff 0%, #92ABB1 100%);
+    color: #51395B;
 }
 
 /* Force border-radius for all buttons to override Bootstrap */

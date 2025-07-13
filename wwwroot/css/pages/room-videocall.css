@@ -1,38 +1,45 @@
-/* Room Video Call Styles - FRIEND PAGES STYLE */
+/* Room Video Call Styles - FOREST DAWN THEME */
 
 :root {
-    /* Friend Pages Color Scheme */
-    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --container-bg: rgba(255, 255, 255, 0.95);
-    --glass-bg: rgba(255, 255, 255, 0.9);
-    --glass-light: rgba(255, 255, 255, 0.7);
-    --primary: #667eea;
-    --primary-dark: #5a67d8;
-    --accent: #764ba2;
-    --accent-alt: #6b46c1;
-    --success: #38a169;
-    --success-alt: #48bb78;
-    --warning: #d69e2e;
-    --warning-alt: #f6e05e;
-    --danger: #f5576c;
-    --danger-alt: #f093fb;
-    --secondary: #718096;
-    --secondary-alt: #a0aec0;
-    --text-primary: #1a202c;
-    --text-secondary: #2d3748;
-    --text-muted: #718096;
-    --text-white: #ffffff;
-    --border-color: rgba(102, 126, 234, 0.2);
-    --border-focus: rgba(102, 126, 234, 0.4);
+    /* Forest Dawn Theme */
+    --header-bg: #477495;
+    --main-bg: #63A3B4;
+    --secondary-bg: #92ABB1;
+    --accent: #CC6058;
+    --hover: #8B4263;
+    --text: #51395B;
+
+    /* Legacy/fallback variables mapped to new palette */
+    --primary: var(--header-bg);
+    --primary-dark: #35546a;
+    --accent-alt: var(--hover);
+    --success: #5cbf7a;
+    --success-alt: #a3e4c3;
+    --warning: #e6b86a;
+    --warning-alt: #f6e5b2;
+    --danger: var(--accent);
+    --danger-alt: var(--hover);
+    --secondary: var(--secondary-bg);
+    --secondary-alt: #bfcfd4;
+    --container-bg: var(--main-bg);
+    --glass-bg: var(--secondary-bg);
+    --glass-light: #b7c7cc;
+    --text-primary: var(--text);
+    --text-secondary: #7a6e8b;
+    --text-muted: #bfcfd4;
+    --text-white: #fff;
+    --border-color: var(--text);
+    --border-focus: var(--hover);
+    --shadow-neon: 0 0 20px rgba(140, 66, 99, 0.18);
+
     --radius: 16px;
     --radius-lg: 20px;
     --radius-xl: 24px;
     --gap: 1rem;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --shadow-sm: 0 4px 12px rgba(102, 126, 234, 0.1);
-    --shadow-md: 0 8px 25px rgba(102, 126, 234, 0.15);
-    --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.1);
-    --shadow-neon: 0 0 20px rgba(102, 126, 234, 0.3);
+    --shadow-sm: 0 4px 12px rgba(71, 116, 149, 0.08);
+    --shadow-md: 0 8px 25px rgba(99, 163, 180, 0.13);
+    --shadow-lg: 0 20px 40px rgba(81, 57, 91, 0.10);
 }
 
 * {
@@ -43,9 +50,9 @@
 
 body {
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: var(--bg-gradient);
+    background: var(--main-bg);
     min-height: 100vh;
-    color: var(--text-primary);
+    color: var(--text);
     overflow-x: hidden;
 }
 
@@ -68,7 +75,7 @@ body {
     margin-bottom: 10px;
     letter-spacing: -1px;
     position: relative;
-    background: linear-gradient(135deg, var(--primary-dark), var(--accent-alt));
+    background: var(--header-bg);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -83,7 +90,7 @@ body {
     transform: translateX(-50%);
     width: 80px;
     height: 4px;
-    background: linear-gradient(90deg, var(--primary), var(--accent));
+    background: linear-gradient(90deg, var(--accent), var(--hover));
     border-radius: 2px;
     animation: expandWidth 1s ease-out 0.5s both;
 }
@@ -96,7 +103,7 @@ body {
     gap: 15px;
     margin-bottom: 30px;
     padding: 25px;
-    background: var(--glass-bg);
+    background: var(--secondary-bg);
     border-radius: var(--radius-lg);
     backdrop-filter: blur(20px);
     border: 2px solid var(--border-color);
@@ -112,17 +119,17 @@ body {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--primary), var(--accent), var(--danger-alt), var(--danger));
+    background: linear-gradient(90deg, var(--accent), var(--hover), var(--accent), var(--hover));
     background-size: 400% 400%;
     animation: gradientShift 3s ease infinite;
 }
 
 #meeting-code-input {
-    background: var(--container-bg);
+    background: var(--secondary-bg);
     border: 2px solid var(--border-color);
     border-radius: var(--radius);
     padding: 12px 20px;
-    color: var(--text-primary);
+    color: var(--text);
     font-size: 1.2rem;
     font-weight: 700;
     text-align: center;
@@ -134,24 +141,24 @@ body {
 }
 
 #meeting-code-input:focus {
-    border-color: var(--primary);
+    border-color: var(--border-focus);
     box-shadow: var(--shadow-neon);
     transform: translateY(-1px);
 }
 
 #copy-code-btn {
-    background: linear-gradient(135deg, var(--success), var(--success-alt));
+    background: var(--accent);
     border: none;
     border-radius: var(--radius);
     padding: 12px 25px;
-    color: var(--text-white);
+    color: #fff;
     font-size: 1rem;
     font-weight: 700;
     cursor: pointer;
     transition: var(--transition);
     text-transform: uppercase;
     letter-spacing: 1px;
-    box-shadow: 0 4px 15px rgba(56, 161, 105, 0.3);
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.3);
     position: relative;
     overflow: hidden;
 }
@@ -173,8 +180,8 @@ body {
 
 #copy-code-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(56, 161, 105, 0.4);
-    background: linear-gradient(135deg, #2f855a, var(--success));
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.4);
+    background: linear-gradient(135deg, #8B4263, var(--accent));
 }
 
 #copy-code-btn:active {
@@ -189,7 +196,7 @@ body {
     gap: 15px;
     flex-wrap: wrap;
     padding: 25px;
-    background: var(--glass-bg);
+    background: var(--secondary-bg);
     border-radius: var(--radius-lg);
     backdrop-filter: blur(20px);
     border: 2px solid var(--border-color);
@@ -206,7 +213,7 @@ body {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--primary), var(--accent), var(--warning-alt), var(--warning));
+    background: linear-gradient(90deg, var(--accent), var(--hover), var(--warning-alt), var(--warning));
     background-size: 400% 400%;
     animation: gradientShift 3s ease infinite;
 }
@@ -252,74 +259,74 @@ body {
 
 /* Media Control Buttons */
 #toggle-mic, #toggle-cam {
-    background: linear-gradient(135deg, var(--success), var(--success-alt));
-    color: var(--text-white);
-    box-shadow: 0 4px 15px rgba(56, 161, 105, 0.3);
+    background: var(--accent);
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.3);
 }
 
 #toggle-mic:hover, #toggle-cam:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(56, 161, 105, 0.4);
-    background: linear-gradient(135deg, #2f855a, var(--success));
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.4);
+    background: linear-gradient(135deg, #8B4263, var(--accent));
 }
 
 #toggle-mic.muted, #toggle-cam.disabled {
-    background: linear-gradient(135deg, var(--danger), var(--danger-alt));
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+    background: linear-gradient(135deg, var(--accent), var(--hover));
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.3);
 }
 
 #toggle-mic.muted:hover, #toggle-cam.disabled:hover {
-    background: linear-gradient(135deg, #e53e3e, #ed64a6);
-    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
+    background: linear-gradient(135deg, #8B4263, #CC6058);
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.4);
 }
 
 /* Screen Share Button */
 #share-screen {
-    background: linear-gradient(135deg, var(--warning), var(--warning-alt));
-    color: var(--text-primary);
-    box-shadow: 0 4px 15px rgba(214, 158, 46, 0.3);
+    background: linear-gradient(135deg, var(--accent), var(--hover));
+    color: var(--text);
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.3);
 }
 
 #share-screen:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(214, 158, 46, 0.4);
-    background: linear-gradient(135deg, #b7791f, var(--warning));
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.4);
+    background: linear-gradient(135deg, #8B4263, var(--accent));
 }
 
 #share-screen.sharing {
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    color: var(--text-white);
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, var(--accent), var(--hover));
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.3);
 }
 
 #share-screen.sharing:hover {
-    background: linear-gradient(135deg, var(--primary-dark), var(--accent-alt));
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+    background: linear-gradient(135deg, #8B4263, #CC6058);
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.4);
 }
 
 /* Leave/End Buttons */
 #btnLeave {
-    background: linear-gradient(135deg, var(--secondary), var(--secondary-alt));
-    color: var(--text-white);
-    box-shadow: 0 4px 15px rgba(113, 128, 150, 0.3);
+    background: linear-gradient(135deg, var(--accent), var(--hover));
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.3);
 }
 
 #btnLeave:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(113, 128, 150, 0.4);
-    background: linear-gradient(135deg, #4a5568, var(--secondary));
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.4);
+    background: linear-gradient(135deg, #8B4263, var(--accent));
 }
 
 #btnEnd {
-    background: linear-gradient(135deg, var(--danger), var(--danger-alt));
-    color: var(--text-white);
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+    background: linear-gradient(135deg, var(--accent), var(--hover));
+    color: #fff;
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.3);
 }
 
 #btnEnd:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
-    background: linear-gradient(135deg, #e53e3e, #ed64a6);
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.4);
+    background: linear-gradient(135deg, #8B4263, #CC6058);
 }
 
 .btn:active {
@@ -336,27 +343,27 @@ body {
 
 #toggle-quality:hover, #toggle-recording:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 6px 20px rgba(204, 96, 88, 0.3);
 }
 
 /* Active states for toggle buttons */
 #toggle-quality.active,
 #toggle-recording.active {
-    background: linear-gradient(135deg, var(--accent), var(--accent-alt)) !important;
-    color: var(--text-white) !important;
-    box-shadow: 0 4px 15px rgba(118, 75, 162, 0.4) !important;
+    background: linear-gradient(135deg, var(--accent), var(--hover)) !important;
+    color: #fff !important;
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.4) !important;
 }
 
 #toggle-quality.active:hover,
 #toggle-recording.active:hover {
-    background: linear-gradient(135deg, var(--accent-alt), var(--primary)) !important;
-    box-shadow: 0 8px 25px rgba(118, 75, 162, 0.5) !important;
+    background: linear-gradient(135deg, #8B4263, var(--accent)) !important;
+    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.5) !important;
 }
 
 /* Statistics and Recordings Buttons */
 .btn-info {
     background: linear-gradient(135deg, #3182ce, #2b6cb0);
-    color: var(--text-white);
+    color: #fff;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -392,12 +399,12 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(49, 130, 206, 0.4);
     text-decoration: none;
-    color: var(--text-white);
+    color: #fff;
 }
 
 .btn-success {
     background: linear-gradient(135deg, #38a169, #48bb78);
-    color: var(--text-white);
+    color: #fff;
     text-decoration: none;
     display: inline-flex;
     align-items: center;
@@ -433,7 +440,7 @@ body {
     transform: translateY(-2px);
     box-shadow: 0 8px 25px rgba(56, 161, 105, 0.4);
     text-decoration: none;
-    color: var(--text-white);
+    color: #fff;
 }
 
 .btn-info:active,
@@ -447,7 +454,7 @@ body {
     display: grid;
     gap: 15px;
     padding: 25px;
-    background: var(--glass-bg);
+    background: var(--secondary-bg);
     border-radius: var(--radius-lg);
     backdrop-filter: blur(20px);
     border: 2px solid var(--border-color);
@@ -466,7 +473,7 @@ body {
     left: 0;
     right: 0;
     height: 3px;
-    background: linear-gradient(90deg, var(--primary), var(--accent), var(--success), var(--warning));
+    background: linear-gradient(90deg, var(--accent), var(--hover), var(--success), var(--warning));
     background-size: 400% 400%;
     animation: gradientShift 3s ease infinite;
 }
@@ -517,7 +524,7 @@ body {
 
 .video-container {
     position: relative;
-    background: var(--container-bg);
+    background: var(--secondary-bg);
     border-radius: var(--radius);
     overflow: hidden;
     border: 2px solid var(--border-color);
@@ -531,7 +538,7 @@ body {
 }
 
 .video-container:hover {
-    border-color: var(--primary);
+    border-color: var(--accent);
     box-shadow: var(--shadow-neon);
     transform: translateY(-2px);
 }
@@ -548,8 +555,8 @@ body {
     position: absolute;
     bottom: 10px;
     left: 10px;
-    background: rgba(26, 32, 44, 0.8);
-    color: var(--text-white);
+    background: rgba(81, 57, 91, 0.8);
+    color: #fff;
     padding: 8px 12px;
     border-radius: 8px;
     font-size: 0.9rem;
@@ -559,13 +566,13 @@ body {
 }
 
 /* Loading Overlay */
-#loading-overlay {
+.videocall-loading-overlay {
     position: fixed;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(102, 126, 234, 0.1);
+    background: rgba(99, 163, 180, 0.1);
     backdrop-filter: blur(10px);
     display: flex;
     justify-content: center;
@@ -573,14 +580,14 @@ body {
     z-index: 9999;
 }
 
-.loading-content {
+.videocall-loading-content {
     text-align: center;
-    color: var(--text-primary);
+    color: var(--text);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 20px;
-    background: var(--container-bg);
+    background: var(--secondary-bg);
     padding: 3rem;
     border-radius: var(--radius-xl);
     backdrop-filter: blur(20px);
@@ -588,19 +595,19 @@ body {
     box-shadow: var(--shadow-lg);
 }
 
-.loading-spinner {
+.videocall-loading-spinner {
     width: 50px;
     height: 50px;
     border: 3px solid var(--border-color);
-    border-top: 3px solid var(--primary);
+    border-top: 3px solid var(--accent);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
 
-.loading-message {
+.videocall-loading-message {
     font-size: 1.2rem;
     font-weight: 600;
-    color: var(--text-primary);
+    color: var(--text);
 }
 
 /* Error Notification */
@@ -608,11 +615,11 @@ body {
     position: fixed;
     top: 20px;
     right: 20px;
-    background: linear-gradient(135deg, var(--danger), var(--danger-alt));
-    color: var(--text-white);
+    background: var(--header-bg);
+    color: #fff;
     padding: 15px 20px;
     border-radius: var(--radius);
-    border: 2px solid rgba(245, 87, 108, 0.3);
+    border: 2px solid rgba(204, 96, 88, 0.3);
     box-shadow: var(--shadow-md);
     z-index: 10000;
     max-width: 350px;
@@ -638,7 +645,7 @@ body {
 .error-close {
     background: none;
     border: none;
-    color: var(--text-white);
+    color: #fff;
     font-size: 1.2rem;
     cursor: pointer;
     padding: 0;
@@ -661,8 +668,8 @@ body {
     position: fixed;
     top: 20px;
     left: 290px; /* 270px sidebar + 20px margin */
-    background: var(--glass-bg);
-    color: var(--text-primary);
+    background: var(--header-bg);
+    color: #fff;
     padding: 10px 15px;
     border-radius: 25px;
     border: 2px solid var(--border-color);
@@ -693,7 +700,7 @@ body {
 
 .connection-status.reconnecting {
     border-color: var(--primary);
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+    background: linear-gradient(135deg, rgba(99, 163, 180, 0.1), rgba(118, 75, 162, 0.1));
     animation: pulse 1.5s infinite;
 }
 
@@ -709,8 +716,8 @@ body {
 .debug-button {
     position: fixed;
     bottom: 20px;
-    background: var(--glass-bg);
-    color: var(--text-primary);
+    background: var(--secondary-bg);
+    color: var(--text);
     border: 2px solid var(--border-color);
     padding: 8px 12px;
     border-radius: var(--radius);
@@ -723,27 +730,27 @@ body {
 }
 
 .debug-button:hover {
-    background: var(--container-bg);
-    border-color: var(--primary);
+    background: var(--secondary-bg);
+    border-color: var(--accent);
     transform: translateY(-1px);
 }
 
 .debug-button.test {
     right: 20px;
     background: linear-gradient(135deg, var(--danger), var(--danger-alt));
-    color: var(--text-white);
+    color: #fff;
     border-color: var(--danger);
 }
 
 .debug-button.debug {
     right: 120px;
     background: linear-gradient(135deg, var(--warning), var(--warning-alt));
-    color: var(--text-primary);
+    color: var(--text);
     border-color: var(--warning);
 }
 
 .debug-button.test:hover {
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.4);
 }
 
 .debug-button.debug:hover {
@@ -937,12 +944,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--primary);
+    background: var(--accent);
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--accent);
+    background: var(--hover);
 }
 
 /* Utility Classes */
@@ -958,12 +965,12 @@ body.recording-active::before {
     background-size: 200% 200%;
     animation: recordingIndicator 2s ease-in-out infinite;
     z-index: 9999;
-    box-shadow: 0 0 20px rgba(245, 87, 108, 0.5);
+    box-shadow: 0 0 20px rgba(204, 96, 88, 0.5);
 }
 
 body.recording-active #video-grid::before {
     border-color: var(--danger);
-    background: linear-gradient(145deg, rgba(245, 87, 108, 0.05), rgba(240, 147, 251, 0.05));
+    background: linear-gradient(145deg, rgba(204, 96, 88, 0.05), rgba(240, 147, 251, 0.05));
     animation: recordingBorderPulse 2s ease-in-out infinite;
 }
 
@@ -989,11 +996,11 @@ body.recording-active .videocall-container h2 {
 @keyframes recordingBorderPulse {
     0%, 100% {
         border-color: var(--danger);
-        box-shadow: 0 0 30px rgba(245, 87, 108, 0.3);
+        box-shadow: 0 0 30px rgba(204, 96, 88, 0.3);
     }
     50% {
         border-color: var(--danger-alt);
-        box-shadow: 0 0 50px rgba(245, 87, 108, 0.5);
+        box-shadow: 0 0 50px rgba(204, 96, 88, 0.5);
     }
 }
 
@@ -1041,7 +1048,7 @@ body.recording-active .meeting-code-container::before {
 
 /* Focus States for Accessibility */
 button:focus {
-    outline: 3px solid rgba(102, 126, 234, 0.3);
+    outline: 3px solid rgba(99, 163, 180, 0.3);
     outline-offset: 2px;
 }
 
@@ -1069,7 +1076,7 @@ button:focus {
     right: -400px;
     width: 400px;
     height: 100vh;
-    background: var(--glass-bg);
+    background: var(--secondary-bg);
     backdrop-filter: blur(20px);
     border-left: 2px solid var(--border-color);
     box-shadow: -10px 0 30px rgba(0, 0, 0, 0.1);
@@ -1085,29 +1092,29 @@ button:focus {
 
 /* Quality Control Sidebar Styling */
 .quality-sidebar {
-    background: linear-gradient(135deg, rgba(102,126,234,0.95), rgba(118,75,162,0.95));
-    border-left: 3px solid rgba(102,126,234,0.5);
+    background: linear-gradient(135deg, rgba(99, 163, 180, 0.95), rgba(118, 75, 162, 0.95));
+    border-left: 3px solid rgba(99, 163, 180, 0.5);
 }
 
 .quality-sidebar .sidebar-header {
-    background: linear-gradient(135deg, var(--primary-dark), var(--accent-alt));
+    background: linear-gradient(135deg, var(--header-bg), var(--hover));
 }
 
 /* Recording Sidebar Styling */
 .recording-sidebar {
-    background: linear-gradient(135deg, rgba(245,87,108,0.95), rgba(220,53,69,0.95));
-    border-left: 3px solid rgba(245,87,108,0.5);
+    background: linear-gradient(135deg, rgba(204, 96, 88, 0.95), rgba(220,53,69,0.95));
+    border-left: 3px solid rgba(204, 96, 88, 0.5);
 }
 
 .recording-sidebar .sidebar-header {
-    background: linear-gradient(135deg, var(--danger), var(--danger-alt));
+    background: linear-gradient(135deg, var(--danger), var(--hover));
 }
 
 .sidebar-header {
     padding: 20px;
     border-bottom: 2px solid var(--border-color);
-    background: linear-gradient(135deg, var(--primary), var(--accent));
-    color: var(--text-white);
+    background: linear-gradient(135deg, var(--accent), var(--hover));
+    color: #fff;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -1122,7 +1129,7 @@ button:focus {
 .close-btn {
     background: none;
     border: none;
-    color: var(--text-white);
+    color: #fff;
     font-size: 2rem;
     cursor: pointer;
     width: 40px;
@@ -1157,7 +1164,7 @@ button:focus {
     width: 40px;
     height: 40px;
     border: 4px solid var(--border-color);
-    border-top: 4px solid var(--primary);
+    border-top: 4px solid var(--accent);
     border-radius: 50%;
     animation: spin 1s linear infinite;
     margin-bottom: 15px;
@@ -1175,7 +1182,7 @@ button:focus {
 }
 
 .stat-card {
-    background: var(--container-bg);
+    background: var(--secondary-bg);
     border-radius: var(--radius);
     padding: 20px;
     border: 2px solid var(--border-color);
@@ -1190,7 +1197,7 @@ button:focus {
 
 .stat-card h4 {
     margin: 0 0 15px 0;
-    color: var(--primary);
+    color: var(--accent);
     font-size: 1.2rem;
     font-weight: 700;
     display: flex;
@@ -1241,7 +1248,7 @@ button:focus {
 }
 
 .participant-name.current-user {
-    color: var(--primary);
+    color: var(--accent);
     font-weight: 700;
 }
 
@@ -1275,11 +1282,11 @@ button:focus {
 }
 
 .btn-refresh {
-    background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+    background: linear-gradient(135deg, var(--accent), var(--hover));
     border: none;
     border-radius: var(--radius);
     padding: 8px 16px;
-    color: var(--text-white);
+    color: #fff;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
@@ -1290,7 +1297,7 @@ button:focus {
 
 .btn-refresh:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 12px rgba(99, 163, 180, 0.3);
 }
 
 .sidebar-overlay {
@@ -1488,8 +1495,8 @@ body.recording-active .audio-indicator {
 }
 
 body.recording-active .status-indicator {
-    background: rgba(245, 87, 108, 0.2);
-    border-color: rgba(245, 87, 108, 0.4);
+    background: rgba(204, 96, 88, 0.2);
+    border-color: rgba(204, 96, 88, 0.4);
     animation: recordingPulse 2s infinite;
 }
 

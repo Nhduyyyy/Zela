@@ -8,20 +8,20 @@
 
 .zela-main {
     flex: 1;
-    background: linear-gradient(135deg, #0B1D34 0%, #08192C 100%);
+    background: linear-gradient(135deg, #477495 0%, #92ABB1 100%);
     overflow-y: auto;
 }
 
 .zela-sidebar {
     width: 270px;
-    background: linear-gradient(180deg, #0B1D34 0%, #08192C 100%);
-    color: #FFFFFF;
+    background: linear-gradient(180deg, #477495 0%, #63A3B4 100%);
+    color: #F4F8FB;
     display: flex;
     flex-direction: column;
     height: 100vh;
     flex-shrink: 0;
     position: relative;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    box-shadow: 2px 0 10px rgba(71, 116, 149, 0.15);
 }
 
 .zela-logo {
@@ -29,8 +29,8 @@
     font-weight: bold;
     text-align: center;
     margin-bottom: 30px;
-    color: #FF5E5B;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    color: #CC6058;
+    text-shadow: 0 2px 4px rgba(81, 57, 91, 0.18);
 }
 
 .zela-nav ul {
@@ -48,7 +48,7 @@
     align-items: center;
     padding: 10px 20px;
     text-decoration: none;
-    color: #D3E0F1;
+    color: #F4F8FB;
     transition: all 0.3s ease;
     border-left: 4px solid transparent;
     position: relative;
@@ -62,13 +62,13 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(41, 182, 246, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(99, 163, 180, 0.12), transparent);
     transition: left 0.6s ease;
 }
 
 .zela-nav a:hover {
-    background: linear-gradient(90deg, rgba(65, 215, 167, 0.1) 0%, rgba(41, 182, 246, 0.1) 100%);
-    border-left: 4px solid #00F0B5;
+    background: linear-gradient(90deg, rgba(99, 163, 180, 0.13) 0%, rgba(140, 66, 99, 0.10) 100%);
+    border-left: 4px solid #63A3B4;
     color: #FFFFFF;
     transform: translateX(5px);
 }
@@ -80,12 +80,12 @@
 .zela-nav a i {
     margin-right: 10px;
     font-size: 1.2rem;
-    color: #29B6F6;
+    color: #63A3B4;
     transition: color 0.3s ease;
 }
 
 .zela-nav a:hover i {
-    color: #00F0B5;
+    color: #CC6058;
 }
 
 .zela-nav a span {
@@ -95,34 +95,34 @@
 
 /* Nút đặc biệt cho "Hỏi đi con vợ" */
 .zela-nav a.special-btn {
-    background: linear-gradient(135deg, #41D7A7 0%, #22E3AC 100%);
+    background: linear-gradient(135deg, #CC6058 0%, #8B4263 100%);
     color: #FFFFFF;
     border-radius: 8px;
     margin: 10px 20px;
     padding: 12px 16px;
     border-left: none;
-    box-shadow: 0 4px 12px rgba(65, 215, 167, 0.3);
+    box-shadow: 0 4px 12px rgba(204, 96, 88, 0.18);
 }
 
 .zela-nav a.special-btn:hover {
-    background: linear-gradient(135deg, #22E3AC 0%, #00F0B5 100%);
+    background: linear-gradient(135deg, #8B4263 0%, #51395B 100%);
     transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(65, 215, 167, 0.4);
+    box-shadow: 0 6px 16px rgba(140, 66, 99, 0.22);
 }
 
 .zela-footer {
     margin-top: auto;
     display: flex;
-    flex-direction: column; /* NEW: Dọc thay vì ngang */
+    flex-direction: column;
     align-items: center;
     gap: 16px;
     padding: 20px 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(147, 171, 177, 0.13);
 }
 
 .zela-footer a,
 .zela-footer button {
-    color: #D3E0F1;
+    color: #F4F8FB;
     font-size: 1.3rem;
     background: transparent;
     border: none;
@@ -137,16 +137,15 @@
 
 .zela-footer a:hover,
 .zela-footer button:hover {
-    color: #29B6F6;
-    background-color: rgba(41, 182, 246, 0.15);
+    color: #63A3B4;
+    background-color: rgba(99, 163, 180, 0.13);
     transform: translateY(-2px);
-    box-shadow: 0 4px 10px rgba(41, 182, 246, 0.2);
+    box-shadow: 0 4px 10px rgba(99, 163, 180, 0.18);
 }
 
 .zela-footer form {
     margin: 0;
 }
-
 
 /* Hiệu ứng gradient cho toàn bộ sidebar */
 .zela-sidebar::before {
@@ -156,7 +155,7 @@
     left: 0;
     right: 0;
     height: 2px;
-    background: linear-gradient(90deg, #FF5E5B 0%, #00F0B5 50%, #29B6F6 100%);
+    background: linear-gradient(90deg, #CC6058 0%, #63A3B4 50%, #8B4263 100%);
 }
 /*CSS cho User*/
 /* CSS for User Section in Sidebar */
@@ -164,9 +163,9 @@
     padding: 10px 5px;
     display: flex;
     align-items: center;
-    background-color: #f4f6f9; /* Light background for contrast */
+    background-color: #F4F8FB;
     border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(81, 57, 91, 0.08);
 }
 
 .user-avatar-container {
@@ -181,13 +180,13 @@
     width: 100%;
     height: 100%;
     border-radius: 50%;
-    border: 2px solid #ddd; /* Subtle border around avatar */
+    border: 2px solid #92ABB1;
     object-fit: cover;
     transition: transform 0.3s ease;
 }
 
 .user-avatar-sidebar:hover {
-    transform: scale(1.1); /* Add a slight hover effect */
+    transform: scale(1.1);
 }
 
 .user-status-indicator {
@@ -196,25 +195,25 @@
     right: 2px;
     width: 12px;
     height: 12px;
-    background: #28a745; /* Green online indicator */
+    background: #63A3B4;
     border-radius: 50%;
-    border: 2px solid #ffffff; /* Border to give indicator visibility */
+    border: 2px solid #F4F8FB;
 }
 
 .user-info {
-    flex: 1; /* Allow user info to take up remaining space */
+    flex: 1;
 }
 
 .user-name {
     font-size: 16px;
     font-weight: 600;
-    color: #333333; /* Dark color for name */
+    color: #477495;
     margin-bottom: 5px;
 }
 
 .user-status-text {
     font-size: 14px;
-    color: #6c757d; /* Neutral gray for less emphasis */
+    color: #92ABB1;
 }
 
 .user-status-text i {
@@ -229,52 +228,52 @@
     padding: 0;
     background-color: transparent;
     border: none;
-    font-size: 1.2rem; /* Slightly larger icon size */
-    color: #6c757d;
+    font-size: 1.2rem;
+    color: #92ABB1;
     transition: color 0.2s ease;
 }
 
 .user-menu-btn:hover {
-    color: #343a40; /* Slightly darker on hover */
+    color: #51395B;
 }
 
 /* Dropdown Styling */
 .dropdown-menu {
     min-width: 200px;
     border-radius: 6px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 8px rgba(81, 57, 91, 0.10);
 }
 
 .dropdown-item {
     font-size: 14px;
-    color: #333333;
+    color: #477495;
     padding: 10px 15px;
     transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .dropdown-item:hover {
-    background-color: #f8f9fa; /* Light hover for items */
-    color: #007bff;
+    background-color: #E6EEF2;
+    color: #8B4263;
 }
 
 .dropdown-item.text-danger {
-    color: #dc3545;
+    color: #CC6058;
 }
 
 .dropdown-item.text-danger:hover {
-    background-color: #f8d7da; /* Subtle hover for danger option */
-    color: #721c24;
+    background-color: #F7E3E1;
+    color: #8B4263;
 }
 
 .dropdown-divider {
     margin: 5px 0;
-    border-top: 1px solid #f1f1f1;
+    border-top: 1px solid #E6EEF2;
 }
 
 /* Logout Button */
 .logout-btn {
     font-size: 18px;
-    color: #6c757d;
+    color: #92ABB1;
     background-color: transparent;
     border: none;
     cursor: pointer;
@@ -282,5 +281,5 @@
 }
 
 .logout-btn:hover {
-    color: #dc3545; /* Red hover effect */
+    color: #CC6058;
 }
