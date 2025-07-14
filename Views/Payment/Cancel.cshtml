@@ -1,0 +1,40 @@
+@{
+    ViewData["Title"] = "Thanh toán bị hủy";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8 col-lg-6">
+            <div class="card border-warning shadow-lg">
+                <div class="card-body text-center p-5">
+                    <div class="mb-4">
+                        <i class="bi bi-x-circle-fill text-warning" style="font-size: 4rem;"></i>
+                    </div>
+                    
+                    <h2 class="card-title text-warning mb-3">Thanh toán bị hủy</h2>
+                    <p class="card-text text-muted mb-4">
+                        Bạn đã hủy quá trình thanh toán. Không sao, bạn có thể thử lại bất cứ lúc nào.
+                    </p>
+                    
+                    <div class="alert alert-warning">
+                        <h5><i class="bi bi-info-circle me-2"></i>Bạn có muốn thử lại?</h5>
+                        <p class="mb-0">Nâng cấp Premium để tận hưởng tất cả tính năng cao cấp của Zela.</p>
+                    </div>
+                    
+                    <div class="row mt-4">
+                        <div class="col-6">
+                            <a href="@Url.Action("Index", "Home")" class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-house me-2"></i>Về trang chủ
+                            </a>
+                        </div>
+                        <div class="col-6">
+                            <a href="@Url.Action("Plans", "Payment")" class="btn btn-warning w-100">
+                                <i class="bi bi-arrow-clockwise me-2"></i>Thử lại
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

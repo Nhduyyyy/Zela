@@ -20,5 +20,14 @@
     "CloudName": "da7a0c23y",
     "ApiKey": "537419489853277",
     "ApiSecret": "C2cV4EuSr5Yw_8OpGVex9SZ4Y9M"
+  },
+  "PayOS": {
+    "PartnerCode": "YOUR_PAYOS_PARTNER_CODE",
+    "ClientId": "YOUR_PAYOS_CLIENT_ID",
+    "ApiKey": "YOUR_PAYOS_API_KEY",
+    "Checksum": "YOUR_PAYOS_CHECKSUM"
+  },
+  "AppSettings": {
+    "BaseUrl": "https://yourdomain.com"
   }
 }

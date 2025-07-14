@@ -1,44 +1,18 @@
 /* Recording & Screenshots System Styles - FRIEND PAGES THEME */
 
 :root {
-    /* Recording system specific variables - Forest Dawn Theme */
-    --recording-panel-bg: var(--secondary-bg, #92ABB1);
-    --recording-header-bg: linear-gradient(135deg, var(--accent, #CC6058), var(--hover, #8B4263));
-    --recording-accent: var(--accent, #CC6058);
-    --recording-primary: var(--header-bg, #477495);
-    --recording-success: #5cbf7a;
-    --recording-warning: #e6b86a;
-    --recording-text: var(--text, #51395B);
-    --recording-text-light: #7a6e8b;
-    --recording-border: var(--border-color, #51395B);
-    --recording-hover: rgba(140, 66, 99, 0.10);
-    --recording-pulse: #CC6058;
-    --danger: var(--accent, #CC6058);
-    --danger-alt: var(--hover, #8B4263);
-    --primary: var(--header-bg, #477495);
-    --primary-dark: #35546a;
-    --accent-alt: var(--hover, #8B4263);
-    --success-alt: #a3e4c3;
-    --warning-alt: #f6e5b2;
-    --secondary: var(--secondary-bg, #92ABB1);
-    --secondary-alt: #bfcfd4;
-    --container-bg: var(--main-bg, #63A3B4);
-    --glass-bg: var(--secondary-bg, #92ABB1);
-    --glass-light: #b7c7cc;
-    --text-primary: var(--text, #51395B);
-    --text-secondary: #7a6e8b;
-    --text-muted: #bfcfd4;
-    --text-white: #fff;
-    --border-focus: var(--hover, #8B4263);
-    --shadow-neon: 0 0 20px rgba(140, 66, 99, 0.18);
-    --radius: 16px;
-    --radius-lg: 20px;
-    --radius-xl: 24px;
-    --gap: 1rem;
-    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    --shadow-sm: 0 4px 12px rgba(71, 116, 149, 0.08);
-    --shadow-md: 0 8px 25px rgba(99, 163, 180, 0.13);
-    --shadow-lg: 0 20px 40px rgba(81, 57, 91, 0.10);
+    /* Recording system specific variables */
+    --recording-panel-bg: rgba(255, 255, 255, 0.95);
+    --recording-header-bg: linear-gradient(135deg, var(--danger), var(--danger-alt));
+    --recording-accent: var(--danger);
+    --recording-primary: var(--primary);
+    --recording-success: var(--success);
+    --recording-warning: var(--warning);
+    --recording-text: var(--text-primary);
+    --recording-text-light: var(--text-muted);
+    --recording-border: rgba(245, 87, 108, 0.2);
+    --recording-hover: rgba(245, 87, 108, 0.1);
+    --recording-pulse: #ff3333;
 }
 
 /* ======== MAIN PANEL ======== */

@@ -3,26 +3,32 @@
 */
 
 :root {
-    --header-bg: #477495;
-    --main-bg: #63A3B4;
-    --secondary-bg: #92ABB1;
-    --accent: #CC6058;
-    --hover: #8B4263;
-    --text: #51395B;
-    --success: #5cbf7a;
-    --success-alt: #a3e4c3;
+    /* Friend Pages Color Scheme */
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --container-bg: rgba(255, 255, 255, 0.95);
+    --primary: #667eea;
+    --primary-dark: #5a67d8;
+    --accent: #764ba2;
+    --accent-alt: #6b46c1;
+    --success: #38a169;
+    --success-alt: #48bb78;
+    --warning: #d69e2e;
+    --warning-alt: #f6e05e;
+    --text-primary: #1a202c;
+    --text-secondary: #2d3748;
+    --text-white: #ffffff;
     --radius: 16px;
     --gap: 1.5rem;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
-    background: linear-gradient(135deg, var(--main-bg), var(--header-bg));
+    background: var(--bg-gradient);
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     margin: 0;
     padding: 0;
-    color: var(--text);
+    color: var(--text-primary);
 }
 
 .video-call-index-container {
@@ -45,11 +51,13 @@ body {
     transform: translate(-50%, -50%);
     width: 800px;
     height: 800px;
-    background: var(--secondary-bg);
+    background: var(--container-bg);
     border-radius: 50%;
     backdrop-filter: blur(30px);
-    border: 1px solid var(--header-bg);
-    box-shadow: 0 20px 60px rgba(81, 57, 91, 0.10), inset 0 0 60px rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+            0 20px 60px rgba(0, 0, 0, 0.1),
+            inset 0 0 60px rgba(255, 255, 255, 0.1);
     animation: pulse 4s ease-in-out infinite;
     z-index: -1;
 }
@@ -59,7 +67,7 @@ body {
     font-weight: 800;
     margin-bottom: var(--gap);
     position: relative;
-    background: linear-gradient(135deg, var(--header-bg), var(--accent));
+    background: linear-gradient(135deg, var(--primary-dark), var(--accent-alt));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -76,7 +84,7 @@ body {
     transform: translateX(-50%);
     width: 80px;
     height: 4px;
-    background: linear-gradient(90deg, var(--accent), var(--hover));
+    background: linear-gradient(90deg, var(--primary), var(--accent));
     border-radius: 2px;
     animation: expandWidth 1s ease-out 0.5s both;
 }
@@ -99,7 +107,7 @@ body {
     font-weight: 700;
     border: none;
     border-radius: var(--radius);
-    color: #fff;
+    color: var(--text-white);
     text-decoration: none;
     transition: var(--transition);
     position: relative;
@@ -127,40 +135,38 @@ body {
 
 .video-call-index-container .action-buttons a.btn-create {
     background: linear-gradient(135deg, var(--success), var(--success-alt));
-    box-shadow: 0 4px 15px rgba(92, 191, 122, 0.18);
+    box-shadow: 0 4px 15px rgba(56, 161, 105, 0.3);
     border-color: var(--success);
-    color: var(--text);
 }
 
 .video-call-index-container .action-buttons a.btn-create:hover {
-    background: linear-gradient(135deg, #3e8e5a, var(--success));
+    background: linear-gradient(135deg, #2f855a, var(--success));
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(92, 191, 122, 0.28);
-    color: #fff;
+    box-shadow: 0 8px 25px rgba(56, 161, 105, 0.4);
 }
 
 .video-call-index-container .action-buttons a.btn-join {
-    background: linear-gradient(135deg, var(--accent), var(--hover));
-    box-shadow: 0 4px 15px rgba(204, 96, 88, 0.18);
-    border-color: var(--accent);
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    border-color: var(--primary);
 }
 
 .video-call-index-container .action-buttons a.btn-join:hover {
-    background: linear-gradient(135deg, var(--hover), var(--accent));
+    background: linear-gradient(135deg, var(--primary-dark), var(--accent-alt));
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(204, 96, 88, 0.28);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 .video-call-index-container .action-buttons a.btn-recordings {
-    background: linear-gradient(135deg, var(--header-bg), var(--main-bg));
-    box-shadow: 0 4px 15px rgba(71, 116, 149, 0.18);
-    border-color: var(--header-bg);
+    background: linear-gradient(135deg, #9f7aea, #d53f8c);
+    box-shadow: 0 4px 15px rgba(159, 122, 234, 0.3);
+    border-color: #9f7aea;
 }
 
 .video-call-index-container .action-buttons a.btn-recordings:hover {
-    background: linear-gradient(135deg, var(--main-bg), var(--header-bg));
+    background: linear-gradient(135deg, #805ad5, #b83280);
     transform: translateY(-3px);
-    box-shadow: 0 8px 25px rgba(71, 116, 149, 0.28);
+    box-shadow: 0 8px 25px rgba(159, 122, 234, 0.4);
 }
 
 .video-call-index-container .action-buttons a:active {
@@ -254,5 +260,5 @@ body {
 /* Focus states for accessibility */
 .video-call-index-container .action-buttons a:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(204, 96, 88, 0.18);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }

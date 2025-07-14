@@ -1,28 +1,29 @@
 /* join-meeting.css
-   Styles cho trang Tham gia cuộc họp - FOREST DAWN THEME
+   Styles cho trang Tham gia cuộc họp - FRIEND PAGES STYLE
 */
 
 :root {
-    --header-bg: #477495;
-    --main-bg: #63A3B4;
-    --secondary-bg: #92ABB1;
-    --accent: #CC6058;
-    --hover: #8B4263;
-    --text: #51395B;
-    --success: #5cbf7a;
-    --success-alt: #a3e4c3;
-    --text-primary: var(--text);
-    --text-secondary: #6b7a86;
-    --text-muted: #8fa1a8;
-    --border-color: #92ABB1;
-    --border-focus: #477495;
+    /* Friend Pages Color Scheme */
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --container-bg: rgba(255, 255, 255, 0.95);
+    --primary: #667eea;
+    --primary-dark: #5a67d8;
+    --accent: #764ba2;
+    --accent-alt: #6b46c1;
+    --success: #38a169;
+    --success-alt: #48bb78;
+    --text-primary: #1a202c;
+    --text-secondary: #2d3748;
+    --text-muted: #718096;
+    --border-color: rgba(102, 126, 234, 0.2);
+    --border-focus: rgba(102, 126, 234, 0.4);
     --radius: 16px;
     --gap: 1rem;
     --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 body {
-    background: linear-gradient(135deg, var(--main-bg), var(--header-bg));
+    background: var(--bg-gradient);
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     margin: 0;
@@ -42,12 +43,14 @@ body {
 .join-meeting-form {
     width: 100%;
     max-width: 420px;
-    background: var(--secondary-bg);
+    background: var(--container-bg);
     backdrop-filter: blur(20px);
     padding: 2.5rem;
     border-radius: 24px;
-    box-shadow: 0 20px 40px rgba(81, 57, 91, 0.10), 0 0 0 1px #fff2;
-    border: 1px solid var(--border-color);
+    box-shadow:
+            0 20px 40px rgba(0, 0, 0, 0.1),
+            0 0 0 1px rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.2);
     position: relative;
     overflow: hidden;
 }
@@ -59,7 +62,7 @@ body {
     left: 0;
     right: 0;
     height: 4px;
-    background: linear-gradient(90deg, var(--header-bg), var(--accent), var(--hover));
+    background: linear-gradient(90deg, var(--primary), var(--accent), #f093fb, #f5576c);
     background-size: 400% 400%;
     animation: gradientShift 3s ease infinite;
 }
@@ -71,7 +74,7 @@ body {
     text-align: center;
     margin-bottom: 2rem;
     position: relative;
-    background: linear-gradient(135deg, var(--header-bg), var(--hover));
+    background: linear-gradient(135deg, var(--primary-dark), var(--accent-alt));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -85,7 +88,7 @@ body {
     transform: translateX(-50%);
     width: 60px;
     height: 4px;
-    background: linear-gradient(90deg, var(--header-bg), var(--accent));
+    background: linear-gradient(90deg, var(--primary), var(--accent));
     border-radius: 2px;
 }
 
@@ -105,19 +108,21 @@ body {
     width: 100%;
     padding: 1rem 1.5rem;
     font-size: 1.1rem;
-    background: #f7fafc;
+    background: rgba(255, 255, 255, 0.9);
     border: 2px solid var(--border-color);
     border-radius: var(--radius);
     color: var(--text-secondary);
     transition: var(--transition);
-    box-shadow: 0 4px 12px rgba(99, 163, 180, 0.10);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
 }
 
 .join-meeting-form .form-control:focus {
     outline: none;
-    border-color: var(--header-bg);
-    box-shadow: 0 0 0 4px #47749522, 0 8px 24px #47749522;
-    background: #fff;
+    border-color: var(--primary);
+    box-shadow:
+            0 0 0 4px rgba(102, 126, 234, 0.1),
+            0 8px 24px rgba(102, 126, 234, 0.2);
+    background: rgba(255, 255, 255, 1);
     transform: translateY(-2px);
 }
 
@@ -136,7 +141,7 @@ body {
     padding: 1rem 1.5rem;
     font-size: 1.1rem;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--accent), var(--header-bg));
+    background: linear-gradient(135deg, var(--primary), var(--accent));
     border: none;
     border-radius: var(--radius);
     color: white;
@@ -144,7 +149,7 @@ body {
     transition: var(--transition);
     text-transform: uppercase;
     letter-spacing: 1px;
-    box-shadow: 0 4px 15px #CC605833;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
     position: relative;
     overflow: hidden;
 }
@@ -156,7 +161,7 @@ body {
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, #fff6, transparent);
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
     transition: left 0.6s ease;
 }
 
@@ -165,9 +170,9 @@ body {
 }
 
 .join-meeting-form button[type="submit"]:hover {
-    background: linear-gradient(135deg, var(--hover), var(--accent));
+    background: linear-gradient(135deg, var(--primary-dark), var(--accent-alt));
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px #8B426344;
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
 .join-meeting-form button[type="submit"]:active {
@@ -195,7 +200,7 @@ body {
 /* Focus states for accessibility */
 .join-meeting-form button[type="submit"]:focus {
     outline: none;
-    box-shadow: 0 0 0 3px #CC605833;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }
 
 /* Responsive */
