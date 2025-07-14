@@ -63,37 +63,37 @@
         <!-- Hiển thị mã phòng và nút copy mã phòng -->
         <div class="meeting-code-container">
             <!-- Input readonly hiển thị mã phòng từ ViewBag.code 
-                        ID: meeting-code-input → JavaScript sẽ dùng để select text khi copy -->
+                            ID: meeting-code-input → JavaScript sẽ dùng để select text khi copy -->
             <input type="text" id="meeting-code-input" value="@ViewBag.code" readonly>
             <!-- Button copy mã phòng vào clipboard
-                 ID: copy-code-btn → JavaScript attach click event -->
+                     ID: copy-code-btn → JavaScript attach click event -->
             <button id="copy-code-btn">Copy mã phòng</button>
         </div>
 
         <!-- =========================================
-     LOADING & ERROR LAYERS TRÊN MÀN HÌNH ROOM
-     ========================================= -->
+         LOADING & ERROR LAYERS TRÊN MÀN HÌNH ROOM
+         ========================================= -->
 
-<!-- 1️⃣  LOADING OVERLAY  ---------------------------------
-     • ID:    loading-overlay        (JS: showLoading / hideLoading)
-     • Task:  Che toàn bộ màn hình + spinner + thông báo
-     • Mặc định (CSS): display: none  → ẩn ngay khi page render
-     • Khi JS gọi  showLoading()  → display: flex (hiện)
-     • Khi JS gọi  hideLoading()  → display: none (ẩn)
---------------------------------------------------------->
-        <div id="loading-overlay">
-            <div class="loading-content">
-                <div class="loading-spinner"></div>
-                <p class="loading-message">Đang kết nối...</p>  <!-- text được JS ghi đè -->
+        <!-- 1️⃣  LOADING OVERLAY  ---------------------------------
+         • ID:    loading-overlay        (JS: showLoading / hideLoading)
+         • Task:  Che toàn bộ màn hình + spinner + thông báo
+         • Mặc định (CSS): display: none  → ẩn ngay khi page render
+         • Khi JS gọi  showLoading()  → display: flex (hiện)
+         • Khi JS gọi  hideLoading()  → display: none (ẩn)
+    --------------------------------------------------------->
+        <div id="videocall-loading-overlay" class="videocall-loading-overlay">
+            <div class="videocall-loading-content">
+                <div class="videocall-loading-spinner"></div>
+                <p class="videocall-loading-message">Đang kết nối...</p>
             </div>
-        </div> 
+        </div>
         <!-- 2️⃣  ERROR NOTIFICATION  -------------------------------
-     • ID:    error-notification     (JS: showError / hideError)
-     • Task:  Toast cảnh báo góc phải → báo lỗi cho user
-     • Inline style “display: none”   → ẩn mặc định
-     • Khi JS gọi  showError(msg)     → display: block + đổi nội dung
-     • Khi JS gọi  hideError()        → display: none
---------------------------------------------------------->
+         • ID:    error-notification     (JS: showError / hideError)
+         • Task:  Toast cảnh báo góc phải → báo lỗi cho user
+         • Inline style “display: none”   → ẩn mặc định
+         • Khi JS gọi  showError(msg)     → display: block + đổi nội dung
+         • Khi JS gọi  hideError()        → display: none
+    --------------------------------------------------------->
         <div id="error-notification" style="display: none;">
             <div class="error-content">
                 <span class="error-icon">⚠️</span>
@@ -279,6 +279,13 @@
                     // Khởi tạo quality control
                     if (typeof initializeQualityControl === 'function') {
                         window.qualityController = initializeQualityControl();
+
+                        // KẾT NỐI VỚI VIDEO CALL SYSTEM
+                        if (typeof setQualityController === 'function') {
+                            setQualityController(window.qualityController);
+                            console.log('🔗 Quality Control connected to Video Call System');
+                        }
+
                         console.log('✅ Quality Control System initialized');
                     }
 

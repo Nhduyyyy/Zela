@@ -126,6 +126,10 @@ builder.Services.AddScoped<IWhiteboardService, WhiteboardService>();
 
 //add Quiz
 builder.Services.AddScoped<IQuizService, QuizService>();
+
+//add PayOS Payment
+builder.Services.AddScoped<IPayOSService, PayOSService>();
+
 // Configure form options for file uploads
 builder.Services.Configure<FormOptions>(options =>
 {

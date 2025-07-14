@@ -56,6 +56,10 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<WhiteboardSession> WhiteboardSessions { get; set; }
     public DbSet<DrawAction> DrawActions { get; set; }
 
+    // ------------ Payment & Subscription ------------
+    public DbSet<Subscription> Subscriptions { get; set; }
+    public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
+
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

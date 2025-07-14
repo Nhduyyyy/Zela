@@ -1,54 +1,59 @@
 /* ========================================
-   ZELA FRIEND FIND - MODERN DESIGN
+   ZELA FRIEND FIND - MODERN DESIGN (THEMED)
    ======================================== */
 
-/* Background và base styling */
+@import url("../themes/chat-theme.css");
+
+:root {
+    /* Fallbacks for Forest Dawn palette */
+    --fd-header-bg: #1B2062;
+    --fd-main-bg: #2A307C;
+    --fd-secondary-bg: #050C38;
+    --fd-accent: #E02F75;
+    --fd-hover: #F04A90;
+    --fd-text: #D0D3FF;
+}
+
 body {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: var(--theme-bg-gradient, linear-gradient(135deg, var(--fd-main-bg) 0%, var(--fd-header-bg) 100%));
     font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     min-height: 100vh;
     margin: 0;
     padding: 0;
 }
 
-/* Container chính */
 .container {
-    background: rgba(255, 255, 255, 0.95);
+    background: var(--theme-bg-primary, #19182c);
     border-radius: 24px;
     padding: 2.5rem;
-    box-shadow: 
-        0 20px 40px rgba(0, 0, 0, 0.1),
-        0 0 0 1px rgba(255, 255, 255, 0.5);
+    box-shadow: 0 20px 40px var(--theme-shadow-md, rgba(5,12,56,0.25)), 0 0 0 1px var(--theme-border-color, #1B2062);
     backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    border: 1px solid var(--theme-border-color, #1B2062);
     animation: slideInUp 0.6s ease-out;
     position: relative;
     overflow: hidden;
-    max-width: 1400px; /* Tăng độ rộng tối đa */
-    width: 95%; /* Sử dụng 95% chiều rộng màn hình */
+    max-width: 1400px;
+    width: 95%;
 }
 
 .container::before {
     content: '';
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2, #f093fb, #f5576c);
+    background: linear-gradient(90deg, var(--theme-primary-dark, #1B2062) 0%, var(--theme-accent-green, #E02F75) 100%);
     background-size: 400% 400%;
     animation: gradientShift 3s ease infinite;
 }
 
-/* Header styling */
 h2 {
-    color: #1a202c; /* Màu fallback đậm hơn */
+    color: var(--theme-primary-darker, #D0D3FF);
     font-weight: 800;
     font-size: 2.5rem;
     text-align: center;
     margin-bottom: 2rem;
     position: relative;
-    background: linear-gradient(135deg, #5a67d8, #6b46c1); /* Gradient đậm hơn */
+    background: linear-gradient(135deg, var(--theme-primary-dark, #1B2062) 0%, var(--theme-accent-green-alt, #F04A90) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -62,17 +67,16 @@ h2::after {
     transform: translateX(-50%);
     width: 60px;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, var(--theme-primary-dark, #1B2062) 0%, var(--theme-accent-green, #E02F75) 100%);
     border-radius: 2px;
 }
 
-/* Search section styling */
 .search-section {
-    background: rgba(102, 126, 234, 0.05);
+    background: var(--theme-bg-secondary, #232062);
     border-radius: 20px;
     padding: 1.5rem;
     margin-bottom: 2rem;
-    border: 1px solid rgba(102, 126, 234, 0.1);
+    border: 1px solid var(--theme-border-color, #1B2062);
 }
 
 .search-container {
@@ -88,100 +92,94 @@ h2::after {
     font-size: 1.2rem;
     z-index: 2;
     opacity: 0.7;
+    color: var(--theme-primary-light, #2A307C);
 }
 
-/* Search input styling */
 .form-control {
-    background: rgba(255, 255, 255, 0.9);
-    border: 2px solid rgba(102, 126, 234, 0.2);
+    background: var(--theme-bg-glass-light, #232062);
+    border: 2px solid var(--theme-border-color, #1B2062);
     border-radius: 16px;
     padding: 1rem 1.5rem;
     padding-left: 3.5rem;
     font-size: 1.1rem;
-    color: #2d3748;
+    color: var(--theme-text-primary, #D0D3FF);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.1);
+    box-shadow: 0 4px 12px var(--theme-shadow-sm, rgba(5,12,56,0.2));
     position: relative;
 }
 
 .form-control:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 
-        0 0 0 4px rgba(102, 126, 234, 0.1),
-        0 8px 24px rgba(102, 126, 234, 0.2);
-    background: rgba(255, 255, 255, 1);
+    border-color: var(--theme-primary-dark, #1B2062);
+    box-shadow: 0 0 0 4px #1B206222, 0 8px 24px #1B206222;
+    background: var(--theme-bg-glass, #232062);
     transform: translateY(-2px);
 }
 
 .form-control::placeholder {
-    color: #a0aec0;
+    color: var(--theme-primary-light, #2A307C);
     font-weight: 500;
 }
 
 .form-control:hover {
-    border-color: rgba(102, 126, 234, 0.4);
+    border-color: var(--theme-primary-dark, #1B2062);
 }
 
-/* Search stats */
 .search-stats {
     margin-top: 1rem;
     padding: 0.5rem;
-    background: rgba(102, 126, 234, 0.05);
+    background: var(--theme-bg-secondary, #232062);
     border-radius: 12px;
-    border: 1px solid rgba(102, 126, 234, 0.1);
+    border: 1px solid var(--theme-border-color, #1B2062);
 }
 
 .search-stats small {
     font-weight: 600;
-    color: #667eea;
+    color: var(--theme-accent-green, #E02F75);
 }
 
-/* Alert styling */
 .alert-danger {
-    background: linear-gradient(135deg, rgba(245, 87, 108, 0.1), rgba(240, 147, 251, 0.1));
-    border: 1px solid rgba(245, 87, 108, 0.3);
-    color: #e53e3e;
+    background: linear-gradient(135deg, var(--theme-accent-green)11, var(--theme-accent-green-alt)11);
+    border: 1px solid var(--theme-accent-green, #E02F75);
+    color: var(--theme-accent-green, #E02F75);
     border-radius: 16px;
     padding: 1rem 1.5rem;
-    border-left: 4px solid #f5576c;
+    border-left: 4px solid var(--theme-accent-green, #E02F75);
     font-weight: 500;
 }
 
 .alert-success {
-    background: linear-gradient(135deg, rgba(56, 161, 105, 0.1), rgba(72, 187, 120, 0.1));
-    border: 1px solid rgba(56, 161, 105, 0.3);
-    color: #38a169;
+    background: linear-gradient(135deg, #00F0B511, var(--theme-primary-color)11);
+    border: 1px solid #00F0B5;
+    color: #00F0B5;
     border-radius: 16px;
     padding: 1rem 1.5rem;
-    border-left: 4px solid #38a169;
+    border-left: 4px solid #00F0B5;
     font-weight: 500;
 }
 
-/* Table container */
 .table-responsive {
     border-radius: 20px;
-    overflow-x: auto; /* Cho phép scroll ngang khi cần */
-    overflow-y: visible; /* Đảm bảo tooltip có thể hiển thị */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    overflow-x: auto;
+    overflow-y: visible;
+    box-shadow: 0 10px 30px var(--theme-shadow-md, rgba(5,12,56,0.25));
     margin-top: 2rem;
-    background: rgba(255, 255, 255, 0.9);
+    background: var(--theme-bg-primary, #19182c);
     backdrop-filter: blur(10px);
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling trên iOS */
-    position: relative; /* Để tooltip có thể hiển thị đúng */
+    -webkit-overflow-scrolling: touch;
+    position: relative;
 }
 
-/* Table styling */
 .table {
     margin-bottom: 0;
     background: transparent;
-    min-width: 1000px; /* Đảm bảo bảng có độ rộng tối thiểu */
-    table-layout: fixed; /* Cố định layout để kiểm soát độ rộng cột */
+    min-width: 1000px;
+    table-layout: fixed;
 }
 
 .table thead th {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, var(--theme-primary-dark, #1B2062) 0%, var(--theme-accent-green, #E02F75) 100%);
+    color: var(--theme-text-primary, #D0D3FF);
     font-weight: 700;
     font-size: 0.9rem;
     text-transform: uppercase;
@@ -190,8 +188,8 @@ h2::after {
     border: none;
     text-align: center;
     position: relative;
-    white-space: nowrap; /* Không cho phép xuống dòng */
-    min-width: 120px; /* Độ rộng tối thiểu cho mỗi cột */
+    white-space: nowrap;
+    min-width: 120px;
 }
 
 .table thead th i {
@@ -236,30 +234,30 @@ h2::after {
     width: 250px;
     min-width: 250px;
     max-width: 300px;
-    white-space: nowrap; /* Không cho phép xuống dòng */
+    white-space: nowrap;
 }
 
 .table tbody td {
     padding: 1.2rem 1rem;
     border: none;
-    color: #1a202c; /* Màu đậm hơn từ #2d3748 */
-    font-weight: 600; /* Tăng độ đậm từ 500 lên 600 */
+    color: var(--theme-text-primary, #D0D3FF);
+    font-weight: 600;
     text-align: center;
     vertical-align: middle;
-    background: rgba(255, 255, 255, 0.9); /* Tăng độ trong suốt để text rõ hơn */
+    background: var(--theme-bg-primary, #19182c);
     transition: all 0.3s ease;
 }
 
 .table tbody tr {
-    border-bottom: 1px solid rgba(102, 126, 234, 0.1);
+    border-bottom: 1px solid var(--theme-border-color, #1B2062);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    position: relative; /* Để tooltip có thể hiển thị */
+    position: relative;
 }
 
 .table tbody tr:hover {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05), rgba(118, 75, 162, 0.05));
+    background: var(--theme-bg-hover, #F04A9011);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+    box-shadow: 0 8px 25px var(--theme-shadow-md, rgba(5,12,56,0.25));
 }
 
 .table tbody tr:last-child td:first-child {
@@ -273,12 +271,12 @@ h2::after {
 /* User info styling */
 .user-id {
     font-family: 'Monaco', 'Consolas', monospace;
-    background: rgba(90, 103, 216, 0.15); /* Background đậm hơn */
-    color: #5a67d8; /* Màu đậm hơn */
+    background: var(--theme-bg-secondary, #232062);
+    color: var(--theme-primary-dark, #1B2062);
     padding: 0.3rem 0.6rem;
     border-radius: 8px;
     font-size: 0.8rem;
-    font-weight: 700; /* Tăng độ đậm */
+    font-weight: 700;
 }
 
 .user-info {
@@ -296,45 +294,45 @@ h2::after {
     height: 45px;
     border-radius: 50%;
     object-fit: cover;
-    border: 3px solid rgba(102, 126, 234, 0.2);
+    border: 3px solid var(--theme-border-color, #1B2062);
     transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+    box-shadow: 0 2px 8px var(--theme-shadow-sm, rgba(5,12,56,0.2));
 }
 
 .avatar-img:hover {
-    border-color: #667eea;
+    border-color: var(--theme-primary-dark, #1B2062);
     transform: scale(1.05);
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 16px var(--theme-shadow-md, rgba(5,12,56,0.3));
 }
 
 .user-details {
     flex: 1;
     min-width: 0;
-    position: relative; /* Để tooltip có thể hiển thị đúng */
-    overflow: visible; /* Đảm bảo tooltip không bị cắt */
+    position: relative;
+    overflow: visible;
 }
 
 .user-details strong {
-    color: #1a202c; /* Màu đậm hơn cho tên user */
+    color: var(--theme-text-primary, #D0D3FF);
     font-size: 1.1rem;
     display: block;
     margin-bottom: 0.2rem;
-    font-weight: 700; /* Tăng từ 600 lên 700 */
+    font-weight: 700;
 }
 
 .user-details small {
-    color: #4a5568; /* Màu đậm hơn từ #718096 */
+    color: var(--theme-primary-light, #2A307C);
     font-size: 0.8rem;
-    font-weight: 600; /* Tăng từ 500 lên 600 */
+    font-weight: 600;
     /* Email truncation styling */
-    max-width: 200px; /* Giới hạn độ rộng tối đa */
-    white-space: nowrap; /* Không cho phép xuống dòng */
-    overflow: hidden; /* Ẩn phần text vượt quá */
-    text-overflow: ellipsis; /* Hiển thị ... khi text bị cắt */
-    display: inline-block; /* Để max-width có hiệu lực */
-    cursor: help; /* Con trỏ chuột thay đổi khi hover */
-    transition: all 0.3s ease; /* Smooth transition */
-    position: relative; /* Để có thể hiển thị tooltip */
+    max-width: 200px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    cursor: help;
+    transition: all 0.3s ease;
+    position: relative;
 }
 
 /* Tooltip styling for full email display */
@@ -344,14 +342,14 @@ h2::after {
 
 .user-details small:hover {
     z-index: 1000;
-    overflow: visible; /* Cho phép tooltip hiển thị */
+    overflow: visible;
 }
 
 /* Tooltip container */
 .user-details small[title]:hover::before {
     content: attr(title);
     position: absolute;
-    bottom: calc(100% + 8px); /* Đặt tooltip phía trên */
+    bottom: calc(100% + 8px);
     left: 50%;
     transform: translateX(-50%);
     background: #2d3748;
@@ -397,46 +395,46 @@ h2::after {
 
 /* Status styling */
 .text-muted {
-    color: #4a5568 !important; /* Màu đậm hơn */
-    font-weight: 700; /* Tăng độ đậm */
+    color: var(--theme-primary-light, #2A307C) !important;
+    font-weight: 700;
     padding: 0.4rem 1rem;
-    background: rgba(74, 85, 104, 0.15); /* Background đậm hơn một chút */
+    background: var(--theme-bg-secondary, #232062);
     border-radius: 20px;
     font-size: 0.85rem;
 }
 
 .text-info {
-    color: #2c5aa0 !important; /* Màu xanh đậm hơn */
-    font-weight: 700; /* Tăng độ đậm */
+    color: var(--theme-primary-dark, #1B2062) !important;
+    font-weight: 700;
     padding: 0.4rem 1rem;
-    background: rgba(44, 90, 160, 0.15); /* Background đậm hơn */
+    background: var(--theme-bg-secondary, #232062);
     border-radius: 20px;
     font-size: 0.85rem;
 }
 
 .text-warning {
-    color: #b7791f !important; /* Màu vàng đậm hơn */
-    font-weight: 700; /* Tăng độ đậm */
+    color: #ffe066 !important;
+    font-weight: 700;
     padding: 0.4rem 1rem;
-    background: rgba(183, 121, 31, 0.15); /* Background đậm hơn */
+    background: #fffbe6;
     border-radius: 20px;
     font-size: 0.85rem;
 }
 
 .text-success {
-    color: #2f855a !important; /* Màu xanh lá đậm hơn */
-    font-weight: 700; /* Tăng độ đậm */
+    color: #00F0B5 !important;
+    font-weight: 700;
     padding: 0.4rem 1rem;
-    background: rgba(47, 133, 90, 0.15); /* Background đậm hơn */
+    background: var(--theme-bg-secondary, #232062);
     border-radius: 20px;
     font-size: 0.85rem;
 }
 
 .text-secondary {
-    color: #4a5568 !important; /* Màu xám đậm hơn */
-    font-weight: 700; /* Tăng độ đậm */
+    color: var(--theme-primary-light, #2A307C) !important;
+    font-weight: 700;
     padding: 0.4rem 1rem;
-    background: rgba(74, 85, 104, 0.15); /* Background đậm hơn */
+    background: var(--theme-bg-secondary, #232062);
     border-radius: 20px;
     font-size: 0.85rem;
 }
@@ -450,8 +448,8 @@ h2::after {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, var(--theme-primary-dark, #1B2062) 0%, var(--theme-accent-green, #E02F75) 100%);
+    color: var(--theme-text-primary, #D0D3FF);
     padding: 0.5rem 1rem;
     border-radius: 20px;
     font-weight: 600;
@@ -464,8 +462,8 @@ h2::after {
 
 .mutual-friends-badge:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    color: white;
+    box-shadow: 0 4px 12px var(--theme-shadow-neon, #E02F7544);
+    color: var(--theme-text-primary, #D0D3FF);
     text-decoration: none;
 }
 
@@ -474,7 +472,7 @@ h2::after {
 }
 
 .mutual-friends-count {
-    background: rgba(255, 255, 255, 0.2);
+    background: var(--theme-bg-secondary, #232062);
     padding: 0.2rem 0.5rem;
     border-radius: 10px;
     font-weight: 700;
@@ -482,7 +480,7 @@ h2::after {
 
 /* Không có bạn chung */
 .no-mutual-friends {
-    color: #a0aec0;
+    color: var(--theme-primary-light, #2A307C);
     font-style: italic;
     font-size: 0.85rem;
 }
@@ -493,8 +491,8 @@ h2::after {
     gap: 0.5rem;
     justify-content: center;
     align-items: center;
-    flex-wrap: nowrap; /* Không cho phép wrap */
-    min-width: 200px; /* Đảm bảo có đủ không gian */
+    flex-wrap: nowrap;
+    min-width: 200px;
 }
 
 .btn-group, .btn-group-vertical {
@@ -511,7 +509,7 @@ h2::after {
 /* Button styling */
 .btn {
     border-radius: 12px !important;
-    font-weight: 700; /* Tăng từ 600 lên 700 */
+    font-weight: 700;
     padding: 0.6rem 1.5rem !important;
     border: none !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -522,7 +520,7 @@ h2::after {
     display: inline-flex;
     align-items: center;
     gap: 0.5rem;
-    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Thêm shadow cho text */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .btn::before {
@@ -545,61 +543,61 @@ h2::after {
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    background: linear-gradient(135deg, var(--theme-primary-dark, #1B2062) 0%, var(--theme-accent-green, #E02F75) 100%);
+    color: var(--theme-text-primary, #D0D3FF);
+    box-shadow: 0 4px 15px var(--theme-shadow-neon, #E02F7544);
 }
 
 .btn-primary:hover {
-    background: linear-gradient(135deg, #5a67d8, #6b46c1);
+    background: linear-gradient(135deg, var(--theme-accent-green-alt, #F04A90) 0%, var(--theme-accent-green, #E02F75) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px var(--theme-shadow-neon, #E02F7544);
+    color: var(--theme-text-primary, #D0D3FF);
 }
 
 .btn-success {
-    background: linear-gradient(135deg, #38a169, #48bb78);
-    color: white;
-    box-shadow: 0 4px 15px rgba(56, 161, 105, 0.3);
+    background: var(--theme-btn-success-gradient, linear-gradient(135deg, #E02F75 0%, #F04A90 100%));
+    color: var(--theme-text-primary, #D0D3FF);
+    box-shadow: 0 4px 15px #00F0B544;
 }
 
 .btn-success:hover {
-    background: linear-gradient(135deg, #2f855a, #38a169);
+    background: linear-gradient(135deg, #00F0B5 0%, var(--theme-primary-color, #1B2062) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(56, 161, 105, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px #00F0B544;
+    color: var(--theme-text-primary, #D0D3FF);
 }
 
 .btn-danger {
-    background: linear-gradient(135deg, #f5576c, #f093fb);
-    color: white;
-    box-shadow: 0 4px 15px rgba(245, 87, 108, 0.3);
+    background: var(--theme-btn-danger-gradient, linear-gradient(135deg, var(--theme-accent-red, #FF5A57) 0%, #FF7A59 100%));
+    color: var(--theme-text-primary, #D0D3FF);
+    box-shadow: 0 4px 15px var(--theme-shadow-neon, #E02F7544);
 }
 
 .btn-danger:hover {
-    background: linear-gradient(135deg, #e53e3e, #ed64a6);
+    background: linear-gradient(135deg, var(--theme-accent-green-alt, #F04A90) 0%, var(--theme-accent-green, #E02F75) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(245, 87, 108, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px var(--theme-shadow-neon, #E02F7544);
+    color: var(--theme-text-primary, #D0D3FF);
 }
 
 .btn-secondary {
-    background: linear-gradient(135deg, #718096, #a0aec0);
-    color: white;
-    box-shadow: 0 4px 15px rgba(113, 128, 150, 0.3);
+    background: linear-gradient(135deg, var(--theme-primary-light, #2A307C) 0%, var(--theme-primary-dark, #1B2062) 100%);
+    color: var(--theme-text-primary, #D0D3FF);
+    box-shadow: 0 4px 15px var(--theme-shadow-sm, rgba(5,12,56,0.2));
 }
 
 .btn-secondary:hover {
-    background: linear-gradient(135deg, #4a5568, #718096);
+    background: linear-gradient(135deg, var(--theme-primary-dark, #1B2062) 0%, var(--theme-primary-light, #2A307C) 100%);
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(113, 128, 150, 0.4);
-    color: white;
+    box-shadow: 0 8px 25px var(--theme-shadow-sm, rgba(5,12,56,0.2));
+    color: var(--theme-text-primary, #D0D3FF);
 }
 
 .btn-chat {
-    background: linear-gradient(135deg, #00d4aa, #00b894) !important;
-    color: white !important;
-    box-shadow: 0 4px 15px rgba(0, 212, 170, 0.3);
+    background: linear-gradient(135deg, var(--theme-primary-color, #1B2062) 0%, var(--theme-accent-green, #E02F75) 100%) !important;
+    color: var(--theme-text-primary, #D0D3FF) !important;
+    box-shadow: 0 4px 15px var(--theme-shadow-sm, rgba(5,12,56,0.2));
     border: none !important;
     border-radius: 12px !important;
     position: relative;
@@ -628,10 +626,9 @@ h2::after {
 }
 
 .btn-chat:hover {
-    background: linear-gradient(135deg, #00b894, #00a085);
-    transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(0, 212, 170, 0.4);
-    color: white;
+    background: linear-gradient(135deg, var(--theme-accent-green, #E02F75) 0%, var(--theme-primary-color, #1B2062) 100%) !important;
+    box-shadow: 0 8px 25px var(--theme-shadow-sm, rgba(5,12,56,0.2));
+    color: var(--theme-text-primary, #D0D3FF);
 }
 
 .btn-chat:active {
@@ -793,7 +790,7 @@ form.mb-0 {
 /* Large screens optimization */
 @media (min-width: 1200px) {
     .container {
-        max-width: 1600px; /* Mở rộng cho màn hình lớn */
+        max-width: 1600px;
         width: 90%;
     }
 
@@ -829,14 +826,14 @@ form.mb-0 {
 
     .user-details strong {
         font-size: 1.2rem;
-        font-weight: 800; /* Cực kỳ đậm cho màn hình lớn */
+        font-weight: 800;
     }
 
     .user-details small {
         font-size: 0.9rem;
-        font-weight: 600; /* Đậm hơn */
-        color: #4a5568; /* Màu đậm hơn */
-        max-width: 250px; /* Tăng độ rộng cho màn hình lớn */
+        font-weight: 600;
+        color: #4a5568;
+        max-width: 250px;
     }
 
     .avatar-img {
@@ -964,14 +961,14 @@ form.mb-0 {
 
     .user-details strong {
         font-size: 0.9rem;
-        font-weight: 700; /* Đảm bảo vẫn đậm trên mobile */
+        font-weight: 700;
     }
 
     .user-details small {
         font-size: 0.7rem;
-        font-weight: 600; /* Đậm hơn trên mobile */
-        color: #4a5568; /* Màu đậm hơn */
-        max-width: 150px; /* Giảm độ rộng cho mobile */
+        font-weight: 600;
+        color: #4a5568;
+        max-width: 150px;
     }
 
     .btn-chat {
@@ -1016,7 +1013,7 @@ form.mb-0 {
     }
 
     .table {
-        min-width: 650px; /* Đảm bảo bảng có độ rộng tối thiểu */
+        min-width: 650px;
     }
 }
 
@@ -1050,10 +1047,8 @@ form.mb-0 {
 
 /* Search highlight */
 .search-highlight {
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
-    padding: 0.2rem 0.4rem;
-    border-radius: 4px;
-    font-weight: 600;
+    background: var(--theme-bg-hover, #F04A9011);
+    color: var(--theme-text-primary, #D0D3FF);
 }
 
 /* Force border-radius for all buttons to override Bootstrap */

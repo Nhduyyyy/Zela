@@ -148,7 +148,7 @@
 #quality-control-panel .quality-select {
     /* Reset everything first */
     all: unset;
-    
+
     /* Apply our styles */
     display: block !important;
     width: 100% !important;
@@ -162,14 +162,14 @@
     line-height: 1.4 !important;
     cursor: pointer !important;
     transition: var(--transition) !important;
-    
+
     /* Background and appearance */
     background-color: #ffffff !important;
     color: #1f2937 !important;
     appearance: none !important;
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
-    
+
     /* Single dropdown arrow */
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23374151' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e") !important;
     background-repeat: no-repeat !important;
@@ -525,49 +525,49 @@
         --quality-border: rgba(102, 126, 234, 0.4);
         --quality-hover: rgba(102, 126, 234, 0.25);
     }
-    
+
     .stat-label {
         color: #e2e8f0 !important;
     }
-    
+
     .stat-value {
         color: #f7fafc !important;
     }
-    
+
     .indicator-status {
         color: #f7fafc !important;
     }
-    
+
     .indicator-detail {
         color: #e2e8f0 !important;
     }
-    
+
     .quality-info {
         color: #e2e8f0 !important;
     }
-    
+
     .toggle-text {
         color: #f7fafc !important;
     }
-    
 
-    
+
+
     .help-text {
         color: #e2e8f0 !important;
     }
-    
+
     .quality-label {
         color: #f7fafc !important;
     }
-    
+
     .stats-grid {
         background: rgba(45, 55, 72, 0.9) !important;
     }
-    
+
     .quality-indicator {
         background: rgba(45, 55, 72, 0.9) !important;
     }
-    
+
     /* Dark mode dropdown styling */
     .quality-select {
         background-color: #2d3748 !important;
@@ -578,27 +578,27 @@
         background-position: right 12px center !important;
         background-size: 16px !important;
     }
-    
+
     #quality-control-panel .toggle-text,
     .quality-control-panel .toggle-text {
         color: #f7fafc !important;
     }
-    
+
     #quality-control-panel .quality-label,
     .quality-control-panel .quality-label {
         color: #f7fafc !important;
     }
-    
+
     #quality-control-panel .help-text,
     .quality-control-panel .help-text {
         color: #e2e8f0 !important;
     }
-    
+
     #quality-control-panel .stat-label,
     .quality-control-panel .stat-label {
         color: #e2e8f0 !important;
     }
-    
+
     #quality-control-panel .stat-value,
     .quality-control-panel .stat-value {
         color: #f7fafc !important;

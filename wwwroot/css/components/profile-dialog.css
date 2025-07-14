@@ -1,4 +1,120 @@
-/* Profile Dialog Styles */
+/* =================================
+   ZELA THEME ROOT - UNIFIED DESIGN SYSTEM
+   ================================= */
+
+:root {
+    /* =================================
+       PRIMARY COLOR PALETTE
+       ================================= */
+    
+    /* Main Theme Colors - Artistic & Techy */
+    --theme-primary-dark: #050C38;      /* Xanh đậm nhất */
+    --theme-primary-darker: #050C38;    /* Nền sâu nhất */
+    --theme-primary-color: #1B2062;     /* Xanh đậm trung bình */
+    --theme-primary-light: #2A307C;     /* Xanh tím sáng */
+    
+    /* Accent Colors - Vibrant Highlights */
+    --theme-accent-green: #E02F75;      /* HỒNG MAGENTA - Màu nhấn chính */
+    --theme-accent-green-alt: #F04A90;  /* Hồng nhạt hơn cho hover */
+    --theme-accent-sky-blue: #6700A3;   /* TÍM ĐẬM - Màu nhấn phụ */
+    --theme-accent-red: #FF5A57;        /* ĐỎ CAM - Cho cảnh báo, xóa */
+    
+    /* Status Colors */
+    --theme-status-online: #00F0B5;     /* Xanh neon cho trạng thái online */
+    --theme-status-offline: rgba(208, 211, 255, 0.5);
+    
+    /* =================================
+       BACKGROUND COLORS
+       ================================= */
+    
+    --theme-bg-primary: rgba(19, 24, 44, 0.95);
+    --theme-bg-gradient: linear-gradient(135deg, var(--theme-primary-color) 0%, var(--theme-primary-dark) 100%);
+    --theme-bg-secondary: rgba(27, 32, 98, 0.85);
+    --theme-bg-hover: rgba(224, 47, 117, 0.1);
+    --theme-bg-active: rgba(224, 47, 117, 0.15);
+    --theme-bg-glass: rgba(255, 255, 255, 0.05);
+    --theme-bg-glass-light: rgba(255, 255, 255, 0.1);
+    --theme-bg-light-gray: #f3f4f6;
+    --theme-bg-dark: #343a40;
+    
+    /* =================================
+       TEXT COLORS
+       ================================= */
+    
+    --theme-text-primary: #FFFFFF;
+    --theme-text-secondary: #D0D3FF;
+    --theme-text-muted: rgba(208, 211, 255, 0.7);
+    --theme-text-accent: var(--theme-accent-green);
+    --theme-text-dark: #FFFFFF;
+    --theme-text-white: #FFFFFF;
+    --theme-text-light: #f8f9fa;
+    
+    /* =================================
+       BORDER & SHADOW COLORS
+       ================================= */
+    
+    --theme-border-color: rgba(103, 0, 163, 0.4);
+    --theme-border-accent: var(--theme-accent-green);
+    --theme-border-color-light: #fcf4f8;
+    
+    --theme-shadow-sm: 0 2px 4px rgba(5, 12, 56, 0.2);
+    --theme-shadow-md: 0 4px 12px rgba(5, 12, 56, 0.25);
+    --theme-shadow-lg: 0 8px 25px rgba(5, 12, 56, 0.3);
+    --theme-shadow-xl: 0 20px 40px rgba(5, 12, 56, 0.4);
+    --theme-shadow-neon: 0 0 20px rgba(224, 47, 117, 0.4);
+    
+    /* =================================
+       BUTTON GRADIENTS
+       ================================= */
+    
+    --theme-btn-success-gradient: linear-gradient(45deg, #E02F75, #F04A90);
+    --theme-btn-danger-gradient: linear-gradient(45deg, var(--theme-accent-red), #FF7A59);
+    --theme-btn-warning-gradient: linear-gradient(45deg, var(--theme-accent-sky-blue), #8A2BE2);
+    --theme-btn-primary-gradient: linear-gradient(135deg, var(--theme-accent-green-alt) 0%, var(--theme-accent-green) 100%);
+    
+    /* =================================
+       SPACING & TYPOGRAPHY
+       ================================= */
+    
+    --theme-spacing-xs: 0.25rem;
+    --theme-spacing-sm: 0.5rem;
+    --theme-spacing-md: 1rem;
+    --theme-spacing-lg: 1.5rem;
+    --theme-spacing-xl: 2rem;
+    --theme-spacing-2xl: 3rem;
+    
+    --theme-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --theme-font-size-xs: 0.75rem;
+    --theme-font-size-sm: 0.875rem;
+    --theme-font-size-base: 1rem;
+    --theme-font-size-lg: 1.125rem;
+    --theme-font-size-xl: 1.25rem;
+    --theme-font-size-2xl: 1.5rem;
+    --theme-font-size-3xl: 1.875rem;
+    
+    /* =================================
+       BORDER RADIUS
+       ================================= */
+    
+    --theme-radius-sm: 0.375rem;
+    --theme-radius-md: 0.5rem;
+    --theme-radius-lg: 0.75rem;
+    --theme-radius-xl: 1rem;
+    --theme-radius-2xl: 1.5rem;
+    
+    /* =================================
+       TRANSITIONS
+       ================================= */
+    
+    --theme-transition-fast: 0.15s ease;
+    --theme-transition-normal: 0.3s ease;
+    --theme-transition-slow: 0.5s ease;
+}
+
+/* =================================
+   PROFILE DIALOG STYLES
+   ================================= */
+
 #profileDialog .modal-dialog {
     max-width: 500px;
     margin: 1.75rem auto;
@@ -6,28 +122,30 @@
 
 #profileDialog .modal-content {
     border: none;
-    border-radius: 12px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    border-radius: var(--theme-radius-xl);
+    box-shadow: var(--theme-shadow-xl);
     overflow: hidden;
+    background: var(--theme-bg-primary);
 }
 
 #profileDialog .modal-header {
-    background: var(--primary-gradient);
-    color: var(--text-white);
+    background: var(--theme-btn-primary-gradient);
+    color: var(--theme-text-white);
     border-bottom: none;
-    padding: 1.5rem 1.5rem 1rem;
+    padding: var(--theme-spacing-lg) var(--theme-spacing-lg) var(--theme-spacing-md);
 }
 
 #profileDialog .modal-title {
-    font-size: 1.25rem;
+    font-size: var(--theme-font-size-xl);
     font-weight: 600;
     margin: 0;
+    font-family: var(--theme-font-family);
 }
 
 #profileDialog .btn-close {
     filter: brightness(0) invert(1);
     opacity: 0.8;
-    transition: opacity 0.2s;
+    transition: var(--theme-transition-fast);
 }
 
 #profileDialog .btn-close:hover {
@@ -35,112 +153,118 @@
 }
 
 #profileDialog .modal-body {
-    padding: 2rem 1.5rem;
-    background-color: var(--bg-secondary);
+    padding: var(--theme-spacing-xl) var(--theme-spacing-lg);
+    background-color: var(--theme-bg-secondary);
 }
 
 #profileDialog .form-label {
     font-weight: 600;
-    color: var(--text-primary);
-    margin-bottom: 0.5rem;
-    font-size: 0.9rem;
+    color: var(--theme-text-primary);
+    margin-bottom: var(--theme-spacing-sm);
+    font-size: var(--theme-font-size-sm);
+    font-family: var(--theme-font-family);
 }
 
 #profileDialog .form-control {
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
-    background-color: var(--bg-primary);
+    border: 1px solid var(--theme-border-color);
+    border-radius: var(--theme-radius-lg);
+    padding: var(--theme-spacing-md) var(--theme-spacing-md);
+    font-size: var(--theme-font-size-sm);
+    transition: var(--theme-transition-normal);
+    background-color: var(--theme-bg-primary);
+    color: var(--theme-text-primary);
+    font-family: var(--theme-font-family);
 }
 
 #profileDialog .form-control:focus {
-    border-color: var(--theme-accent-green, #E02F75);
-    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    border-color: var(--theme-accent-green);
+    box-shadow: 0 0 0 3px rgba(224, 47, 117, 0.1);
     outline: none;
 }
 
 #profileDialog .form-control-plaintext {
-    background-color: var(--bg-light-gray);
-    border: 1px solid var(--border-color-light);
-    border-radius: 8px;
-    padding: 0.75rem 1rem;
-    font-size: 0.95rem;
-    color: var(--text-secondary);
+    background-color: var(--theme-bg-light-gray);
+    border: 1px solid var(--theme-border-color-light);
+    border-radius: var(--theme-radius-lg);
+    padding: var(--theme-spacing-md) var(--theme-spacing-md);
+    font-size: var(--theme-font-size-sm);
+    color: black;
     margin: 0;
+    font-family: var(--theme-font-family);
 }
 
 #profileDialog .mb-3 {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--theme-spacing-lg);
 }
 
 #profileDialog .text-danger {
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
+    font-size: var(--theme-font-size-xs);
+    margin-top: var(--theme-spacing-xs);
     display: block;
+    color: var(--theme-accent-red);
 }
 
 #profileDialog .modal-footer {
-    background-color: var(--bg-primary);
-    border-top: 1px solid var(--border-color-light);
-    padding: 1rem 1.5rem;
-    gap: 0.75rem;
+    background-color: var(--theme-bg-primary);
+    border-top: 1px solid var(--theme-border-color-light);
+    padding: var(--theme-spacing-md) var(--theme-spacing-lg);
+    gap: var(--theme-spacing-md);
 }
 
 #profileDialog .btn {
-    border-radius: 8px;
-    padding: 0.625rem 1.5rem;
+    border-radius: var(--theme-radius-lg);
+    padding: var(--theme-spacing-sm) var(--theme-spacing-lg);
     font-weight: 500;
-    font-size: 0.95rem;
+    font-size: var(--theme-font-size-sm);
     border: none;
-    transition: all 0.2s ease;
+    transition: var(--theme-transition-normal);
     cursor: pointer;
+    font-family: var(--theme-font-family);
 }
 
 #profileDialog .btn-secondary {
-    background-color: var(--text-secondary);
-    color: var(--text-white);
+    background-color: var(--theme-text-secondary);
+    color: var(--theme-text-white);
 }
 
 #profileDialog .btn-secondary:hover {
-    background-color: var(--bg-dark);
+    background-color: var(--theme-bg-dark);
     transform: translateY(-1px);
 }
 
 #profileDialog .btn-primary {
-    background: var(--primary-gradient);
-    color: var(--text-white);
+    background: var(--theme-btn-success-gradient);
+    color: var(--theme-text-white);
 }
 
 #profileDialog .btn-primary:hover {
-    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    background: var(--theme-btn-success-gradient);
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    box-shadow: var(--theme-shadow-neon);
 }
 
 /* Responsive adjustments */
 @media (max-width: 576px) {
     #profileDialog .modal-dialog {
-        margin: 1rem;
+        margin: var(--theme-spacing-md);
         max-width: none;
     }
 
     #profileDialog .modal-header,
     #profileDialog .modal-body,
     #profileDialog .modal-footer {
-        padding-left: 1rem;
-        padding-right: 1rem;
+        padding-left: var(--theme-spacing-md);
+        padding-right: var(--theme-spacing-md);
     }
 
     #profileDialog .modal-title {
-        font-size: 1.1rem;
+        font-size: var(--theme-font-size-lg);
     }
 }
 
 /* Animation for modal */
 #profileDialog .modal-dialog {
-    transition: transform 0.3s ease-out;
+    transition: transform var(--theme-transition-slow);
 }
 
 #profileDialog.show .modal-dialog {
@@ -163,7 +287,7 @@
     margin-left: -8px;
     margin-top: -8px;
     border: 2px solid transparent;
-    border-top-color: var(--text-white);
+    border-top-color: var(--theme-text-white);
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }

@@ -122,10 +122,6 @@ class QualityController {
                     <div style="color: rgba(255,255,255,0.7); font-size: 12px;" id="quality-detail">Vui lòng chờ</div>
                 </div>
             </div>
-            
-            <button onclick="window.qualityController?.applyVideoQuality()" style="width: 100%; padding: 15px; background: rgba(255,255,255,0.2); color: white; border: 2px solid rgba(255,255,255,0.3); border-radius: 12px; font-weight: 600; cursor: pointer; font-size: 16px; backdrop-filter: blur(10px); transition: all 0.3s ease;">
-                ✅ Áp dụng Cài đặt
-            </button>
         `;
 
         console.log('🎥 Quality control content created');
@@ -381,9 +377,12 @@ class QualityController {
         let recommendedQuality = this.getRecommendedQuality(bandwidth, latency, packetLoss);
 
         if (recommendedQuality !== this.currentVideoQuality) {
-            console.log(`🎯 Auto-adjusting quality: ${this.currentVideoQuality} → ${recommendedQuality}`);
+            try {
             this.setVideoQuality(recommendedQuality, true);
             this.lastAdjustmentTime = now;
+            } catch (error) {
+                showError('Lỗi tự động điều chỉnh chất lượng: ' + (error?.message || error), true);
+            }
         }
     }
 
@@ -403,7 +402,7 @@ class QualityController {
     // ======== QUALITY SETTERS ========
     async setVideoQuality(quality, isAutoAdjust = false) {
         if (!this.qualityProfiles[quality]) {
-            console.error('Invalid quality profile:', quality);
+            showError('Chất lượng video không hợp lệ!', true);
             return;
         }
 
@@ -438,14 +437,13 @@ class QualityController {
             console.log(`📹 Video quality set to: ${this.qualityProfiles[quality].name}`);
             
         } catch (error) {
-            console.error('Error setting video quality:', error);
-            this.showQualityError('Không thể thay đổi chất lượng video');
+            showError('Lỗi khi áp dụng chất lượng video: ' + (error?.message || error), true);
         }
     }
 
     async setAudioQuality(quality) {
         if (!this.qualityProfiles[quality]) {
-            console.error('Invalid quality profile:', quality);
+            showError('Chất lượng audio không hợp lệ!', true);
             return;
         }
 
@@ -471,8 +469,7 @@ class QualityController {
             console.log(`🎵 Audio quality set to: ${this.qualityProfiles[quality].name}`);
             
         } catch (error) {
-            console.error('Error setting audio quality:', error);
-            this.showQualityError('Không thể thay đổi chất lượng audio');
+            showError('Lỗi khi áp dụng chất lượng audio: ' + (error?.message || error), true);
         }
     }
 
@@ -526,7 +523,7 @@ class QualityController {
             }
 
         } catch (error) {
-            console.warn('Error applying video constraints:', error);
+            showError('Không thể áp dụng cấu hình video: ' + (error?.message || error), true);
             throw error;
         }
     }
@@ -565,7 +562,7 @@ class QualityController {
             }
 
         } catch (error) {
-            console.warn('Error applying audio constraints:', error);
+            showError('Không thể áp dụng cấu hình audio: ' + (error?.message || error), true);
             throw error;
         }
     }
@@ -719,6 +716,38 @@ class QualityController {
         
         console.log('🎥 Quality Control System destroyed');
     }
+}
+
+// ======== ERROR HANDLING (giống videocall.js) ========
+function showError(message, isTemporary = true) {
+    let errorDiv = document.getElementById('error-notification');
+    if (!errorDiv) {
+        // Nếu chưa có, tạo mới
+        errorDiv = document.createElement('div');
+        errorDiv.id = 'error-notification';
+        errorDiv.style.position = 'fixed';
+        errorDiv.style.top = '30px';
+        errorDiv.style.right = '30px';
+        errorDiv.style.zIndex = 9999;
+        errorDiv.innerHTML = `
+            <div class="error-content" style="background: #ff5e62; color: white; padding: 18px 32px; border-radius: 16px; font-size: 1.2em; box-shadow: 0 4px 16px rgba(0,0,0,0.15); display: flex; align-items: center; gap: 16px;">
+                <span class="error-icon">⚠️</span>
+                <span class="error-message"></span>
+                <button class="error-close" style="background: none; border: none; color: white; font-size: 1.5em; margin-left: 12px; cursor: pointer;">&times;</button>
+            </div>
+        `;
+        document.body.appendChild(errorDiv);
+    }
+    errorDiv.style.display = 'block';
+    errorDiv.querySelector('.error-message').textContent = message;
+    errorDiv.querySelector('.error-close').onclick = hideError;
+    if (isTemporary) {
+        setTimeout(hideError, 5000);
+    }
+}
+function hideError() {
+    const errorDiv = document.getElementById('error-notification');
+    if (errorDiv) errorDiv.style.display = 'none';
 }
 
 // ======== GLOBAL INSTANCE ========
