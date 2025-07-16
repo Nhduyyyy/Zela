@@ -1,0 +1,71 @@
+@* Modal Quản lý nhóm - Đậm chất Zela, tông tím-xanh, magenta, glass, shadow, bo góc lớn *@
+<link rel="stylesheet" href="/css/components/group-manage-modal.css" />
+<div class="modal fade" id="groupManageModal" tabindex="-1" aria-labelledby="groupManageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content group-manage-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="groupManageModalLabel">
+                    <i class="bi bi-gear me-2"></i>Quản lý nhóm
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-12 col-md-4 mb-3 mb-md-0">
+                        <ul class="nav nav-pills flex-column group-manage-nav" id="groupManageTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="status-tab" data-bs-toggle="pill" data-bs-target="#status" type="button" role="tab" aria-controls="status" aria-selected="true">
+                                    <i class="bi bi-bar-chart me-2"></i>Trạng thái nhóm
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="settings-tab" data-bs-toggle="pill" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">
+                                    <i class="bi bi-sliders me-2"></i>Tùy chỉnh nhóm
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="requests-tab" data-bs-toggle="pill" data-bs-target="#requests" type="button" role="tab" aria-controls="requests" aria-selected="false">
+                                    <i class="bi bi-person-check me-2"></i>Yêu cầu tham gia
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-danger" id="delete-tab" data-bs-toggle="pill" data-bs-target="#delete" type="button" role="tab" aria-controls="delete" aria-selected="false">
+                                    <i class="bi bi-trash me-2"></i>Xóa nhóm
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <div class="tab-content group-manage-content" id="groupManageTabContent">
+                            <div class="tab-pane fade show active" id="status" role="tabpanel" aria-labelledby="status-tab">
+                                <h6>Trạng thái nhóm</h6>
+                                <p>Hiển thị trạng thái hiện tại của nhóm. (Nội dung chi tiết sẽ bổ sung sau)</p>
+                                <div class="mb-2">
+                                    <label for="groupLink" class="form-label">Link tham gia nhóm:</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="groupLink" value="@($"{Context.Request.Scheme}://{Context.Request.Host}/GroupChat/Join?groupId={Model.GroupId}")" readonly>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('groupLink').value)">Copy</button>
+                                    </div>
+                                    <small class="text-muted">Chia sẻ link này để người khác có thể tham gia nhóm.</small>
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                                <h6>Tùy chỉnh nhóm</h6>
+                                <p>Thay đổi thông tin, cài đặt nhóm. (Nội dung chi tiết sẽ bổ sung sau)</p>
+                            </div>
+                            <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+                                <h6>Yêu cầu tham gia</h6>
+                                <p>Quản lý các yêu cầu tham gia nhóm. (Nội dung chi tiết sẽ bổ sung sau)</p>
+                            </div>
+                            <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
+                                <h6 class="text-danger">Xóa nhóm</h6>
+                                <p>Bạn có chắc chắn muốn xóa nhóm này không? (Chức năng chi tiết sẽ bổ sung sau)</p>
+                                <button class="btn btn-outline-danger" disabled>Xóa nhóm</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 
