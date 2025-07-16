@@ -669,7 +669,6 @@ body {
 #connection-status {
     position: fixed;
     top: 20px;
-    left: 290px;
     background: var(--theme-bg-primary, #19182c);
     color: var(--theme-text-primary, #D0D3FF);
     padding: 10px 15px;
@@ -1256,7 +1255,7 @@ button:focus {
 
 .participant-time {
     font-size: 0.8rem;
-    color: var(--theme-text-muted, rgba(208, 211, 255, 0.7));
+    color: black;
 }
 
 .participant-duration {

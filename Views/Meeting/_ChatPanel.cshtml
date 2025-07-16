@@ -1,0 +1,167 @@
+@model Zela.ViewModels.MeetingChatPanelViewModel
+
+<div class="meeting-chat-panel" data-room-id="@Model.RoomId" data-session-id="@Model.SessionId" data-current-user-id="@Model.CurrentUserId">
+    <div class="meeting-chat-header">
+        <h5><i class="fas fa-comments"></i> Chat</h5>
+        <div class="meeting-chat-controls">
+            <button class="btn btn-sm btn-outline-secondary" id="toggleChat">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+        </div>
+    </div>
+
+    <div class="meeting-chat-body" id="chatBody">
+        <div class="messages-container" id="messagesContainer">
+            @if (Model.Messages.Any())
+            {
+                foreach (var message in Model.Messages)
+                {
+                    <div class="message @(message.IsOwnMessage ? "own-message" : "other-message")" data-message-id="@message.MessageId">
+                        <div class="message-avatar">
+                            @if (!string.IsNullOrEmpty(message.SenderAvatar))
+                            {
+                                <img src="@message.SenderAvatar" alt="@message.SenderName" class="avatar-img" />
+                            }
+                            else
+                            {
+                                <div class="avatar-placeholder">@message.SenderName.Substring(0, 1).ToUpper()</div>
+                            }
+                        </div>
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="sender-name">@message.SenderName</span>
+                                <span class="message-time">@message.FormattedTime</span>
+                                @if (message.IsEdited)
+                                {
+                                    <span class="edited-badge">(đã chỉnh sửa)</span>
+                                }
+                            </div>
+                            <div class="message-text" data-content="@message.Content">
+                                @if (message.IsPrivate)
+                                {
+                                    <span class="private-badge">Tin nhắn riêng tư</span>
+                                }
+                                @message.DisplayContent
+                            </div>
+                            @if (message.CanEdit || message.CanDelete)
+                            {
+                                <div class="message-actions">
+                                    @if (message.CanEdit)
+                                    {
+                                        <button class="btn btn-sm btn-link edit-message" data-message-id="@message.MessageId">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                    }
+                                    @if (message.CanDelete)
+                                    {
+                                        <button class="btn btn-sm btn-link text-danger delete-message" data-message-id="@message.MessageId">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    }
+                                </div>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="no-messages">
+                    <p class="text-muted">Chưa có tin nhắn nào. Hãy bắt đầu cuộc trò chuyện!</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    @if (Model.AllowChat)
+    {
+        <div class="meeting-chat-footer">
+            <div class="message-input-container">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="messageInput" placeholder="Nhập tin nhắn..." maxlength="1000">
+                    <div class="input-group-append">
+                        <button class="btn btn-primary" type="button" id="sendMessage">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="message-options">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="privateMessage">
+                        <label class="form-check-label" for="privateMessage">
+                            Tin nhắn riêng tư
+                        </label>
+                    </div>
+                    <select class="form-control form-control-sm" id="recipientSelect" style="display: none;">
+                        <option value="">Chọn người nhận...</option>
+                        @foreach (var participant in Model.Participants.Where(p => p.UserId != Model.CurrentUserId))
+                        {
+                            <option value="@participant.UserId">@participant.FullName</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="meeting-chat-footer">
+            <div class="alert alert-warning">
+                <i class="fas fa-ban"></i> Chat đã bị tắt trong phòng này
+            </div>
+        </div>
+    }
+</div>
+
+<!-- Edit Message Modal -->
+<div class="modal fade" id="editMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa tin nhắn</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form id="editMessageForm">
+                    <input type="hidden" id="editMessageId">
+                    <div class="form-group">
+                        <label for="editMessageContent">Nội dung tin nhắn</label>
+                        <textarea class="form-control" id="editMessageContent" rows="3" maxlength="1000" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="editReason">Lý do chỉnh sửa (tùy chọn)</label>
+                        <input type="text" class="form-control" id="editReason" maxlength="500">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="saveEditMessage">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Message Modal -->
+<div class="modal fade" id="deleteMessageModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xóa tin nhắn</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn xóa tin nhắn này không?</p>
+                <input type="hidden" id="deleteMessageId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteMessage">Xóa</button>
+            </div>
+        </div>
+    </div>
+</div> 

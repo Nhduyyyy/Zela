@@ -17,6 +17,7 @@ namespace Zela.Services.Interface
         Task<Guid> StartCallSessionAsync(string password);
         Task EndCallSessionAsync(string password);
         Task<CallSession?> GetActiveSessionAsync(string password);
+        Task<VideoRoom?> GetRoomByCodeAsync(string code);
         
         // ======== ATTENDANCE TRACKING ========
         Task TrackUserJoinAsync(Guid sessionId, int userId);

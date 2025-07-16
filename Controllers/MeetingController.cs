@@ -14,13 +14,15 @@ namespace Zela.Controllers
         // Khai báo biến thành viên (field) để lưu các service xử lý logic họp và ghi âm/ghi hình
         private readonly IMeetingService _meetingService; // Service xử lý các nghiệp vụ liên quan đến Meeting (phòng họp)
         private readonly IRecordingService _recordingService; // Service xử lý các nghiệp vụ liên quan đến Recording (ghi âm/ghi hình)
+        private readonly IMeetingRoomMessageService _meetingRoomMessageService; // Service xử lý tin nhắn trong phòng
 
         // Constructor của MeetingController, được gọi khi controller này được khởi tạo
-        public MeetingController(IMeetingService meetingService, IRecordingService recordingService)
+        public MeetingController(IMeetingService meetingService, IRecordingService recordingService, IMeetingRoomMessageService meetingRoomMessageService)
         {
             // Gán các service được inject từ bên ngoài vào biến thành viên để sử dụng trong các action của controller
             _meetingService = meetingService;
             _recordingService = recordingService;
+            _meetingRoomMessageService = meetingRoomMessageService;
         }
 
         // Đánh dấu action này sẽ xử lý các HTTP GET request đến /Meeting hoặc /Meeting/Index
@@ -120,6 +122,48 @@ namespace Zela.Controllers
             {
                 var statsData = await _meetingService.GetRoomStatsDataAsync(code);
                 return Json(statsData);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetActiveSession(string code)
+        {
+            try
+            {
+                var session = await _meetingService.GetActiveSessionAsync(code);
+                if (session != null)
+                {
+                    return Json(new { sessionId = session.SessionId });
+                }
+                else
+                {
+                    return Json(new { sessionId = (string?)null });
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRoomId(string code)
+        {
+            try
+            {
+                var room = await _meetingService.GetRoomByCodeAsync(code);
+                if (room != null)
+                {
+                    return Json(new { roomId = room.RoomId });
+                }
+                else
+                {
+                    return Json(new { roomId = (int?)null });
+                }
             }
             catch (Exception ex)
             {
@@ -568,6 +612,155 @@ namespace Zela.Controllers
 
                 var recordings = await _recordingService.GetSessionRecordingsAsync(sessionId, userId.Value);
                 return Json(recordings);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        // ======== ROOM CHAT ENDPOINTS ========
+
+        [HttpGet]
+        public async Task<IActionResult> GetRoomMessages(int roomId, Guid sessionId)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (userId == 0)
+                {
+                    userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                }
+
+                if (userId == 0)
+                    return Unauthorized();
+
+                var messages = await _meetingRoomMessageService.GetRoomMessagesAsync(roomId, sessionId, userId);
+                return Json(messages);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SendMessage([FromBody] MeetingSendMessageViewModel model)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (userId == 0)
+                {
+                    userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                }
+
+                if (userId == 0)
+                    return Unauthorized();
+
+                var message = await _meetingRoomMessageService.SendMessageAsync(model, userId);
+                return Json(new { success = true, message = message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpPut]
+        public async Task<IActionResult> EditMessage([FromBody] MeetingEditMessageViewModel model)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (userId == 0)
+                {
+                    userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                }
+
+                if (userId == 0)
+                    return Unauthorized();
+
+                var message = await _meetingRoomMessageService.EditMessageAsync(model, userId);
+                if (message == null)
+                    return BadRequest(new { success = false, error = "Không thể chỉnh sửa tin nhắn này" });
+
+                return Json(new { success = true, message = message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpDelete]
+        public async Task<IActionResult> DeleteMessage(long messageId)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (userId == 0)
+                {
+                    userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                }
+
+                if (userId == 0)
+                    return Unauthorized();
+
+                var success = await _meetingRoomMessageService.DeleteMessageAsync(messageId, userId);
+                if (!success)
+                    return BadRequest(new { success = false, error = "Không thể xóa tin nhắn này" });
+
+                return Json(new { success = true });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetRoomParticipants(int roomId)
+        {
+            try
+            {
+                var participants = await _meetingRoomMessageService.GetRoomParticipantsAsync(roomId);
+                return Json(participants);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> ChatPanel(int roomId, Guid sessionId)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (userId == 0)
+                {
+                    userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                }
+
+                if (userId == 0)
+                    return Unauthorized();
+
+                var messages = await _meetingRoomMessageService.GetRoomMessagesAsync(roomId, sessionId, userId);
+                var participants = await _meetingRoomMessageService.GetRoomParticipantsAsync(roomId);
+
+                var chatPanel = new MeetingChatPanelViewModel
+                {
+                    RoomId = roomId,
+                    SessionId = sessionId,
+                    Messages = messages,
+                    Participants = participants,
+                    CurrentUserId = userId,
+                    AllowChat = true // Có thể lấy từ cài đặt phòng
+                };
+
+                return PartialView("_ChatPanel", chatPanel);
             }
             catch (Exception ex)
             {
