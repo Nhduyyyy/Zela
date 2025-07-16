@@ -234,5 +234,33 @@ namespace Zela.Controllers
                 return StatusCode(500, new { message = "Có lỗi xảy ra khi xóa biểu tượng cảm xúc" });
             }
         }
+        
+        // Tham gia nhóm bằng link
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> Join(int groupId)
+        {
+            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            if (userId == 0)
+            {
+                TempData["ErrorMessage"] = "Bạn cần đăng nhập để tham gia nhóm.";
+                return RedirectToAction("Login", "Account");
+            }
+            var group = await _chatService.GetGroupDetailsAsync(groupId);
+            if (group == null)
+            {
+                TempData["ErrorMessage"] = "Nhóm không tồn tại.";
+                return RedirectToAction("Index");
+            }
+            var isMember = group.Members.Any(m => m.UserId == userId);
+            if (isMember)
+            {
+                TempData["InfoMessage"] = "Bạn đã là thành viên của nhóm này.";
+                return RedirectToAction("Index", new { groupId });
+            }
+            await _chatService.AddMemberToGroupAsync(groupId, userId);
+            TempData["SuccessMessage"] = "Bạn đã tham gia nhóm thành công!";
+            return RedirectToAction("Index", new { groupId });
+        }
     }
 } 

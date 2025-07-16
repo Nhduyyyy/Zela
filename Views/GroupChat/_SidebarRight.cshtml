@@ -1,4 +1,5 @@
 @model Zela.ViewModels.GroupViewModel
+@await Html.PartialAsync("_GroupManageModal")
 <div class="chat-info-panel" data-group-id="@Model.GroupId">
     <div class="info-header">
         <h4><i class="bi bi-info-circle me-2" aria-hidden="true"></i>Thông tin nhóm</h4>
@@ -19,19 +20,27 @@
             </div>
         </div>
 
-        <div class="group-actions">
-            <button class="btn" type="button" title="Tắt thông báo nhóm" aria-label="Tắt thông báo nhóm">
-                <i class="bi bi-bell-slash me-1" aria-hidden="true"></i>Tắt thông báo
-            </button>
-            <button class="btn" type="button" title="Ghim hội thoại" aria-label="Ghim hội thoại">
-                <i class="bi bi-pin me-1" aria-hidden="true"></i>Ghim hội thoại
-            </button>
-            <button class="btn" type="button" id="btnAddMember" title="Thêm thành viên vào nhóm" aria-label="Thêm thành viên vào nhóm">
-                <i class="bi bi-person-plus me-1" aria-hidden="true"></i>Thêm thành viên
-            </button>
-            <button class="btn" type="button" title="Quản lý nhóm" aria-label="Quản lý nhóm"> 
-                <i class="bi bi-gear me-1" aria-hidden="true"></i>Quản lý nhóm
-            </button>
+        <div class="group-actions d-flex flex-wrap gap-2 align-items-center mb-3">
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-light" type="button" title="Tắt thông báo nhóm" aria-label="Tắt thông báo nhóm">
+                    <i class="bi bi-bell-slash"></i>
+                </button>
+                <button class="btn btn-light" type="button" title="Ghim hội thoại" aria-label="Ghim hội thoại">
+                    <i class="bi bi-pin"></i>
+                </button>
+                <button class="btn btn-light" type="button" id="btnAddMember" title="Thêm thành viên vào nhóm" aria-label="Thêm thành viên vào nhóm">
+                    <i class="bi bi-person-plus"></i>
+                </button>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-light dropdown-toggle" type="button" id="groupManageDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Quản lý nhóm" aria-label="Quản lý nhóm">
+                        <i class="bi bi-gear"></i>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="groupManageDropdown">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#groupManageModal">Quản Lý</a></li>
+                        <li><a class="dropdown-item" href="#">Thống Kê</a></li>
+                    </ul>
+                </div>
+            </div>
         </div>
     </div>
 

@@ -802,15 +802,8 @@ public class ChatService : IChatService
             string avatarUrl = null;
             if (avatar != null && avatar.Length > 0)
             {
-                var uploads = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/images");
-                if (!Directory.Exists(uploads)) Directory.CreateDirectory(uploads);
-                var fileName = $"group_{Guid.NewGuid()}{Path.GetExtension(avatar.FileName)}";
-                var filePath = Path.Combine(uploads, fileName);
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await avatar.CopyToAsync(stream);
-                }
-                avatarUrl = $"/images/{fileName}";
+                // Sử dụng dịch vụ upload bên thứ ba (Cloudinary)
+                avatarUrl = await _fileUploadService.UploadAsync(avatar, "group-avatar");
             }
 
             // Call existing group creation logic
