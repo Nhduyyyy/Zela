@@ -193,7 +193,7 @@ function createErrorNotification() {
         <div class="error-content">
             <i class="error-icon">⚠️</i>
             <span class="error-message"></span>
-            <button class="error-close" onclick="hideError()">×</button>
+            <button class="error-close" onclick="hideError()"></button>
         </div>
     `;
     // 3️⃣  Gán CSS inline (đảm bảo hiển thị kể cả thiếu stylesheet ngoài)
@@ -336,6 +336,47 @@ async function start() {
         // Join room with user ID for tracking
         await connection.invoke('JoinRoom', meetingCode, currentUserId);
         console.log('Joined room', meetingCode, 'with user ID', currentUserId);
+        
+        // Lấy session ID từ meeting service
+        try {
+            const response = await fetch(`/Meeting/GetActiveSession?code=${encodeURIComponent(meetingCode)}`);
+            if (response.ok) {
+                const sessionData = await response.json();
+                if (sessionData.sessionId) {
+                    window.currentSessionId = sessionData.sessionId;
+                    console.log('Got session ID from meeting service:', window.currentSessionId);
+                } else {
+                    // Fallback: generate a temporary session ID
+                    window.currentSessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        const r = Math.random() * 16 | 0;
+                        const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                    console.log('Generated temporary session ID:', window.currentSessionId);
+                }
+            } else {
+                // Fallback: generate a temporary session ID
+                window.currentSessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    const r = Math.random() * 16 | 0;
+                    const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+                console.log('Generated temporary session ID (fallback):', window.currentSessionId);
+            }
+        } catch (error) {
+            console.error('Error getting session ID:', error);
+            // Fallback: generate a temporary session ID
+            window.currentSessionId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                const r = Math.random() * 16 | 0;
+                const v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+            console.log('Generated temporary session ID (error fallback):', window.currentSessionId);
+        }
+        
+        // Lưu thông tin room và session để chat system có thể sử dụng
+        window.currentRoomId = meetingCode;
+        window.currentUserId = currentUserId;
 
         // 🟢 Thành công: cập-nhật badge & tắt loading
         updateConnectionStatus('connected');

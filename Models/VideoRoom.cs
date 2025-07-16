@@ -9,6 +9,7 @@
 
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Zela.Enum;
 
 namespace Zela.Models;
 
@@ -63,6 +64,104 @@ public class VideoRoom
     [Required, MaxLength(10)]
     public string Password { get; set; } // NVARCHAR(50) NULL
 
+    // ======== NEW FIELDS FOR ADVANCED FEATURES ========
+    
+    /// <summary>
+    /// Loại phòng: 0=Public, 1=Private, 2=Scheduled, 3=Recurring
+    /// </summary>
+    public RoomType RoomType { get; set; } = RoomType.Public;
+    
+    /// <summary>
+    /// Thời gian bắt đầu dự kiến (cho scheduled meetings)
+    /// </summary>
+    public DateTime? ScheduledStartTime { get; set; }
+    
+    /// <summary>
+    /// Thời gian kết thúc dự kiến (cho scheduled meetings)
+    /// </summary>
+    public DateTime? ScheduledEndTime { get; set; }
+    
+    /// <summary>
+    /// Số lượng người tham gia tối đa
+    /// </summary>
+    public int MaxParticipants { get; set; } = 50;
+    
+    /// <summary>
+    /// Cài đặt phòng (JSON format)
+    /// </summary>
+    [MaxLength(2000)]
+    public string? Settings { get; set; }
+    
+    /// <summary>
+    /// Trạng thái ghi hình: 0=Disabled, 1=HostOnly, 2=Anyone
+    /// </summary>
+    public RecordingPolicy RecordingPolicy { get; set; } = RecordingPolicy.HostOnly;
+    
+    /// <summary>
+    /// Cho phép người tham gia chia sẻ màn hình
+    /// </summary>
+    public bool AllowScreenShare { get; set; } = true;
+    
+    /// <summary>
+    /// Cho phép chat trong phòng
+    /// </summary>
+    public bool AllowChat { get; set; } = true;
+    
+    /// <summary>
+    /// Cho phép người tham gia bật camera
+    /// </summary>
+    public bool AllowVideo { get; set; } = true;
+    
+    /// <summary>
+    /// Cho phép người tham gia bật microphone
+    /// </summary>
+    public bool AllowAudio { get; set; } = true;
+    
+    /// <summary>
+    /// Yêu cầu xác thực để tham gia
+    /// </summary>
+    public bool RequireAuthentication { get; set; } = false;
+    
+    /// <summary>
+    /// Cho phép người tham gia tự tham gia (không cần host approve)
+    /// </summary>
+    public bool AllowJoinBeforeHost { get; set; } = true;
+    
+    /// <summary>
+    /// Tự động ghi hình khi bắt đầu
+    /// </summary>
+    public bool AutoRecord { get; set; } = false;
+    
+    /// <summary>
+    /// Tự động kết thúc khi host rời phòng
+    /// </summary>
+    public bool EndWhenHostLeaves { get; set; } = false;
+    
+    /// <summary>
+    /// Thời gian chờ trước khi tự động kết thúc (phút)
+    /// </summary>
+    public int AutoEndDelay { get; set; } = 5;
+    
+    /// <summary>
+    /// Phòng có bị khóa không
+    /// </summary>
+    public bool IsLocked { get; set; } = false;
+    
+    /// <summary>
+    /// Bật phòng chờ
+    /// </summary>
+    public bool WaitingRoomEnabled { get; set; } = false;
+    
+    /// <summary>
+    /// Thời gian cập nhật cuối
+    /// </summary>
+    public DateTime? UpdatedAt { get; set; }
+    
+    /// <summary>
+    /// Người cập nhật cuối
+    /// </summary>
+    public int? UpdatedBy { get; set; }
+
     /*
      * ====== Navigation Properties ======
      * Các thuộc tính dưới đây biểu thị quan hệ giữa VideoRoom và các thực thể khác.
@@ -81,6 +180,12 @@ public class VideoRoom
     /// </summary>
     [ForeignKey(nameof(CreatorId))]
     public User Creator { get; set; }
+    
+    /// <summary>
+    /// Navigation property: User đã cập nhật cuối
+    /// </summary>
+    [ForeignKey(nameof(UpdatedBy))]
+    public User? UpdatedByUser { get; set; }
 
     /// <summary>
     /// Danh sách người tham gia (RoomParticipant) trong phòng này.
@@ -95,6 +200,26 @@ public class VideoRoom
     /// Bảng CallSession sẽ có cột RoomId làm FK trỏ về VideoRooms.RoomId.
     /// </summary>
     public ICollection<CallSession> CallSessions { get; set; }
+    
+    /// <summary>
+    /// Danh sách tin nhắn trong phòng
+    /// </summary>
+    public ICollection<RoomMessage> Messages { get; set; } = new List<RoomMessage>();
+    
+    /// <summary>
+    /// Danh sách bình chọn trong phòng
+    /// </summary>
+    public ICollection<RoomPoll> Polls { get; set; } = new List<RoomPoll>();
+    
+    /// <summary>
+    /// Danh sách phòng nhóm nhỏ
+    /// </summary>
+    public ICollection<BreakoutRoom> BreakoutRooms { get; set; } = new List<BreakoutRoom>();
+    
+    /// <summary>
+    /// Danh sách sự kiện trong phòng
+    /// </summary>
+    public ICollection<RoomEvent> Events { get; set; } = new List<RoomEvent>();
 }
 
 /*

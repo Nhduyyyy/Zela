@@ -7,6 +7,8 @@
 @section Styles {
     <!-- Load CSS chính cho toàn bộ trang video call -->
     <link href="~/css/pages/room-videocall.css" rel="stylesheet" />
+    <!-- Load CSS cho chat panel -->
+    <link href="~/css/components/meeting-chat-panel.css" rel="stylesheet" />
     <style>
         /* Định dạng cho badge "Host" (người chủ phòng) */
         .host-badge {
@@ -113,6 +115,7 @@
             <button id="toggle-mic" class="btn">🎤 Micro</button>
             <button id="toggle-cam" class="btn">📹 Camera</button>
             <button id="share-screen" class="btn">🖥️ Chia sẻ màn hình</button>
+            <button id="toggle-chat" class="btn btn-primary">💬 Chat</button>
             <button id="toggle-quality" class="btn btn-info">⚙️ Chất lượng</button>
             <button id="toggle-recording" class="btn btn-success">🎥 Ghi hình</button>
             <button id="toggle-whiteboard" class="btn btn-warning">🎨 Whiteboard</button>
@@ -130,7 +133,7 @@
         </div>
 
         <!-- Khu vực hiển thị video call, các video sẽ được JS render động -->
-        <div id="video-grid" data-meeting-code="@ViewBag.code" data-user-id="@ViewBag.UserId"></div>
+        <div id="video-grid" data-meeting-code="@ViewBag.code" data-user-id="@ViewBag.UserId" data-room-id="1" data-session-id="@Guid.NewGuid()"></div>
 
         <!-- Sidebar thống kê cuộc họp (chỉ host mới xem được) -->
         <div id="stats-sidebar" class="stats-sidebar">
@@ -175,6 +178,19 @@
             <div class="sidebar-content">
                 <div id="recording-content">
                     <!-- Nội dung ghi hình sẽ được JS load vào đây -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar chat -->
+        <div id="chat-sidebar" class="stats-sidebar chat-sidebar">
+            <div class="sidebar-header">
+                <h3>💬 Chat</h3>
+                <button id="close-chat" class="close-btn">&times;</button>
+            </div>
+            <div class="sidebar-content">
+                <div id="chat-content">
+                    <!-- Chat panel sẽ được load vào đây -->
                 </div>
             </div>
         </div>
@@ -238,6 +254,7 @@
                 const qualityBtn = document.getElementById('toggle-quality');
                 const recordingBtn = document.getElementById('toggle-recording');
                 const statsBtn = document.getElementById('toggle-stats');
+                const chatBtn = document.getElementById('toggle-chat');
 
                 if (qualityBtn) {
                     qualityBtn.innerHTML = '⚙️ Chất lượng';
@@ -254,15 +271,22 @@
                     statsBtn.classList.remove('active');
                 }
 
+                if (chatBtn) {
+                    chatBtn.innerHTML = '💬 Chat';
+                    chatBtn.classList.remove('active');
+                }
+
                 // Đảm bảo các sidebar đều đóng khi load trang
                 const qualitySidebar = document.getElementById('quality-sidebar');
                 const recordingSidebar = document.getElementById('recording-sidebar');
                 const statsSidebar = document.getElementById('stats-sidebar');
+                const chatSidebar = document.getElementById('chat-sidebar');
                 const overlay = document.getElementById('sidebar-overlay');
 
                 if (qualitySidebar) qualitySidebar.classList.remove('open');
                 if (recordingSidebar) recordingSidebar.classList.remove('open');
                 if (statsSidebar) statsSidebar.classList.remove('open');
+                if (chatSidebar) chatSidebar.classList.remove('open');
                 if (overlay) overlay.classList.remove('show');
 
                 // Khởi tạo hệ thống video call, quality control, recording, ... sau 0.5s
@@ -294,6 +318,14 @@
                         window.recordingSystem = initializeRecordingSystem();
                         console.log('✅ Recording System initialized');
                     }
+
+                    // Khởi tạo chat sidebar
+                    if (typeof ChatSidebar !== 'undefined') {
+                        window.chatSidebar = new ChatSidebar();
+                        console.log('✅ Chat Sidebar initialized');
+                    } else {
+                        console.error('❌ ChatSidebar class not found');
+                    }
                 }, 500);
             });
         </script>
@@ -309,6 +341,10 @@
 
         <!-- Script sidebar thống kê -->
         <script src="~/js/stats-sidebar.js"></script>
+
+        <!-- Chat Panel System -->
+        <script src="~/js/chat-panel.js"></script>
+        <script src="~/js/chat-sidebar.js"></script>
 
         <!-- Whiteboard System -->
         <link href="~/css/components/whiteboard.css" rel="stylesheet" />

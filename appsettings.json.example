@@ -22,12 +22,12 @@
     "ApiSecret": "C2cV4EuSr5Yw_8OpGVex9SZ4Y9M"
   },
   "PayOS": {
-    "PartnerCode": "YOUR_PAYOS_PARTNER_CODE",
-    "ClientId": "YOUR_PAYOS_CLIENT_ID",
-    "ApiKey": "YOUR_PAYOS_API_KEY",
-    "Checksum": "YOUR_PAYOS_CHECKSUM"
-  },
-  "AppSettings": {
-    "BaseUrl": "https://yourdomain.com"
-  }
+      "PartnerCode": "MOMO",
+      "ClientId": "f53a4fe9-338b-4040-b228-9329d85fee29",
+      "ApiKey": "22d0e505-cdb0-4233-b190-9dc5f68a5db8",
+      "Checksum": "b6911d00cd425ed894e78bd680cae70f9dfa14734cdf1bb77f44f9a835d0f744"
+    },
+    "AppSettings": {
+      "BaseUrl": "http://localhost:5160"
+    }
 }

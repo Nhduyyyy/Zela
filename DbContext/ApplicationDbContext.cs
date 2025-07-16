@@ -44,6 +44,15 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<CallTranscript> CallTranscripts { get; set; }
     public DbSet<Subtitle> Subtitles { get; set; }
     public DbSet<Recording> Recordings { get; set; }
+    
+    // ======== NEW VIDEO CALL MODELS ========
+    public DbSet<RoomMessage> RoomMessages { get; set; }
+    public DbSet<RoomPoll> RoomPolls { get; set; }
+    public DbSet<PollOption> PollOptions { get; set; }
+    public DbSet<PollVote> PollVotes { get; set; }
+    public DbSet<BreakoutRoom> BreakoutRooms { get; set; }
+    public DbSet<BreakoutRoomParticipant> BreakoutRoomParticipants { get; set; }
+    public DbSet<RoomEvent> RoomEvents { get; set; }
 
     // ------------ Learning Tools ------------
     public DbSet<Quiz> Quizzes { get; set; }
@@ -55,6 +64,7 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
     // ------------ Collaboration & Whiteboard ------------
     public DbSet<WhiteboardSession> WhiteboardSessions { get; set; }
     public DbSet<DrawAction> DrawActions { get; set; }
+    public DbSet<WhiteboardTemplate> WhiteboardTemplates { get; set; }
 
     // ------------ Payment & Subscription ------------
     public DbSet<Subscription> Subscriptions { get; set; }
@@ -400,5 +410,306 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
             .WithMany(a => a.Details)
             .HasForeignKey(qad => qad.AttemptId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        // ======== NEW VIDEO CALL RELATIONSHIPS ========
+        
+        #region RoomMessage Relationships
+        
+        modelBuilder.Entity<RoomMessage>()
+            .HasOne(rm => rm.Room)
+            .WithMany(r => r.Messages)
+            .HasForeignKey(rm => rm.RoomId)
+            .OnDelete(DeleteBehavior.NoAction);
+            
+        modelBuilder.Entity<RoomMessage>()
+            .HasOne(rm => rm.Sender)
+            .WithMany()
+            .HasForeignKey(rm => rm.SenderId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        modelBuilder.Entity<RoomMessage>()
+            .HasOne(rm => rm.Session)
+            .WithMany(s => s.Messages)
+            .HasForeignKey(rm => rm.SessionId)
+            .OnDelete(DeleteBehavior.NoAction);
+            
+        modelBuilder.Entity<RoomMessage>()
+            .HasOne(rm => rm.Recipient)
+            .WithMany()
+            .HasForeignKey(rm => rm.RecipientId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        #endregion
+        
+        #region RoomPoll Relationships
+        
+        modelBuilder.Entity<RoomPoll>()
+            .HasOne(rp => rp.Room)
+            .WithMany(r => r.Polls)
+            .HasForeignKey(rp => rp.RoomId)
+            .OnDelete(DeleteBehavior.NoAction);
+            
+        modelBuilder.Entity<RoomPoll>()
+            .HasOne(rp => rp.Creator)
+            .WithMany()
+            .HasForeignKey(rp => rp.CreatorId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        modelBuilder.Entity<RoomPoll>()
+            .HasOne(rp => rp.Session)
+            .WithMany(s => s.Polls)
+            .HasForeignKey(rp => rp.SessionId)
+            .OnDelete(DeleteBehavior.NoAction);
+            
+        #endregion
+        
+        #region PollOption & PollVote Relationships
+        
+        modelBuilder.Entity<PollOption>()
+            .HasOne(po => po.Poll)
+            .WithMany(p => p.Options)
+            .HasForeignKey(po => po.PollId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        modelBuilder.Entity<PollVote>()
+            .HasOne(pv => pv.Poll)
+            .WithMany(p => p.Votes)
+            .HasForeignKey(pv => pv.PollId)
+            .OnDelete(DeleteBehavior.NoAction);
+            
+        modelBuilder.Entity<PollVote>()
+            .HasOne(pv => pv.Option)
+            .WithMany(o => o.Votes)
+            .HasForeignKey(pv => pv.OptionId)
+            .OnDelete(DeleteBehavior.NoAction);
+            
+        modelBuilder.Entity<PollVote>()
+            .HasOne(pv => pv.Voter)
+            .WithMany()
+            .HasForeignKey(pv => pv.VoterId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        #endregion
+        
+        #region BreakoutRoom Relationships
+        
+        modelBuilder.Entity<BreakoutRoom>()
+            .HasOne(br => br.MainRoom)
+            .WithMany(r => r.BreakoutRooms)
+            .HasForeignKey(br => br.MainRoomPassword)
+            .HasPrincipalKey(r => r.Password)
+            .OnDelete(DeleteBehavior.NoAction);
+            
+        modelBuilder.Entity<BreakoutRoom>()
+            .HasOne(br => br.Host)
+            .WithMany()
+            .HasForeignKey(br => br.HostId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        modelBuilder.Entity<BreakoutRoomParticipant>()
+            .HasKey(brp => new { brp.BreakoutRoomId, brp.UserId });
+            
+        modelBuilder.Entity<BreakoutRoomParticipant>()
+            .HasOne(brp => brp.BreakoutRoom)
+            .WithMany(br => br.Participants)
+            .HasForeignKey(brp => brp.BreakoutRoomId)
+            .OnDelete(DeleteBehavior.Cascade);
+            
+        modelBuilder.Entity<BreakoutRoomParticipant>()
+            .HasOne(brp => brp.User)
+            .WithMany()
+            .HasForeignKey(brp => brp.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        #endregion
+        
+        #region RoomEvent Relationships
+        
+        modelBuilder.Entity<RoomEvent>()
+            .HasOne(re => re.Room)
+            .WithMany(r => r.Events)
+            .HasForeignKey(re => re.RoomPassword)
+            .HasPrincipalKey(r => r.Password)
+            .OnDelete(DeleteBehavior.NoAction);
+            
+        modelBuilder.Entity<RoomEvent>()
+            .HasOne(re => re.User)
+            .WithMany()
+            .HasForeignKey(re => re.UserId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        #endregion
+        
+        #region CallSession Self-Reference (Parent-Child)
+        
+        modelBuilder.Entity<CallSession>()
+            .HasOne(cs => cs.ParentSession)
+            .WithMany(cs => cs.ChildSessions)
+            .HasForeignKey(cs => cs.ParentSessionId)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        #endregion
+        
+        #region VideoRoom UpdatedBy Relationship
+        
+        modelBuilder.Entity<VideoRoom>()
+            .HasOne(vr => vr.UpdatedByUser)
+            .WithMany()
+            .HasForeignKey(vr => vr.UpdatedBy)
+            .OnDelete(DeleteBehavior.Restrict);
+            
+        #endregion
+        
+        // ======== INDEXES FOR PERFORMANCE ========
+        
+        #region RoomMessage Indexes
+        
+        modelBuilder.Entity<RoomMessage>()
+            .HasIndex(rm => rm.RoomId);
+            
+        modelBuilder.Entity<RoomMessage>()
+            .HasIndex(rm => rm.SessionId);
+            
+        modelBuilder.Entity<RoomMessage>()
+            .HasIndex(rm => rm.SenderId);
+            
+        modelBuilder.Entity<RoomMessage>()
+            .HasIndex(rm => rm.SentAt);
+            
+        modelBuilder.Entity<RoomMessage>()
+            .HasIndex(rm => rm.MessageType);
+            
+        #endregion
+        
+        #region RoomPoll Indexes
+        
+        modelBuilder.Entity<RoomPoll>()
+            .HasIndex(rp => rp.RoomId);
+            
+        modelBuilder.Entity<RoomPoll>()
+            .HasIndex(rp => rp.SessionId);
+            
+        modelBuilder.Entity<RoomPoll>()
+            .HasIndex(rp => rp.Status);
+            
+        modelBuilder.Entity<RoomPoll>()
+            .HasIndex(rp => rp.CreatedAt);
+            
+        #endregion
+        
+        #region PollVote Indexes
+        
+        modelBuilder.Entity<PollVote>()
+            .HasIndex(pv => pv.PollId);
+            
+        modelBuilder.Entity<PollVote>()
+            .HasIndex(pv => pv.VoterId);
+            
+        modelBuilder.Entity<PollVote>()
+            .HasIndex(pv => new { pv.PollId, pv.VoterId })
+            .IsUnique(); // Mỗi người chỉ vote 1 lần cho mỗi poll
+            
+        #endregion
+        
+        #region BreakoutRoom Indexes
+        
+        modelBuilder.Entity<BreakoutRoom>()
+            .HasIndex(br => br.MainRoomPassword);
+            
+        modelBuilder.Entity<BreakoutRoom>()
+            .HasIndex(br => br.Status);
+            
+        modelBuilder.Entity<BreakoutRoom>()
+            .HasIndex(br => br.HostId);
+            
+        #endregion
+        
+        #region RoomEvent Indexes
+        
+        modelBuilder.Entity<RoomEvent>()
+            .HasIndex(re => re.RoomPassword);
+            
+        modelBuilder.Entity<RoomEvent>()
+            .HasIndex(re => re.EventType);
+            
+        modelBuilder.Entity<RoomEvent>()
+            .HasIndex(re => re.UserId);
+            
+        modelBuilder.Entity<RoomEvent>()
+            .HasIndex(re => re.Timestamp);
+            
+        #endregion
+        
+        #region RoomParticipant Indexes
+        
+        modelBuilder.Entity<RoomParticipant>()
+            .HasIndex(rp => rp.UserId);
+            
+        modelBuilder.Entity<RoomParticipant>()
+            .HasIndex(rp => rp.Status);
+            
+        modelBuilder.Entity<RoomParticipant>()
+            .HasIndex(rp => rp.JoinedAt);
+            
+        modelBuilder.Entity<RoomParticipant>()
+            .HasIndex(rp => rp.IsModerator);
+            
+        modelBuilder.Entity<RoomParticipant>()
+            .HasIndex(rp => rp.IsHandRaised);
+            
+        modelBuilder.Entity<RoomParticipant>()
+            .HasIndex(rp => rp.IsMutedByHost);
+            
+        modelBuilder.Entity<RoomParticipant>()
+            .HasIndex(rp => rp.LastActivityAt);
+            
+        #endregion
+        
+        #region VideoRoom Indexes
+        
+        modelBuilder.Entity<VideoRoom>()
+            .HasIndex(vr => vr.CreatorId);
+            
+        modelBuilder.Entity<VideoRoom>()
+            .HasIndex(vr => vr.IsOpen);
+            
+        modelBuilder.Entity<VideoRoom>()
+            .HasIndex(vr => vr.CreatedAt);
+            
+        modelBuilder.Entity<VideoRoom>()
+            .HasIndex(vr => vr.RoomType);
+            
+        modelBuilder.Entity<VideoRoom>()
+            .HasIndex(vr => vr.ScheduledStartTime);
+            
+        modelBuilder.Entity<VideoRoom>()
+            .HasIndex(vr => vr.IsLocked);
+            
+        modelBuilder.Entity<VideoRoom>()
+            .HasIndex(vr => vr.WaitingRoomEnabled);
+            
+        #endregion
+        
+        #region CallSession Indexes
+        
+        modelBuilder.Entity<CallSession>()
+            .HasIndex(cs => cs.RoomId);
+            
+        modelBuilder.Entity<CallSession>()
+            .HasIndex(cs => cs.StartedAt);
+            
+        modelBuilder.Entity<CallSession>()
+            .HasIndex(cs => cs.EndedAt);
+            
+        modelBuilder.Entity<CallSession>()
+            .HasIndex(cs => cs.SessionType);
+            
+        modelBuilder.Entity<CallSession>()
+            .HasIndex(cs => cs.ParentSessionId);
+            
+        modelBuilder.Entity<CallSession>()
+            .HasIndex(cs => cs.CreatedBy);
+            
+        #endregion
     }
 }

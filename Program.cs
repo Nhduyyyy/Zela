@@ -130,6 +130,9 @@ builder.Services.AddScoped<IQuizService, QuizService>();
 //add PayOS Payment
 builder.Services.AddScoped<IPayOSService, PayOSService>();
 
+//add Room Message Service
+builder.Services.AddScoped<IMeetingRoomMessageService, MeetingRoomMessageService>();
+
 // Configure form options for file uploads
 builder.Services.Configure<FormOptions>(options =>
 {
@@ -215,6 +218,7 @@ app.UseStatusCodePagesWithRedirects("/Account/Login?error=403");
 
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<MeetingHub>("/meetingHub");
+app.MapHub<MeetingChatHub>("/meetingChatHub");
 app.MapHub<WhiteboardHub>("/whiteboardHub");
 
 // 7.10) Chạy ứng dụng, lắng nghe request trên port đã cấu hình

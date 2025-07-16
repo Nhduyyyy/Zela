@@ -5,6 +5,7 @@ using Zela.Models;
 using Zela.Services.Dto;
 using Zela.Services.Interface;
 using Zela.ViewModels;
+using Zela.Enum;
 
 namespace Zela.Services
 {
@@ -32,7 +33,23 @@ namespace Zela.Services
                 IsOpen = true, // Đánh dấu phòng đang mở
                 CreatedAt = DateTime.UtcNow, // Lưu thời điểm tạo phòng (giờ UTC)
                 Password = code, // Gán mã phòng vừa tạo cho trường Password
-                Name = "Meeting-" + code // Đặt tên phòng theo mẫu "Meeting-xxxxxx"
+                Name = "Meeting-" + code, // Đặt tên phòng theo mẫu "Meeting-xxxxxx"
+                
+                // ======== NEW FIELDS WITH DEFAULT VALUES ========
+                RoomType = RoomType.Public,
+                MaxParticipants = 50,
+                RecordingPolicy = RecordingPolicy.HostOnly,
+                AllowScreenShare = true,
+                AllowChat = true,
+                AllowVideo = true,
+                AllowAudio = true,
+                RequireAuthentication = false,
+                AllowJoinBeforeHost = true,
+                AutoRecord = false,
+                EndWhenHostLeaves = false,
+                AutoEndDelay = 5,
+                IsLocked = false,
+                WaitingRoomEnabled = false
             };
 
             // Thêm phòng họp mới vào database
@@ -102,7 +119,15 @@ namespace Zela.Services
                 SessionId = Guid.NewGuid(),
                 RoomId = room.RoomId,
                 StartedAt = DateTime.UtcNow,
-                RecordingUrl = "" // Will be updated later when recording is available
+                RecordingUrl = "", // Will be updated later when recording is available
+                
+                // ======== NEW FIELDS WITH DEFAULT VALUES ========
+                SessionType = SessionType.Normal,
+                ParticipantCount = 0,
+                MessageCount = 0,
+                PollCount = 0,
+                HandRaiseCount = 0,
+                CreatedBy = room.CreatorId
             };
 
             _db.CallSessions.Add(session);
@@ -151,10 +176,23 @@ namespace Zela.Services
                 .FirstOrDefaultAsync(cs => cs.RoomId == room.RoomId && cs.EndedAt == null);
         }
 
+        public async Task<VideoRoom?> GetRoomByCodeAsync(string code)
+        {
+            return await _db.VideoRooms
+                .FirstOrDefaultAsync(r => r.Password == code);
+        }
+
         // ======== ATTENDANCE TRACKING ========
 
         public async Task TrackUserJoinAsync(Guid sessionId, int userId)
         {
+            // Get room info from session
+            var session = await _db.CallSessions
+                .Include(cs => cs.VideoRoom)
+                .FirstOrDefaultAsync(cs => cs.SessionId == sessionId);
+            
+            if (session == null) return;
+
             // Check if user is already in this session (prevent duplicates)
             var existingAttendance = await _db.Attendances
                 .FirstOrDefaultAsync(a => a.SessionId == sessionId &&
@@ -163,6 +201,7 @@ namespace Zela.Services
 
             if (existingAttendance != null) return; // Already joined
 
+            // Add attendance record
             var attendance = new Attendance
             {
                 SessionId = sessionId,
@@ -171,21 +210,103 @@ namespace Zela.Services
             };
 
             _db.Attendances.Add(attendance);
+
+            // Add/Update RoomParticipant record
+            var existingParticipant = await _db.RoomParticipants
+                .FirstOrDefaultAsync(rp => rp.RoomId == session.RoomId && rp.UserId == userId);
+
+            if (existingParticipant == null)
+            {
+                // Check if this is the first participant (host)
+                var isFirstParticipant = !await _db.RoomParticipants
+                    .AnyAsync(rp => rp.RoomId == session.RoomId);
+
+                var participant = new RoomParticipant
+                {
+                    RoomId = session.RoomId,
+                    UserId = userId,
+                    IsModerator = false,
+                    IsHost = isFirstParticipant, // true nếu là người đầu tiên, false nếu không
+                    JoinedAt = DateTime.UtcNow,
+                    
+                    // ======== NEW FIELDS WITH DEFAULT VALUES ========
+                    Status = ParticipantStatus.Joined,
+                    CurrentVideoQuality = VideoQuality.Medium,
+                    IsVideoEnabled = true,
+                    IsAudioEnabled = true,
+                    IsScreenSharing = false,
+                    IsHandRaised = false,
+                    IsMutedByHost = false,
+                    IsVideoDisabledByHost = false,
+                    LastActivityAt = DateTime.UtcNow
+                };
+
+                _db.RoomParticipants.Add(participant);
+                
+                // Log để debug
+                Console.WriteLine($"User {userId} joined room {session.RoomId} as {(isFirstParticipant ? "HOST" : "PARTICIPANT")}");
+            }
+            else
+            {
+                // Update existing participant - đảm bảo IsHost = false cho người tham gia lại
+                existingParticipant.Status = ParticipantStatus.Joined;
+                existingParticipant.LeftAt = null;
+                existingParticipant.LeaveReason = null;
+                existingParticipant.IsHost = false; // Người tham gia lại không phải host
+                existingParticipant.LastActivityAt = DateTime.UtcNow;
+                
+                _db.RoomParticipants.Update(existingParticipant);
+                
+                Console.WriteLine($"User {userId} rejoined room {session.RoomId} as PARTICIPANT");
+            }
+
+            // Update session participant count
+            session.ParticipantCount = await _db.RoomParticipants
+                .CountAsync(rp => rp.RoomId == session.RoomId && rp.Status == ParticipantStatus.Joined);
+
             await _db.SaveChangesAsync();
         }
 
         public async Task TrackUserLeaveAsync(Guid sessionId, int userId)
         {
+            // Get room info from session
+            var session = await _db.CallSessions
+                .Include(cs => cs.VideoRoom)
+                .FirstOrDefaultAsync(cs => cs.SessionId == sessionId);
+            
+            if (session == null) return;
+
+            // Update attendance record
             var attendance = await _db.Attendances
                 .FirstOrDefaultAsync(a => a.SessionId == sessionId &&
-                               a.UserId == userId &&
-                               a.LeaveTime == null);
+                                   a.UserId == userId &&
+                                   a.LeaveTime == null);
 
             if (attendance != null)
             {
                 attendance.LeaveTime = DateTime.UtcNow;
-                await _db.SaveChangesAsync();
+                _db.Attendances.Update(attendance);
             }
+
+            // Update RoomParticipant record
+            var participant = await _db.RoomParticipants
+                .FirstOrDefaultAsync(rp => rp.RoomId == session.RoomId && rp.UserId == userId);
+
+            if (participant != null)
+            {
+                participant.Status = ParticipantStatus.Left;
+                participant.LeftAt = DateTime.UtcNow;
+                participant.LeaveReason = "User left the room";
+                participant.LastActivityAt = DateTime.UtcNow;
+                
+                _db.RoomParticipants.Update(participant);
+            }
+
+            // Update session participant count
+            session.ParticipantCount = await _db.RoomParticipants
+                .CountAsync(rp => rp.RoomId == session.RoomId && rp.Status == ParticipantStatus.Joined);
+
+            await _db.SaveChangesAsync();
         }
 
         // ======== RECORDING MANAGEMENT ========

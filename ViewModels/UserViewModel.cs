@@ -8,4 +8,6 @@ public class UserViewModel
     public string AvatarUrl { get; set; }
     public bool IsOnline { get; set; }
     public DateTime? LastLoginAt { get; set; }
+    public bool IsModerator { get; set; }
+    public bool IsHost { get; set; }
 }
