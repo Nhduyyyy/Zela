@@ -29,5 +29,8 @@
     },
     "AppSettings": {
       "BaseUrl": "http://localhost:5160"
-    }
+    },
+    "OpenAI": {
+        "ApiKey": "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"
+      }
 }

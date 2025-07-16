@@ -1,0 +1,31 @@
+@model Zela.ViewModels.FileSummaryViewModel
+
+@if (!string.IsNullOrEmpty(Model.Error)) {
+    <div class="file-summary-box">
+        <button type="button" class="close-summary-btn" aria-label="Đóng">&times;</button>
+        <div class="text-danger">@Model.Error</div>
+    </div>
+} else {
+    <div class="file-summary-box">
+        <button type="button" class="close-summary-btn" aria-label="Đóng">&times;</button>
+        <div class="file-summary-header">
+            <i class="bi bi-lightbulb"></i> <span>Bản tóm tắt AI</span>
+        </div>
+        @functions{
+            // Hàm chuyển **text** thành <strong>text</strong>
+            public static string Boldify(string input)
+            {
+                if (string.IsNullOrEmpty(input)) return "";
+                // Regex: tìm tất cả **nội dung**
+                return System.Text.RegularExpressions.Regex.Replace(
+                    input,
+                    @"\*\*(.+?)\*\*",
+                    "<strong>$1</strong>"
+                ).Replace("\n", "<br>");
+            }
+        }
+        <div class="file-summary-content">
+            @Html.Raw(Boldify(Model.SummaryContent))
+        </div>
+    </div>
+}

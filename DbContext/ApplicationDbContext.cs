@@ -70,6 +70,8 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
     public DbSet<Subscription> Subscriptions { get; set; }
     public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
 
+    public DbSet<FileSummary> FileSummaries { get; set; }
+
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)

@@ -133,6 +133,12 @@ builder.Services.AddScoped<IPayOSService, PayOSService>();
 //add Room Message Service
 builder.Services.AddScoped<IMeetingRoomMessageService, MeetingRoomMessageService>();
 
+// Đăng ký DI cho ChatGPTService
+builder.Services.AddHttpClient<Zela.Services.Interface.IChatGPTService, Zela.Services.ChatGPTService>();
+
+// Đăng ký FileSummaryService
+builder.Services.AddScoped<IFileSummaryService, FileSummaryService>();
+
 // Configure form options for file uploads
 builder.Services.Configure<FormOptions>(options =>
 {
