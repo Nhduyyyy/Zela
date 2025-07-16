@@ -64,6 +64,7 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
     // ------------ Collaboration & Whiteboard ------------
     public DbSet<WhiteboardSession> WhiteboardSessions { get; set; }
     public DbSet<DrawAction> DrawActions { get; set; }
+    public DbSet<WhiteboardTemplate> WhiteboardTemplates { get; set; }
 
     // ------------ Payment & Subscription ------------
     public DbSet<Subscription> Subscriptions { get; set; }

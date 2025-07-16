@@ -7,8 +7,11 @@ namespace Zela.Services.Interface
     {
         // Session Management
         Task<Guid> CreateWhiteboardSessionAsync(int roomId);
+        Task<Guid> CreateStandaloneSessionAsync(int userId);
         Task<WhiteboardSession?> GetActiveSessionAsync(int roomId);
         Task<bool> EndSessionAsync(Guid sessionId);
+        Task<bool> SaveSessionAsync(Guid sessionId, int userId, string? sessionName = null);
+        Task<List<WhiteboardSession>> GetUserSessionsAsync(int userId, int limit = 20);
         
         // Drawing Actions
         Task<DrawAction> AddDrawActionAsync(Guid sessionId, int userId, string actionType, string payload);
@@ -20,9 +23,12 @@ namespace Zela.Services.Interface
         Task<List<int>> GetSessionParticipantsAsync(Guid sessionId);
         
         // Templates & Saving
-        Task<string> SaveAsTemplateAsync(Guid sessionId, string templateName, int userId);
-        Task<List<WhiteboardTemplate>> GetTemplatesAsync(int userId);
-        Task<bool> LoadTemplateAsync(Guid sessionId, string templateName, int userId);
+        Task<string> SaveAsTemplateAsync(Guid sessionId, string templateName, int userId, string? description = null, bool isPublic = false);
+        Task<List<Models.WhiteboardTemplate>> GetTemplatesAsync(int userId);
+        Task<Models.WhiteboardTemplate?> GetTemplateByIdAsync(int templateId, int userId);
+        Task<bool> LoadTemplateAsync(Guid sessionId, int templateId, int userId);
+        Task<bool> LoadTemplateByNameAsync(Guid sessionId, string templateName, int userId);
+        Task<bool> DeleteTemplateAsync(int templateId, int userId);
         
         // Export
         Task<byte[]> ExportAsImageAsync(Guid sessionId, string format = "png");
@@ -30,14 +36,6 @@ namespace Zela.Services.Interface
         
         // Statistics
         Task<WhiteboardStats> GetSessionStatsAsync(Guid sessionId);
-    }
-    
-    public class WhiteboardTemplate
-    {
-        public string Name { get; set; }
-        public string Data { get; set; }
-        public DateTime CreatedAt { get; set; }
-        public int CreatedByUserId { get; set; }
     }
     
     public class WhiteboardStats

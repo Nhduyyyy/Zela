@@ -1,0 +1,233 @@
+@model List<Zela.Models.WhiteboardTemplate>
+@{
+    ViewData["Title"] = "Quản lý Template";
+    Layout = "_Layout";
+}
+
+<div class="templates-container">
+    <div class="templates-header">
+        <h1>Quản lý Template</h1>
+        <div class="templates-actions">
+            <a href="@Url.Action("Index")" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Quay lại Whiteboard
+            </a>
+        </div>
+    </div>
+
+    <div class="templates-content">
+        @if (Model != null && Model.Count > 0)
+        {
+            <div class="row">
+                @foreach (var template in Model)
+                {
+                    <div class="col-md-4 mb-4">
+                        <div class="template-card">
+                            <div class="template-thumbnail">
+                                @if (!string.IsNullOrEmpty(template.Thumbnail))
+                                {
+                                    <img src="data:image/png;base64,@template.Thumbnail" 
+                                         alt="@template.Name" class="img-fluid">
+                                }
+                                else
+                                {
+                                    <div class="template-placeholder">
+                                        <i class="fas fa-image fa-3x"></i>
+                                        <p>No thumbnail</p>
+                                    </div>
+                                }
+                            </div>
+                            
+                            <div class="template-info">
+                                <h5>@template.Name</h5>
+                                <p class="template-description">
+                                    @(string.IsNullOrEmpty(template.Description) ? "No description" : template.Description)
+                                </p>
+                                <div class="template-meta">
+                                    <small class="text-muted">
+                                        <i class="fas fa-user"></i> @template.CreatedByUser?.FullName
+                                    </small>
+                                    <br>
+                                    <small class="text-muted">
+                                        <i class="fas fa-calendar"></i> @template.CreatedAt.ToString("MM/dd/yyyy HH:mm")
+                                    </small>
+                                    @if (template.IsPublic)
+                                    {
+                                        <br>
+                                        <small class="text-success">
+                                            <i class="fas fa-globe"></i> Public
+                                        </small>
+                                    }
+                                </div>
+                            </div>
+                            
+                            <div class="template-actions">
+                                <button class="btn btn-sm btn-primary load-template-btn" 
+                                        data-template-name="@template.Name">
+                                    <i class="fas fa-play"></i> Load
+                                </button>
+                                <button class="btn btn-sm btn-info view-template-btn" 
+                                        data-template-id="@template.Id">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button class="btn btn-sm btn-danger delete-template-btn" 
+                                        data-template-id="@template.Id" 
+                                        data-template-name="@template.Name">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-layer-group fa-4x"></i>
+                </div>
+                <h3>Chưa có template nào</h3>
+                <p>Bạn chưa tạo template nào. Hãy tạo whiteboard session và lưu nó làm template.</p>
+                <a href="@Url.Action("Index")" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Tạo Whiteboard
+                </a>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Template Preview Modal -->
+<div class="modal fade" id="templatePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Template Preview</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="templatePreviewContent">
+                    <!-- Template preview will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="loadTemplateFromModal">Load Template</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Load template
+            $('.load-template-btn').on('click', function() {
+                const templateName = $(this).data('template-name');
+                loadTemplate(templateName);
+            });
+
+            // View template
+            $('.view-template-btn').on('click', function() {
+                const templateId = $(this).data('template-id');
+                viewTemplate(templateId);
+            });
+
+            // Delete template
+            $('.delete-template-btn').on('click', function() {
+                const templateId = $(this).data('template-id');
+                const templateName = $(this).data('template-name');
+                deleteTemplate(templateId, templateName);
+            });
+
+            // Load template from modal
+            $('#loadTemplateFromModal').on('click', function() {
+                const templateName = $(this).data('template-name');
+                $('#templatePreviewModal').modal('hide');
+                loadTemplate(templateName);
+            });
+        });
+
+        async function loadTemplate(templateName) {
+            try {
+                // Create a new session first
+                const response = await fetch('/Whiteboard/CreateSession', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        roomId: Math.floor(Math.random() * 1000) + 1, // Random room ID
+                        templateName: templateName
+                    })
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // Redirect to whiteboard with session
+                    window.location.href = `/Whiteboard/Index?sessionId=${result.sessionId}`;
+                } else {
+                    alert('Lỗi: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error loading template:', error);
+                alert('Có lỗi xảy ra khi load template');
+            }
+        }
+
+        async function viewTemplate(templateId) {
+            try {
+                const response = await fetch(`/Whiteboard/GetTemplate/${templateId}`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const template = result.template;
+                    $('#templatePreviewContent').html(`
+                        <div class="template-preview">
+                            <h4>${template.name}</h4>
+                            <p>${template.description || 'No description'}</p>
+                            <div class="template-preview-image">
+                                ${template.thumbnail ? 
+                                    `<img src="data:image/png;base64,${template.thumbnail}" class="img-fluid">` :
+                                    '<div class="text-center text-muted"><i class="fas fa-image fa-3x"></i><p>No preview available</p></div>'
+                                }
+                            </div>
+                        </div>
+                    `);
+                    
+                    $('#loadTemplateFromModal').data('template-name', template.name);
+                    $('#templatePreviewModal').modal('show');
+                } else {
+                    alert('Lỗi: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error viewing template:', error);
+                alert('Có lỗi xảy ra khi xem template');
+            }
+        }
+
+        async function deleteTemplate(templateId, templateName) {
+            if (!confirm(`Bạn có chắc muốn xóa template "${templateName}"?`)) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/Whiteboard/DeleteTemplate/${templateId}`, {
+                    method: 'DELETE'
+                });
+
+                const result = await response.json();
+                if (result.success) {
+                    // Reload page to refresh template list
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + result.error);
+                }
+            } catch (error) {
+                console.error('Error deleting template:', error);
+                alert('Có lỗi xảy ra khi xóa template');
+            }
+        }
+    </script>
+} 

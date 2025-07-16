@@ -41,6 +41,7 @@ namespace Zela.Services
                 {
                     WbSessionId = Guid.NewGuid(),
                     RoomId = roomId,
+                    CreatedByUserId = room.CreatorId, // Use room creator as session creator
                     CreatedAt = DateTime.UtcNow
                 };
 
@@ -55,6 +56,34 @@ namespace Zela.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error creating whiteboard session for room {RoomId}", roomId);
+                throw;
+            }
+        }
+
+        public async Task<Guid> CreateStandaloneSessionAsync(int userId)
+        {
+            try
+            {
+                // Create new standalone session (no room required)
+                var session = new WhiteboardSession
+                {
+                    WbSessionId = Guid.NewGuid(),
+                    RoomId = null, // Standalone sessions don't need a room
+                    CreatedByUserId = userId,
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _db.WhiteboardSessions.Add(session);
+                await _db.SaveChangesAsync();
+
+                _logger.LogInformation("Created standalone whiteboard session {SessionId} for user {UserId}", 
+                    session.WbSessionId, userId);
+
+                return session.WbSessionId;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating standalone whiteboard session for user {UserId}", userId);
                 throw;
             }
         }
@@ -96,6 +125,19 @@ namespace Zela.Services
         {
             try
             {
+                _logger.LogInformation("Adding draw action: Type={ActionType}, User={UserId}, Session={SessionId}", 
+                    actionType, userId, sessionId);
+                
+                // Check if session exists
+                var session = await _db.WhiteboardSessions.FindAsync(sessionId);
+                if (session == null)
+                {
+                    _logger.LogError("Session {SessionId} not found", sessionId);
+                    throw new InvalidOperationException($"Session {sessionId} not found");
+                }
+                
+                _logger.LogInformation("Session found: {SessionId}", sessionId);
+                
                 var action = new DrawAction
                 {
                     WbSessionId = sessionId,
@@ -105,8 +147,13 @@ namespace Zela.Services
                     Timestamp = DateTime.UtcNow
                 };
 
+                _logger.LogInformation("Created DrawAction object: {ActionType}", actionType);
+                
                 _db.DrawActions.Add(action);
+                _logger.LogInformation("Added action to DbContext");
+                
                 await _db.SaveChangesAsync();
+                _logger.LogInformation("Saved changes successfully");
 
                 _logger.LogDebug("Added draw action {ActionType} for user {UserId} in session {SessionId}", 
                     actionType, userId, sessionId);
@@ -184,13 +231,62 @@ namespace Zela.Services
                 .ToListAsync();
         }
 
+        // ======== SESSION SAVING ========
+        
+        public async Task<bool> SaveSessionAsync(Guid sessionId, int userId, string? sessionName = null)
+        {
+            try
+            {
+                var session = await _db.WhiteboardSessions.FindAsync(sessionId);
+                if (session == null) return false;
+
+                // Update session with save info
+                session.UpdatedAt = DateTime.UtcNow;
+                session.LastSavedBy = userId;
+                if (!string.IsNullOrEmpty(sessionName))
+                {
+                    session.SessionName = sessionName;
+                }
+
+                await _db.SaveChangesAsync();
+
+                _logger.LogInformation("Session {SessionId} saved by user {UserId}", sessionId, userId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error saving session {SessionId} for user {UserId}", sessionId, userId);
+                return false;
+            }
+        }
+
+        public async Task<List<WhiteboardSession>> GetUserSessionsAsync(int userId, int limit = 20)
+        {
+            try
+            {
+                return await _db.WhiteboardSessions
+                    .Include(wb => wb.DrawActions)
+                    .Where(wb => wb.CreatedByUserId == userId && wb.CreatedAt > DateTime.UtcNow.AddDays(-30))
+                    .OrderByDescending(wb => wb.UpdatedAt ?? wb.CreatedAt)
+                    .Take(limit)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting sessions for user {UserId}", userId);
+                return new List<WhiteboardSession>();
+            }
+        }
+
         // ======== TEMPLATES & SAVING ========
         
-        public async Task<string> SaveAsTemplateAsync(Guid sessionId, string templateName, int userId)
+        public async Task<string> SaveAsTemplateAsync(Guid sessionId, string templateName, int userId, string? description = null, bool isPublic = false)
         {
             try
             {
                 var actions = await GetDrawActionsAsync(sessionId);
+                
+                // Create template data
                 var templateData = JsonSerializer.Serialize(new
                 {
                     name = templateName,
@@ -204,8 +300,24 @@ namespace Zela.Services
                     createdAt = DateTime.UtcNow
                 });
 
-                // In a real implementation, you'd save this to a separate templates table
-                // For now, we'll just return the template data
+                // Generate thumbnail from current canvas state
+                var thumbnail = await GenerateThumbnailAsync(sessionId);
+
+                // Save to database
+                var template = new WhiteboardTemplate
+                {
+                    Name = templateName,
+                    Data = templateData,
+                    CreatedByUserId = userId,
+                    CreatedAt = DateTime.UtcNow,
+                    IsPublic = isPublic,
+                    Description = description,
+                    Thumbnail = thumbnail
+                };
+
+                _db.WhiteboardTemplates.Add(template);
+                await _db.SaveChangesAsync();
+
                 _logger.LogInformation("Template '{TemplateName}' saved by user {UserId} for session {SessionId}", 
                     templateName, userId, sessionId);
 
@@ -221,16 +333,103 @@ namespace Zela.Services
 
         public async Task<List<WhiteboardTemplate>> GetTemplatesAsync(int userId)
         {
-            // In a real implementation, you'd query a templates table
-            // For now, return empty list
-            return new List<WhiteboardTemplate>();
+            try
+            {
+                return await _db.WhiteboardTemplates
+                    .Include(t => t.CreatedByUser)
+                    .Where(t => t.CreatedByUserId == userId || t.IsPublic)
+                    .OrderByDescending(t => t.CreatedAt)
+                    .ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting templates for user {UserId}", userId);
+                return new List<WhiteboardTemplate>();
+            }
         }
 
-        public async Task<bool> LoadTemplateAsync(Guid sessionId, string templateName, int userId)
+        public async Task<WhiteboardTemplate?> GetTemplateByIdAsync(int templateId, int userId)
         {
             try
             {
-                // In a real implementation, you'd load template data and replay actions
+                return await _db.WhiteboardTemplates
+                    .Include(t => t.CreatedByUser)
+                    .FirstOrDefaultAsync(t => t.Id == templateId && 
+                                            (t.CreatedByUserId == userId || t.IsPublic));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting template {TemplateId} for user {UserId}", templateId, userId);
+                return null;
+            }
+        }
+
+        public async Task<bool> LoadTemplateAsync(Guid sessionId, int templateId, int userId)
+        {
+            try
+            {
+                var template = await _db.WhiteboardTemplates
+                    .FirstOrDefaultAsync(t => t.Id == templateId && 
+                                            (t.CreatedByUserId == userId || t.IsPublic));
+
+                if (template == null)
+                {
+                    _logger.LogWarning("Template {TemplateId} not found for user {UserId}", 
+                        templateId, userId);
+                    return false;
+                }
+
+                // Parse template data and replay actions
+                var templateData = JsonSerializer.Deserialize<dynamic>(template.Data);
+                var actions = templateData.GetProperty("actions");
+
+                foreach (var action in actions.EnumerateArray())
+                {
+                    var actionType = action.GetProperty("actionType").GetString();
+                    var payload = action.GetProperty("payload").GetString();
+                    
+                    await AddDrawActionAsync(sessionId, userId, actionType, payload);
+                }
+
+                _logger.LogInformation("Template {TemplateId} loaded by user {UserId} in session {SessionId}", 
+                    templateId, userId, sessionId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error loading template {TemplateId} for user {UserId}", 
+                    templateId, userId);
+                return false;
+            }
+        }
+
+        public async Task<bool> LoadTemplateByNameAsync(Guid sessionId, string templateName, int userId)
+        {
+            try
+            {
+                var template = await _db.WhiteboardTemplates
+                    .FirstOrDefaultAsync(t => t.Name == templateName && 
+                                            (t.CreatedByUserId == userId || t.IsPublic));
+
+                if (template == null)
+                {
+                    _logger.LogWarning("Template '{TemplateName}' not found for user {UserId}", 
+                        templateName, userId);
+                    return false;
+                }
+
+                // Parse template data and replay actions
+                var templateData = JsonSerializer.Deserialize<dynamic>(template.Data);
+                var actions = templateData.GetProperty("actions");
+
+                foreach (var action in actions.EnumerateArray())
+                {
+                    var actionType = action.GetProperty("actionType").GetString();
+                    var payload = action.GetProperty("payload").GetString();
+                    
+                    await AddDrawActionAsync(sessionId, userId, actionType, payload);
+                }
+
                 _logger.LogInformation("Template '{TemplateName}' loaded by user {UserId} in session {SessionId}", 
                     templateName, userId, sessionId);
                 return true;
@@ -239,6 +438,48 @@ namespace Zela.Services
             {
                 _logger.LogError(ex, "Error loading template '{TemplateName}' for user {UserId}", 
                     templateName, userId);
+                return false;
+            }
+        }
+
+        private async Task<string> GenerateThumbnailAsync(Guid sessionId)
+        {
+            try
+            {
+                // In a real implementation, you'd render the canvas to a small image
+                // For now, return a placeholder
+                return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating thumbnail for session {SessionId}", sessionId);
+                return string.Empty;
+            }
+        }
+
+        public async Task<bool> DeleteTemplateAsync(int templateId, int userId)
+        {
+            try
+            {
+                var template = await _db.WhiteboardTemplates
+                    .FirstOrDefaultAsync(t => t.Id == templateId && t.CreatedByUserId == userId);
+
+                if (template == null)
+                {
+                    _logger.LogWarning("Template {TemplateId} not found or user {UserId} not authorized to delete", 
+                        templateId, userId);
+                    return false;
+                }
+
+                _db.WhiteboardTemplates.Remove(template);
+                await _db.SaveChangesAsync();
+
+                _logger.LogInformation("Template {TemplateId} deleted by user {UserId}", templateId, userId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting template {TemplateId} for user {UserId}", templateId, userId);
                 return false;
             }
         }

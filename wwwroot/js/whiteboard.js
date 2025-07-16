@@ -16,10 +16,25 @@ class WhiteboardSystem {
         this.lastActionTime = 0;
         this.actionThrottle = 16; // ~60fps
 
-        // Drawing state
-        this.lastX = 0;
-        this.lastY = 0;
-        this.path = [];
+            // Drawing state
+    this.lastX = 0;
+    this.lastY = 0;
+    this.path = [];
+    
+    // Text tool state
+    this.textInput = null;
+    this.textPosition = null;
+    this.isTextMode = false;
+    
+    // Shape tool state
+    this.shapeStart = null;
+    this.isDrawingShape = false;
+    this.previewCanvas = null;
+    
+    // Undo/Redo state
+    this.actionHistory = [];
+    this.currentHistoryIndex = -1;
+    this.maxHistorySize = 50;
 
         // Tools configuration
         this.tools = {
@@ -65,6 +80,8 @@ class WhiteboardSystem {
                 <h3>🎨 Whiteboard</h3>
                 <div class="whiteboard-controls">
                     <button id="toggle-whiteboard" class="btn btn-primary">📋 Mở Whiteboard</button>
+                    <button id="undo-btn" class="btn btn-secondary" disabled>↶ Undo</button>
+                    <button id="redo-btn" class="btn btn-secondary" disabled>↷ Redo</button>
                     <button id="clear-whiteboard" class="btn btn-danger">🗑️ Xóa</button>
                     <button id="save-template" class="btn btn-success">💾 Lưu Template</button>
                     <button id="export-whiteboard" class="btn btn-info">📤 Xuất</button>
@@ -157,6 +174,15 @@ class WhiteboardSystem {
             // Nếu cần, gọi lại initializeWhiteboard() ở đây
         });
 
+        // Undo/Redo buttons
+        document.getElementById('undo-btn')?.addEventListener('click', () => {
+            this.undo();
+        });
+
+        document.getElementById('redo-btn')?.addEventListener('click', () => {
+            this.redo();
+        });
+
         // Clear whiteboard
         document.getElementById('clear-whiteboard')?.addEventListener('click', () => {
             this.clearWhiteboard();
@@ -203,6 +229,7 @@ class WhiteboardSystem {
             this.canvas.addEventListener('mousemove', (e) => this.draw(e));
             this.canvas.addEventListener('mouseup', () => this.stopDrawing());
             this.canvas.addEventListener('mouseout', () => this.stopDrawing());
+            this.canvas.addEventListener('click', (e) => this.handleCanvasClick(e));
 
             // Touch events for mobile
             this.canvas.addEventListener('touchstart', (e) => this.startDrawing(e));
@@ -303,7 +330,7 @@ class WhiteboardSystem {
 
     async createSession(roomId) {
         try {
-            const response = await fetch('/api/whiteboard/session/create', {
+            const response = await fetch('/Whiteboard/CreateSession', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -344,7 +371,7 @@ class WhiteboardSystem {
 
     async loadExistingActions() {
         try {
-            const response = await fetch(`/api/whiteboard/session/${this.sessionId}/actions`);
+            const response = await fetch(`/Whiteboard/GetDrawActions?sessionId=${this.sessionId}`);
             const result = await response.json();
 
             if (result.success && result.actions) {
@@ -360,8 +387,18 @@ class WhiteboardSystem {
     // ======== DRAWING FUNCTIONS ========
 
     startDrawing(e) {
-        this.isDrawing = true;
+        // Don't start drawing if in text mode
+        if (this.currentTool === 'text') return;
+        
         const pos = this.getMousePos(e);
+        
+        // Handle shape tools
+        if (['line', 'rectangle', 'circle'].includes(this.currentTool)) {
+            this.startShapeDrawing(pos);
+            return;
+        }
+        
+        this.isDrawing = true;
         this.lastX = pos.x;
         this.lastY = pos.y;
         this.path = [{ x: pos.x, y: pos.y }];
@@ -371,9 +408,16 @@ class WhiteboardSystem {
     }
 
     draw(e) {
+        const pos = this.getMousePos(e);
+        
+        // Handle shape preview
+        if (this.isDrawingShape && this.shapeStart) {
+            this.updateShapePreview(pos);
+            return;
+        }
+        
         if (!this.isDrawing) return;
 
-        const pos = this.getMousePos(e);
         this.path.push({ x: pos.x, y: pos.y });
 
         // Throttle drawing actions
@@ -399,6 +443,11 @@ class WhiteboardSystem {
     }
 
     stopDrawing() {
+        if (this.isDrawingShape && this.shapeStart) {
+            this.finalizeShape();
+            return;
+        }
+        
         if (!this.isDrawing) return;
 
         this.isDrawing = false;
@@ -449,6 +498,13 @@ class WhiteboardSystem {
 
         // Update cursor
         this.canvas.style.cursor = this.getToolCursor(tool);
+        
+        // Handle text tool activation
+        if (tool === 'text') {
+            this.activateTextMode();
+        } else {
+            this.deactivateTextMode();
+        }
     }
 
     selectColor(color) {
@@ -499,6 +555,54 @@ class WhiteboardSystem {
         } catch (error) {
             console.error('Error handling remote draw action:', error);
         }
+    }
+
+    drawRemoteText(payload) {
+        const { text, x, y, color, size, font } = payload;
+        
+        this.ctx.save();
+        this.ctx.font = font || `${size * 8}px Arial`;
+        this.ctx.fillStyle = color;
+        this.ctx.textBaseline = 'top';
+        this.ctx.fillText(text, x, y);
+        this.ctx.restore();
+    }
+
+    drawRemoteShape(payload) {
+        const { shape, x, y, width, height, color, size, fill } = payload;
+        
+        this.ctx.save();
+        this.ctx.strokeStyle = color;
+        this.ctx.lineWidth = size;
+        
+        if (fill) {
+            this.ctx.fillStyle = fill;
+        }
+
+        switch (shape) {
+            case 'line':
+                this.ctx.beginPath();
+                this.ctx.moveTo(x, y);
+                this.ctx.lineTo(width, height); // width/height are endX/endY for line
+                this.ctx.stroke();
+                break;
+            case 'rectangle':
+                if (fill) {
+                    this.ctx.fillRect(x, y, width, height);
+                }
+                this.ctx.strokeRect(x, y, width, height);
+                break;
+            case 'circle':
+                this.ctx.beginPath();
+                this.ctx.arc(x + width/2, y + height/2, Math.min(width, height)/2, 0, 2 * Math.PI);
+                if (fill) {
+                    this.ctx.fill();
+                }
+                this.ctx.stroke();
+                break;
+        }
+        
+        this.ctx.restore();
     }
 
     drawRemotePath(payload) {
@@ -580,6 +684,382 @@ class WhiteboardSystem {
         // This would create visual indicators for other users' cursors
     }
 
+    // ======== TEXT TOOL FUNCTIONS ========
+
+    activateTextMode() {
+        this.isTextMode = true;
+        this.canvas.style.cursor = 'text';
+        this.showNotification('Click anywhere on canvas to add text', 'info');
+    }
+
+    deactivateTextMode() {
+        this.isTextMode = false;
+        if (this.textInput) {
+            this.textInput.remove();
+            this.textInput = null;
+        }
+    }
+
+    handleCanvasClick(e) {
+        if (this.currentTool === 'text') {
+            this.createTextInput(e);
+        }
+    }
+
+    createTextInput(e) {
+        const pos = this.getMousePos(e);
+        this.textPosition = pos;
+
+        // Remove existing text input if any
+        if (this.textInput) {
+            this.textInput.remove();
+        }
+
+        // Create text input element
+        this.textInput = document.createElement('input');
+        this.textInput.type = 'text';
+        this.textInput.className = 'whiteboard-text-input';
+        this.textInput.style.cssText = `
+            position: absolute;
+            left: ${e.clientX}px;
+            top: ${e.clientY}px;
+            border: 2px solid ${this.currentColor};
+            background: white;
+            font-size: ${this.currentSize * 8}px;
+            color: ${this.currentColor};
+            padding: 4px;
+            outline: none;
+            z-index: 10001;
+            min-width: 100px;
+        `;
+
+        document.body.appendChild(this.textInput);
+        this.textInput.focus();
+
+        // Handle text input events
+        this.textInput.addEventListener('blur', () => this.finalizeText());
+        this.textInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                this.finalizeText();
+            } else if (e.key === 'Escape') {
+                this.cancelText();
+            }
+        });
+    }
+
+    finalizeText() {
+        if (!this.textInput || !this.textPosition) return;
+
+        const text = this.textInput.value.trim();
+        if (text) {
+            // Draw text on canvas
+            this.drawText(text, this.textPosition.x, this.textPosition.y);
+            
+            // Send to server
+            this.sendDrawAction('text', {
+                text: text,
+                x: this.textPosition.x,
+                y: this.textPosition.y,
+                color: this.currentColor,
+                size: this.currentSize,
+                font: `${this.currentSize * 8}px Arial`
+            });
+        }
+
+        this.cancelText();
+    }
+
+    cancelText() {
+        if (this.textInput) {
+            this.textInput.remove();
+            this.textInput = null;
+        }
+        this.textPosition = null;
+    }
+
+    drawText(text, x, y) {
+        this.ctx.save();
+        this.ctx.font = `${this.currentSize * 8}px Arial`;
+        this.ctx.fillStyle = this.currentColor;
+        this.ctx.textBaseline = 'top';
+        this.ctx.fillText(text, x, y);
+        this.ctx.restore();
+    }
+
+    // ======== SHAPE TOOL FUNCTIONS ========
+
+    startShapeDrawing(pos) {
+        this.isDrawingShape = true;
+        this.shapeStart = pos;
+        
+        // Create preview canvas
+        this.createPreviewCanvas();
+    }
+
+    createPreviewCanvas() {
+        // Create a temporary canvas for shape preview
+        this.previewCanvas = document.createElement('canvas');
+        this.previewCanvas.width = this.canvas.width;
+        this.previewCanvas.height = this.canvas.height;
+        this.previewCanvas.style.cssText = `
+            position: absolute;
+            top: ${this.canvas.offsetTop}px;
+            left: ${this.canvas.offsetLeft}px;
+            pointer-events: none;
+            z-index: 10000;
+        `;
+        
+        document.body.appendChild(this.previewCanvas);
+    }
+
+    updateShapePreview(currentPos) {
+        if (!this.previewCanvas || !this.shapeStart) return;
+        
+        const ctx = this.previewCanvas.getContext('2d');
+        ctx.clearRect(0, 0, this.previewCanvas.width, this.previewCanvas.height);
+        
+        ctx.save();
+        ctx.strokeStyle = this.currentColor;
+        ctx.lineWidth = this.currentSize;
+        ctx.setLineDash([5, 5]); // Dashed line for preview
+        
+        const startX = this.shapeStart.x;
+        const startY = this.shapeStart.y;
+        const endX = currentPos.x;
+        const endY = currentPos.y;
+        
+        switch (this.currentTool) {
+            case 'line':
+                ctx.beginPath();
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(endX, endY);
+                ctx.stroke();
+                break;
+            case 'rectangle':
+                const rectWidth = endX - startX;
+                const rectHeight = endY - startY;
+                ctx.strokeRect(startX, startY, rectWidth, rectHeight);
+                break;
+            case 'circle':
+                const centerX = (startX + endX) / 2;
+                const centerY = (startY + endY) / 2;
+                const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)) / 2;
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                ctx.stroke();
+                break;
+        }
+        
+        ctx.restore();
+    }
+
+    finalizeShape() {
+        if (!this.shapeStart) return;
+        
+        const currentPos = this.getMousePos({ clientX: event.clientX, clientY: event.clientY });
+        
+        // Remove preview canvas
+        if (this.previewCanvas) {
+            this.previewCanvas.remove();
+            this.previewCanvas = null;
+        }
+        
+        // Draw final shape on main canvas
+        this.drawShape(this.shapeStart, currentPos);
+        
+        // Send to server
+        this.sendShapeAction(this.shapeStart, currentPos);
+        
+        // Reset state
+        this.isDrawingShape = false;
+        this.shapeStart = null;
+    }
+
+    drawShape(start, end) {
+        this.ctx.save();
+        this.ctx.strokeStyle = this.currentColor;
+        this.ctx.lineWidth = this.currentSize;
+        
+        const startX = start.x;
+        const startY = start.y;
+        const endX = end.x;
+        const endY = end.y;
+        
+        switch (this.currentTool) {
+            case 'line':
+                this.ctx.beginPath();
+                this.ctx.moveTo(startX, startY);
+                this.ctx.lineTo(endX, endY);
+                this.ctx.stroke();
+                break;
+            case 'rectangle':
+                const rectWidth = endX - startX;
+                const rectHeight = endY - startY;
+                this.ctx.strokeRect(startX, startY, rectWidth, rectHeight);
+                break;
+            case 'circle':
+                const centerX = (startX + endX) / 2;
+                const centerY = (startY + endY) / 2;
+                const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)) / 2;
+                this.ctx.beginPath();
+                this.ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+                this.ctx.stroke();
+                break;
+        }
+        
+        this.ctx.restore();
+    }
+
+    sendShapeAction(start, end) {
+        const startX = start.x;
+        const startY = start.y;
+        const endX = end.x;
+        const endY = end.y;
+        
+        let payload = {
+            shape: this.currentTool,
+            color: this.currentColor,
+            size: this.currentSize
+        };
+        
+        switch (this.currentTool) {
+            case 'line':
+                payload = {
+                    ...payload,
+                    x: startX,
+                    y: startY,
+                    width: endX, // endX for line
+                    height: endY  // endY for line
+                };
+                break;
+            case 'rectangle':
+                payload = {
+                    ...payload,
+                    x: startX,
+                    y: startY,
+                    width: endX - startX,
+                    height: endY - startY
+                };
+                break;
+            case 'circle':
+                const centerX = (startX + endX) / 2;
+                const centerY = (startY + endY) / 2;
+                const radius = Math.sqrt(Math.pow(endX - startX, 2) + Math.pow(endY - startY, 2)) / 2;
+                payload = {
+                    ...payload,
+                    x: centerX - radius,
+                    y: centerY - radius,
+                    width: radius * 2,
+                    height: radius * 2
+                };
+                break;
+        }
+        
+        this.sendDrawAction('shape', payload);
+    }
+
+    // ======== UNDO/REDO FUNCTIONS ========
+
+    addToHistory(action) {
+        // Remove any actions after current index (when undoing and then doing new action)
+        this.actionHistory = this.actionHistory.slice(0, this.currentHistoryIndex + 1);
+        
+        // Add new action
+        this.actionHistory.push(action);
+        this.currentHistoryIndex++;
+        
+        // Limit history size
+        if (this.actionHistory.length > this.maxHistorySize) {
+            this.actionHistory.shift();
+            this.currentHistoryIndex--;
+        }
+        
+        this.updateUndoRedoButtons();
+    }
+
+    undo() {
+        if (this.currentHistoryIndex >= 0) {
+            this.currentHistoryIndex--;
+            this.redrawFromHistory();
+            this.updateUndoRedoButtons();
+        }
+    }
+
+    redo() {
+        if (this.currentHistoryIndex < this.actionHistory.length - 1) {
+            this.currentHistoryIndex++;
+            this.redrawFromHistory();
+            this.updateUndoRedoButtons();
+        }
+    }
+
+    redrawFromHistory() {
+        // Clear canvas
+        this.clearCanvas();
+        
+        // Redraw all actions up to current index
+        for (let i = 0; i <= this.currentHistoryIndex; i++) {
+            const action = this.actionHistory[i];
+            this.replayAction(action);
+        }
+    }
+
+    replayAction(action) {
+        try {
+            const payload = typeof action.payload === 'string' ? JSON.parse(action.payload) : action.payload;
+            
+            switch (action.actionType) {
+                case 'draw':
+                    this.drawRemotePath(payload);
+                    break;
+                case 'text':
+                    this.drawRemoteText(payload);
+                    break;
+                case 'shape':
+                    this.drawRemoteShape(payload);
+                    break;
+                case 'clear':
+                    this.clearCanvas();
+                    break;
+            }
+        } catch (error) {
+            console.error('Error replaying action:', error);
+        }
+    }
+
+    updateUndoRedoButtons() {
+        const undoBtn = document.getElementById('undo-btn');
+        const redoBtn = document.getElementById('redo-btn');
+        
+        if (undoBtn) {
+            undoBtn.disabled = this.currentHistoryIndex < 0;
+        }
+        
+        if (redoBtn) {
+            redoBtn.disabled = this.currentHistoryIndex >= this.actionHistory.length - 1;
+        }
+    }
+
+    // Override sendDrawAction to add to history
+    async sendDrawAction(actionType, payload) {
+        // Add to local history
+        this.addToHistory({
+            actionType: actionType,
+            payload: payload,
+            timestamp: Date.now()
+        });
+        
+        if (!this.connection || !this.isConnected || !this.sessionId) {
+            return;
+        }
+
+        try {
+            await this.connection.invoke('DrawAction', this.sessionId, actionType, JSON.stringify(payload), this.userId);
+        } catch (error) {
+            console.error('Error sending draw action:', error);
+        }
+    }
+
     // ======== TEMPLATE & EXPORT ========
 
     async saveAsTemplate() {
@@ -587,7 +1067,7 @@ class WhiteboardSystem {
         if (!templateName) return;
 
         try {
-            const response = await fetch(`/api/whiteboard/session/${this.sessionId}/save-template`, {
+            const response = await fetch(`/Whiteboard/SaveTemplate?sessionId=${this.sessionId}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -609,7 +1089,7 @@ class WhiteboardSystem {
 
     async exportWhiteboard() {
         try {
-            const response = await fetch(`/api/whiteboard/session/${this.sessionId}/export/image?format=png`);
+            const response = await fetch(`/Whiteboard/ExportImage?sessionId=${this.sessionId}&format=png`);
             const blob = await response.blob();
 
             const url = window.URL.createObjectURL(blob);
