@@ -11,6 +11,9 @@
                 {
                     foreach (var media in msg.Media)
                     {
+                        var isTextDoc = media.FileName != null && (media.FileName.EndsWith(".txt") || 
+                                                                   media.FileName.EndsWith(".doc") || 
+                                                                   media.FileName.EndsWith(".docx"));
                         if (media.MediaType != null && media.MediaType.StartsWith("image/"))
                         {
                             <img src="@media.Url" class="message-media-img" alt="Ảnh gửi"/>
@@ -19,12 +22,39 @@
                         {
                             <video src="@media.Url" class="message-media-video" controls></video>
                         }
+                        else if (isTextDoc)
+                        {
+                            <div class="file-block file-summary-block" data-media-url="@media.Url" data-filename="@media.FileName">
+                                <div class="chat-file-attachment-group">
+                                    <div class="chat-file-attachment">
+                                        <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                                        <span class="file-name">@media.FileName</span>
+                                        <a href="@media.Url" download="@media.FileName" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                                    </div>
+                                    <div class="chat-file-attachment">
+                                        <button type="button" class="btn btn-primary btn-preview-file" data-media-url="@media.Url" data-filename="@media.FileName">
+                                            Xem trước
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-summarize-file" data-media-url="@media.Url" data-filename="@media.FileName">
+                                            <span class="btn-summarize-text">Tóm tắt file</span>
+                                            <span class="btn-summarize-loading" style="display:none;">
+                                                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang tóm tắt...
+                                            </span>
+                                        </button>
+                                    </div>
+                                </div>
+                                @* preview-block *@
+                                <div class="file-preview-content" style="display:none;"></div>
+                                @* summary-block *@
+                                <div class="file-summary-content" style="display:none;"></div>
+                            </div>
+                        }
                         else
                         {
                             <div class="chat-file-attachment">
-                                <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
-                                <span class="file-name">@(media.FileName ?? System.IO.Path.GetFileName(media.Url))</span>
-                                <a href="@media.Url" download="@(media.FileName ?? System.IO.Path.GetFileName(media.Url))" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                                <span class="file-icon"><i class="bi bi-file-earmark"></i></span>
+                                <span class="file-name">@media.FileName</span>
+                                <a href="@media.Url" download="@media.FileName" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
                             </div>
                         }
                     }
@@ -50,6 +80,9 @@
                 {
                     foreach (var media in msg.Media)
                     {
+                        var isTextDoc = media.FileName != null && (media.FileName.EndsWith(".txt") || 
+                                                                   media.FileName.EndsWith(".doc") || 
+                                                                   media.FileName.EndsWith(".docx"));
                         if (media.MediaType != null && media.MediaType.StartsWith("image/"))
                         {
                             <img src="@media.Url" class="message-media-img" alt="Ảnh gửi"/>
@@ -58,12 +91,39 @@
                         {
                             <video src="@media.Url" class="message-media-video" controls></video>
                         }
+                        else if (isTextDoc)
+                        {
+                            <div class="file-block file-summary-block" data-media-url="@media.Url" data-filename="@media.FileName">
+                                <div class="chat-file-attachment-group">
+                                    <div class="chat-file-attachment">
+                                        <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                                        <span class="file-name">@media.FileName</span>
+                                        <a href="@media.Url" download="@media.FileName" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                                    </div>
+                                    <div class="chat-file-attachment">
+                                        <button type="button" class="btn btn-primary btn-preview-file" data-media-url="@media.Url" data-filename="@media.FileName">
+                                            Xem trước
+                                        </button>
+                                        <button type="button" class="btn btn-primary btn-summarize-file" data-media-url="@media.Url" data-filename="@media.FileName">
+                                            <span class="btn-summarize-text">Tóm tắt file</span>
+                                            <span class="btn-summarize-loading" style="display:none;">
+                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang tóm tắt...
+                                        </span>
+                                        </button>
+                                    </div>
+                                </div>
+                                @* preview-block *@
+                                <div class="file-preview-content" style="display:none;"></div>
+                                @* summary-block *@
+                                <div class="file-summary-content" style="display:none;"></div>
+                            </div>
+                        }
                         else
                         {
                             <div class="chat-file-attachment">
-                                <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
-                                <span class="file-name">@(media.FileName ?? System.IO.Path.GetFileName(media.Url))</span>
-                                <a href="@media.Url" download="@(media.FileName ?? System.IO.Path.GetFileName(media.Url))" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                                <span class="file-icon"><i class="bi bi-file-earmark"></i></span>
+                                <span class="file-name">@media.FileName</span>
+                                <a href="@media.Url" download="@media.FileName" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
                             </div>
                         }
                     }

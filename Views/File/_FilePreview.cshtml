@@ -1,0 +1,12 @@
+@model Zela.ViewModels.FileSummaryViewModel
+@if (!string.IsNullOrEmpty(Model.Error)) {
+    <div class="file-preview-box">
+        <button type="button" class="close-preview-btn" aria-label="Đóng">&times;</button>
+        <div class="text-danger">@Model.Error</div>
+    </div>
+} else {
+    <div class="file-preview-box">
+        <button type="button" class="close-preview-btn" aria-label="Đóng">&times;</button>
+        <pre class="file-preview-content">@Model.PreviewContent</pre>
+    </div>
+}

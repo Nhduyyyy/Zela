@@ -900,34 +900,84 @@
     animation: imageAppear 0.5s;
 }
 
+.chat-file-attachment-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    background: var(--theme-bg-glass-light, #232347);
+    border-radius: 14px;
+    box-shadow: 0 2px 12px rgba(79,140,255,0.10);
+    border: 1.5px solid var(--border-color, #4f8cff);
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
 .chat-file-attachment {
     display: flex;
     align-items: center;
-    background: var(--theme-bg-glass);
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid var(--theme-border-color);
+    gap: 12px;
+    padding: 14px 18px;
+    background: transparent;
+    border: none;
+    border-radius: 0;
 }
+
+.chat-file-attachment:first-child {
+    background: var(--bg-secondary, #232347);
+    border-bottom: 1px solid var(--border-color, #4f8cff);
+    border-radius: 14px 14px 0 0;
+}
+
+.chat-file-attachment:last-child {
+    background: var(--theme-bg-glass, #232347);
+    border-radius: 0 0 14px 14px;
+}
+
 .chat-file-attachment .file-icon {
-    font-size: 24px;
-    color: var(--theme-accent-sky-blue);
-    margin-right: 10px;
+    font-size: 28px;
+    color: var(--primary-color, #FF5A57);
+    margin-right: 8px;
 }
+
 .chat-file-attachment .file-name {
-    padding-right: 5px;
+    font-weight: 600;
+    color: var(--text-primary, #fff);
+    font-size: 16px;
     flex: 1;
-    color: var(--theme-text-primary);
-    font-weight: 500;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
 }
-.chat-file-attachment .file-download-btn {
-    color: var(--theme-text-secondary);
-    text-decoration: none;
+
+.file-download-btn {
+    color: var(--primary-color, #FF5A57);
+    font-size: 20px;
+    margin-left: 8px;
+    transition: color 0.2s;
 }
-.chat-file-attachment .file-download-btn:hover {
-    color: var(--theme-accent-green);
+.file-download-btn:hover {
+    color: var(--danger-color, #e74c3c);
+}
+
+.btn-preview-file,
+.btn-summarize-file {
+    font-size: 15px;
+    padding: 7px 18px;
+    border-radius: 7px;
+    border: none;
+    margin-right: 8px;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+    background: var(--theme-accent-green, #FF5A57); /* Màu hồng chủ đạo */
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(255,90,87,0.10);
+}
+
+.btn-preview-file:hover,
+.btn-summarize-file:hover {
+    background: var(--danger-color, #e74c3c); /* Hồng đậm hơn khi hover */
+    color: #fff;
+    text-decoration: none;
 }
 
 #toggle-member-list {
@@ -961,4 +1011,109 @@
     max-height: 0 !important;
     opacity: 0;
     pointer-events: none;
+}
+
+/* File summary */
+
+.file-summary-box {
+    background: var(--theme-bg-glass-light);
+    border: 1.5px solid var(--border-color);
+    border-radius: 18px;
+    padding: 22px 28px 18px 28px;
+    margin-top: 14px;
+    margin-bottom: 12px;
+    max-width: 600px;
+    color: var(--text-primary);
+    font-size: 16px;
+    /*line-height: 1.8;*/
+    box-shadow: 0 4px 24px rgba(255,90,87,0.10);
+    position: relative;
+    animation: fadeInSummary 0.5s;
+    white-space: pre-wrap;
+    word-break: break-word;
+    /*font-family: 'Segoe UI', 'Roboto', 'Arial', sans-serif;*/
+}
+
+@keyframes fadeInSummary {
+    from { opacity: 0; transform: translateY(16px);}
+    to { opacity: 1; transform: translateY(0);}
+}
+
+.file-preview-header,
+.file-summary-header {
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    gap: 10px;
+    letter-spacing: 0.5px;
+}
+
+.file-preview-header i,
+.file-summary-header i {
+    font-size: 22px;
+    color: var(--warning-color);
+}
+
+.file-preview-content,
+.file-summary-content {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: 16px;
+    color: var(--text-primary);
+    white-space: pre-wrap;
+    word-break: break-word;
+    /*font-family: 'Fira Mono', 'Consolas', 'Menlo', 'monospace';*/
+}
+
+.file-summary-content strong {
+    color: var(--primary-color);
+    font-weight: 700;
+    background: var(--secondary-color);
+    padding: 1px 4px;
+    border-radius: 4px;
+    letter-spacing: 0.2px;
+}
+
+.close-summary-btn,
+.close-preview-btn {
+    position: absolute;
+    top: 14px;
+    right: 18px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
+    color: var(--primary-color);
+    cursor: pointer;
+    z-index: 2;
+    transition: color 0.2s;
+    padding: 0;
+    line-height: 1;
+}
+.close-preview-btn:hover,
+.close-summary-btn:hover {
+    color: var(--danger-color);
+}
+
+.file-preview-box .text-danger,
+.file-summary-box .text-danger {
+    color: var(--danger-color);
+    background: var(--bg-light-gray);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 15px;
+}
+
+.file-preview-box {
+    position: relative;
+    padding-top: 32px; /* Đảm bảo nội dung không bị nút X che */
+}
+
+.file-preview-content-inner {
+    margin-top: 18px; /* Đủ để tránh nút X */
 } 
