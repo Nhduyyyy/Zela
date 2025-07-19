@@ -7,13 +7,16 @@ class SubtitleSystem {
     constructor() {
         // Cấu hình
         this.config = {
-            chunkDuration: 3000, // 3 giây (tăng từ 2 giây)
+            chunkDuration: 3000, // 3 giây
+            overlapDuration: 1000, // 1 giây overlap
             sampleRate: 16000,
             language: 'vi', // ISO-639-1 format cho OpenAI
             maxSubtitleLength: 100,
-            subtitleDisplayTime: 15000 // 15 giây (tăng từ 5 giây)
+            subtitleDisplayTime: 15000, // 15 giây
+            maxConcurrentRequests: 2, // Tối đa 2 request đồng thời
+            requestCooldown: 1000 // 1 giây cooldown giữa các request
         };
-        
+
         // State
         this.isEnabled = false;
         this.isRecording = false;
@@ -24,17 +27,22 @@ class SubtitleSystem {
         this.currentUserId = null;
         this.sessionId = null;
         this.activeSubtitleUsers = new Set(); // Track users who have subtitles enabled
-        
+
+        // Request management
+        this.pendingRequests = 0; // Số request đang chờ
+        this.lastRequestTime = 0; // Thời gian request cuối
+        this.processingQueue = []; // Queue xử lý audio chunks
+
         // DOM elements
         this.subtitleContainer = null;
         this.toggleButton = null;
         this.subtitleHistoryContainer = null;
-        
+
         // Voice activity detection
         this.analyser = null;
         this.voiceThreshold = 0.05; // Giảm threshold để nhạy hơn
         this.isSpeaking = false;
-        
+
         console.log('🎬 SubtitleSystem initialized');
     }
 
@@ -42,29 +50,29 @@ class SubtitleSystem {
         try {
             // Khởi tạo DOM elements
             this.initDOMElements();
-            
+
             // Lấy user ID từ page
             this.currentUserId = this.getUserId();
-            
+
             if (!this.currentUserId) {
                 console.warn('⚠️ User ID not found');
                 return;
             }
-            
+
             // Khởi tạo audio context trước
             await this.initAudioContext();
-            
+
             // Đợi sessionId từ videocall.js
             await this.waitForSessionId();
-            
+
             // Load user preference
             await this.loadUserPreference();
-            
+
             // Khởi tạo SignalR connection cho subtitle sharing
             this.initSignalR();
-            
+
             console.log('✅ SubtitleSystem initialized successfully');
-            
+
         } catch (error) {
             console.error('❌ Error initializing SubtitleSystem:', error);
         }
@@ -74,23 +82,23 @@ class SubtitleSystem {
         // Đợi tối đa 10 giây để lấy sessionId
         let attempts = 0;
         const maxAttempts = 100; // 100 * 100ms = 10 giây
-        
+
         while (attempts < maxAttempts) {
             this.sessionId = this.getSessionId();
-            
+
             if (this.sessionId && this.sessionId !== "00000000-0000-0000-0000-000000000000") {
                 console.log('✅ Session ID found:', this.sessionId);
                 return;
             }
-            
+
             if (attempts % 10 === 0) { // Log mỗi 1 giây
                 console.log(`⏳ Waiting for session ID... (${attempts + 1}/${maxAttempts})`);
             }
-            
+
             await new Promise(resolve => setTimeout(resolve, 100));
             attempts++;
         }
-        
+
         console.warn('⚠️ Session ID not found after 10 seconds, using fallback');
         this.sessionId = "00000000-0000-0000-0000-000000000000";
     }
@@ -100,7 +108,7 @@ class SubtitleSystem {
         if (newSessionId && newSessionId !== this.sessionId) {
             console.log('🔄 Updating session ID:', newSessionId);
             this.sessionId = newSessionId;
-            
+
             // Re-initialize các components cần sessionId
             this.initSignalR();
         }
@@ -109,23 +117,23 @@ class SubtitleSystem {
     initDOMElements() {
         // Tạo subtitle container
         this.createSubtitleContainer();
-        
+
         // Tìm toggle button
         this.toggleButton = document.querySelector('#subtitleToggle');
-        
+
         // Tạo subtitle history container
         this.subtitleHistoryContainer = document.querySelector('#subtitleHistory');
-        
+
         // Lắng nghe sessionId changes
         this.setupSessionIdListener();
-        
+
         console.log('🎬 DOM elements initialized');
     }
 
     setupSessionIdListener() {
         // Lắng nghe khi window.currentSessionId thay đổi
         let lastSessionId = window.currentSessionId;
-        
+
         setInterval(() => {
             if (window.currentSessionId && window.currentSessionId !== lastSessionId) {
                 console.log('🔄 Session ID changed from', lastSessionId, 'to', window.currentSessionId);
@@ -140,13 +148,13 @@ class SubtitleSystem {
             // Sử dụng connection từ videocall.js
             if (window.signalRConnection) {
                 this.connection = window.signalRConnection;
-                
+
                 // Lắng nghe subtitle từ user khác
                 this.connection.on('ReceiveSubtitle', (subtitle) => {
                     console.log('📺 Received subtitle from other user:', subtitle);
                     this.displaySubtitleFromOtherUser(subtitle);
                 });
-                
+
                 // Lắng nghe user join/leave với subtitle
                 this.connection.on('UserSubtitleToggled', (userId, enabled) => {
                     if (enabled) {
@@ -157,9 +165,9 @@ class SubtitleSystem {
                         console.log('👤 User disabled subtitles:', userId);
                     }
                 });
-                
+
                 console.log('🔗 SignalR connected for subtitle sharing');
-                
+
                 // Join subtitle group nếu có sessionId
                 if (this.sessionId && this.sessionId !== "00000000-0000-0000-0000-000000000000") {
                     this.connection.invoke('JoinSubtitleGroup', this.sessionId);
@@ -167,7 +175,7 @@ class SubtitleSystem {
             } else {
                 console.warn('⚠️ SignalR connection not available');
             }
-                
+
         } catch (error) {
             console.error('❌ Error initializing SignalR:', error);
         }
@@ -176,10 +184,10 @@ class SubtitleSystem {
     async initAudioContext() {
         try {
             console.log('🎤 Initializing audio context...');
-            
+
             // Tạo Audio Context
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            
+
             // Xin quyền truy cập microphone với cấu hình tối ưu cho AI
             const stream = await navigator.mediaDevices.getUserMedia({
                 audio: {
@@ -191,39 +199,39 @@ class SubtitleSystem {
                     volume: 1.0
                 }
             });
-            
+
             console.log('🎤 Microphone access granted');
-            
+
             // Tạo MediaRecorder với format tương thích
-            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') 
-                ? 'audio/webm;codecs=opus' 
+            const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+                ? 'audio/webm;codecs=opus'
                 : 'audio/webm';
-                
+
             this.mediaRecorder = new MediaRecorder(stream, {
                 mimeType: mimeType
             });
-            
+
             console.log('🎤 MediaRecorder created with mimeType:', mimeType);
-            
+
             // Tạo analyser để detect voice activity
             this.analyser = this.audioContext.createAnalyser();
             this.analyser.fftSize = 256;
             this.analyser.smoothingTimeConstant = 0.8;
             this.microphone = this.audioContext.createMediaStreamSource(stream);
             this.microphone.connect(this.analyser);
-            
+
             // Voice activity detection
             this.voiceThreshold = 0.1;
             this.isSpeaking = false;
-            
+
             console.log('✅ Audio context initialized successfully');
-            
+
         } catch (error) {
             console.error('❌ Error initializing audio context:', error);
-            
+
             // Hiển thị thông báo lỗi cho user
             this.showNotification('Lỗi: Không thể truy cập microphone', 'error');
-            
+
             // Không throw error để không crash app
             this.mediaRecorder = null;
             this.analyser = null;
@@ -253,12 +261,12 @@ class SubtitleSystem {
             backdrop-filter: blur(10px);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         `;
-        
+
         document.body.appendChild(this.subtitleContainer);
-        
+
         // Tạo language selector
         this.createLanguageSelector();
-        
+
         console.log('📺 Subtitle container created');
     }
 
@@ -282,7 +290,7 @@ class SubtitleSystem {
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             min-width: 200px;
         `;
-        
+
         // Tạo label
         const label = document.createElement('div');
         label.textContent = '🌍 Chọn ngôn ngữ phụ đề:';
@@ -292,7 +300,7 @@ class SubtitleSystem {
             text-align: center;
         `;
         this.languageSelector.appendChild(label);
-        
+
         // Tạo select dropdown
         const select = document.createElement('select');
         select.id = 'language-select';
@@ -307,7 +315,7 @@ class SubtitleSystem {
             width: 100%;
             cursor: pointer;
         `;
-        
+
         // Thêm các ngôn ngữ
         const languages = this.getSupportedLanguages();
         Object.entries(languages).forEach(([code, name]) => {
@@ -319,14 +327,14 @@ class SubtitleSystem {
             }
             select.appendChild(option);
         });
-        
+
         // Event listener
         select.addEventListener('change', (e) => {
             this.setLanguage(e.target.value);
         });
-        
+
         this.languageSelector.appendChild(select);
-        
+
         // Tạo close button
         const closeButton = document.createElement('button');
         closeButton.textContent = '✕';
@@ -349,10 +357,10 @@ class SubtitleSystem {
         closeButton.addEventListener('click', () => {
             this.languageSelector.style.display = 'none';
         });
-        
+
         this.languageSelector.appendChild(closeButton);
         document.body.appendChild(this.languageSelector);
-        
+
         console.log('🌍 Language selector created');
     }
 
@@ -360,10 +368,10 @@ class SubtitleSystem {
         try {
             const response = await fetch(`/Meeting/GetUserSubtitlePreference?sessionId=${this.sessionId}`);
             const data = await response.json();
-            
+
             this.isEnabled = data.enabled;
             console.log('🎛️ User subtitle preference loaded:', this.isEnabled);
-            
+
         } catch (error) {
             console.error('❌ Error loading user preference:', error);
             this.isEnabled = false;
@@ -373,7 +381,7 @@ class SubtitleSystem {
     async toggleSubtitles() {
         try {
             this.isEnabled = !this.isEnabled;
-            
+
             const response = await fetch('/Meeting/ToggleSubtitles', {
                 method: 'POST',
                 headers: {
@@ -384,12 +392,12 @@ class SubtitleSystem {
                     enabled: this.isEnabled
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 console.log('🎛️ Subtitle toggled:', this.isEnabled);
-                
+
                 if (this.isEnabled) {
                     // Hiển thị language selector khi bật phụ đề
                     if (this.languageSelector) {
@@ -398,25 +406,25 @@ class SubtitleSystem {
                             this.languageSelector.style.display = 'none';
                         }, 15000); // Hiển thị 15 giây (tăng từ 5 giây)
                     }
-                    
+
                     // Kiểm tra và khởi tạo lại audio nếu cần
                     if (!this.mediaRecorder) {
                         console.log('🔄 Re-initializing audio context...');
                         await this.initAudioContext();
                     }
-                    
+
                     this.startRecording();
                 } else {
                     this.stopRecording();
                 }
-                
+
                 // Hiển thị thông báo
                 this.showNotification(
                     this.isEnabled ? 'Phụ đề đã bật' : 'Phụ đề đã tắt',
                     this.isEnabled ? 'success' : 'info'
                 );
             }
-            
+
         } catch (error) {
             console.error('❌ Error toggling subtitles:', error);
             this.showNotification('Lỗi khi bật/tắt phụ đề', 'error');
@@ -427,7 +435,7 @@ class SubtitleSystem {
     async setLanguage(language) {
         this.config.language = language;
         console.log(`🌍 Language changed to: ${language}`);
-        
+
         // Hiển thị language selector
         if (this.languageSelector) {
             this.languageSelector.style.display = 'block';
@@ -435,7 +443,7 @@ class SubtitleSystem {
                 this.languageSelector.style.display = 'none';
             }, 15000); // Hiển thị 15 giây (tăng từ 3 giây)
         }
-        
+
         // Lưu preference
         try {
             await fetch('/Meeting/SaveLanguagePreference', {
@@ -451,7 +459,7 @@ class SubtitleSystem {
         } catch (error) {
             console.error('❌ Error saving language preference:', error);
         }
-        
+
         this.showNotification(`🌍 Ngôn ngữ đã đổi sang: ${this.getSupportedLanguages()[language]}`, 'success');
     }
 
@@ -469,9 +477,9 @@ class SubtitleSystem {
                     sourceLanguage: 'vi' // Giả sử source là tiếng Việt
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success) {
                 return data.translatedText;
             } else {
@@ -500,50 +508,57 @@ class SubtitleSystem {
 
     startRecording() {
         if (this.isRecording || !this.isEnabled) return;
-        
+
         try {
             console.log('🎙️ Starting audio recording...');
-            
+
             // Kiểm tra MediaRecorder đã được khởi tạo chưa
             if (!this.mediaRecorder) {
                 console.error('❌ MediaRecorder not initialized');
                 this.showNotification('Lỗi: MediaRecorder chưa được khởi tạo', 'error');
                 return;
             }
-            
+
             // Kiểm tra trạng thái MediaRecorder
             if (this.mediaRecorder.state === 'inactive') {
                 console.log('🔄 MediaRecorder is inactive, trying to start...');
             }
-            
+
             this.isRecording = true;
             this.audioChunks = [];
-            
-            // Bắt đầu recording
-            this.mediaRecorder.start();
-            
+
+            // Bắt đầu recording với timeslice để có data thường xuyên
+            this.mediaRecorder.start(500); // Data available mỗi 500ms
+
             // Xử lý data available
             this.mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     this.audioChunks.push(event.data);
                 }
             };
-            
+
             // Xử lý khi recording stop
             this.mediaRecorder.onstop = () => {
-                this.processAudioChunk();
+                this.queueAudioChunk();
             };
-            
-            // Tự động stop sau mỗi chunk duration
+
+            // Tự động stop và restart sau mỗi chunk duration
             this.recordingInterval = setInterval(() => {
                 if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+                    console.log('🔄 Restarting recording...');
                     this.mediaRecorder.stop();
-                    this.mediaRecorder.start();
+
+                    // Đợi một chút rồi restart để đảm bảo stop hoàn thành
+                    setTimeout(() => {
+                        if (this.isRecording && this.mediaRecorder) {
+                            this.mediaRecorder.start(500);
+                        }
+                    }, 100);
                 }
             }, this.config.chunkDuration);
-            
+
             console.log('✅ Audio recording started');
-            
+
         } catch (error) {
             console.error('❌ Error starting recording:', error);
             this.isRecording = false;
@@ -552,25 +567,25 @@ class SubtitleSystem {
 
     stopRecording() {
         if (!this.isRecording) return;
-        
+
         try {
             console.log('🛑 Stopping audio recording...');
-            
+
             this.isRecording = false;
-            
+
             // Stop recording
             if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
                 this.mediaRecorder.stop();
             }
-            
+
             // Clear interval
             if (this.recordingInterval) {
                 clearInterval(this.recordingInterval);
                 this.recordingInterval = null;
             }
-            
+
             console.log('✅ Audio recording stopped');
-            
+
         } catch (error) {
             console.error('❌ Error stopping recording:', error);
         }
@@ -580,69 +595,138 @@ class SubtitleSystem {
     checkVoiceActivity() {
         const dataArray = new Uint8Array(this.analyser.frequencyBinCount);
         this.analyser.getByteFrequencyData(dataArray);
-        
+
         // Tính trung bình amplitude
         const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
         const normalizedAverage = average / 255;
-        
+
         const wasSpeaking = this.isSpeaking;
         this.isSpeaking = normalizedAverage > this.voiceThreshold;
-        
+
         // Debug logging - chỉ log mỗi 10 lần để không spam
         if (Math.random() < 0.1) { // 10% chance
             console.log(`🔊 Audio level: ${normalizedAverage.toFixed(3)} (threshold: ${this.voiceThreshold})`);
         }
-        
+
         // Log khi bắt đầu/dừng nói
         if (!wasSpeaking && this.isSpeaking) {
             console.log('🎤 Voice detected');
         } else if (wasSpeaking && !this.isSpeaking) {
             console.log('🔇 Voice stopped');
         }
-        
+
         return this.isSpeaking;
     }
 
-    async processAudioChunk() {
-        if (this.audioChunks.length === 0) return;
-        
+    // Queue audio chunk để xử lý
+    queueAudioChunk() {
+        if (this.audioChunks.length === 0) {
+            console.log('🔇 No audio chunks to queue');
+            return;
+        }
+
+        // Tạo blob từ audio chunks hiện tại
+        const audioBlob = new Blob(this.audioChunks, { type: this.mediaRecorder.mimeType });
+        this.audioChunks = [];
+
+        // Kiểm tra nếu queue quá dài, merge các chunks nhỏ
+        if (this.processingQueue.length >= 3) {
+            console.log('🔄 Queue too long, merging chunks...');
+            this.mergeQueueChunks();
+        }
+
+        // Thêm vào queue
+        this.processingQueue.push(audioBlob);
+        console.log(`📋 Queued audio chunk (${audioBlob.size} bytes). Queue size: ${this.processingQueue.length}`);
+
+        // Xử lý queue
+        this.processQueue();
+    }
+
+    // Merge các chunks nhỏ thành chunk lớn hơn
+    mergeQueueChunks() {
+        if (this.processingQueue.length < 2) return;
+
+        // Lấy 2 chunks đầu tiên
+        const chunk1 = this.processingQueue.shift();
+        const chunk2 = this.processingQueue.shift();
+
+        // Merge thành 1 chunk
+        const mergedChunk = new Blob([chunk1, chunk2], { type: this.mediaRecorder.mimeType });
+
+        // Thêm lại vào đầu queue
+        this.processingQueue.unshift(mergedChunk);
+
+        console.log(`🔄 Merged 2 chunks (${chunk1.size} + ${chunk2.size} = ${mergedChunk.size} bytes)`);
+    }
+
+    // Xử lý queue với rate limiting
+    async processQueue() {
+        const currentTime = Date.now();
+
+        // Kiểm tra cooldown
+        if (currentTime - this.lastRequestTime < this.config.requestCooldown) {
+            console.log('⏳ Request cooldown active, skipping...');
+            return;
+        }
+
+        // Kiểm tra concurrent requests
+        if (this.pendingRequests >= this.config.maxConcurrentRequests) {
+            console.log('⏳ Too many concurrent requests, skipping...');
+            return;
+        }
+
+        // Kiểm tra queue quá dài (skip để tránh backlog)
+        if (this.processingQueue.length > 5) {
+            console.log('⏳ Queue too long, clearing old chunks...');
+            // Xóa chunks cũ, giữ lại 2 chunks mới nhất
+            this.processingQueue.splice(0, this.processingQueue.length - 2);
+            return;
+        }
+
+        // Lấy chunk từ queue
+        if (this.processingQueue.length === 0) {
+            return;
+        }
+
+        const audioBlob = this.processingQueue.shift();
+        this.pendingRequests++;
+        this.lastRequestTime = currentTime;
+
+        console.log(`🎵 Processing queued audio chunk (${audioBlob.size} bytes). Remaining: ${this.processingQueue.length}`);
+
+        // Xử lý audio chunk
+        this.processAudioChunk(audioBlob);
+    }
+
+    async processAudioChunk(audioBlob) {
         try {
-            // Tạm thời bỏ qua voice activity để test
-            // if (!this.checkVoiceActivity()) {
-            //     console.log('🔇 No voice detected, skipping...');
-            //     this.audioChunks = [];
-            //     return;
-            // }
-            
-            console.log('🎵 Processing audio chunk (bypassing voice detection)...');
-            
-            // Tạo blob từ audio chunks
-            const audioBlob = new Blob(this.audioChunks, { type: this.mediaRecorder.mimeType });
-            this.audioChunks = [];
-            
-            // Kiểm tra kích thước audio (chỉ xử lý nếu có đủ audio)
-            if (audioBlob.size < 500) { // Giảm threshold để nhạy hơn
+
+            // Kiểm tra kích thước audio
+            console.log(`🔍 [DEBUG] Audio blob size: ${audioBlob.size} bytes`);
+            if (audioBlob.size < 100) {
                 console.log('🔇 Audio chunk too small, skipping...');
+                this.pendingRequests--;
                 return;
             }
-            
+
             // Chuyển thành base64
             const base64Audio = await this.blobToBase64(audioBlob);
-            
+
             // Debug sessionId và speakerId trước khi gửi
             console.log('🔍 [DEBUG] Current sessionId:', this.sessionId);
             console.log('🔍 [DEBUG] Current speakerId:', this.currentUserId);
             console.log('🔍 [DEBUG] window.currentSessionId:', window.currentSessionId);
             console.log('🔍 [DEBUG] window.currentUserId:', window.currentUserId);
-            
+
             // Đảm bảo có valid sessionId và speakerId
             const sessionId = this.sessionId || window.currentSessionId || "00000000-0000-0000-0000-000000000000";
             const speakerId = this.currentUserId || window.currentUserId || 0;
-            
+
             console.log(`🎵 Processing audio chunk (${audioBlob.size} bytes)...`);
             console.log(`🎵 [DEBUG] Final sessionId: ${sessionId}`);
             console.log(`🎵 [DEBUG] Final speakerId: ${speakerId}`);
-            
+
             // Gửi đến server để transcribe
             const response = await fetch('/Meeting/TranscribeAudio', {
                 method: 'POST',
@@ -656,24 +740,24 @@ class SubtitleSystem {
                     speakerId: speakerId
                 })
             });
-            
+
             const data = await response.json();
-            
+
             if (data.success && data.subtitle) {
                 console.log('📝 Transcribed text:', data.subtitle.originalText);
                 this.displaySubtitle(data.subtitle);
-                
+
                 // Gửi subtitle đến các user khác qua SignalR
                 if (this.connection && this.connection.state === 'Connected') {
                     this.connection.invoke('SendSubtitle', this.sessionId, data.subtitle);
                 }
             } else {
                 console.warn('⚠️ No text transcribed from audio');
-                
+
                 // Hiển thị thông báo cho user khi không dịch được
                 const errorMessage = data.error || 'Không thể nhận diện giọng nói';
                 this.showNotification(`🔇 ${errorMessage}`, 'warning');
-                
+
                 // Hiển thị subtitle "Không thể nhận diện" trong 3 giây
                 this.displaySubtitle({
                     originalText: '🔇 Không thể nhận diện giọng nói',
@@ -683,9 +767,17 @@ class SubtitleSystem {
                     timestamp: new Date().toISOString()
                 });
             }
-            
+
         } catch (error) {
             console.error('❌ Error processing audio chunk:', error);
+        } finally {
+            // Giảm số pending requests
+            this.pendingRequests--;
+
+            // Xử lý tiếp queue nếu còn
+            if (this.processingQueue.length > 0) {
+                setTimeout(() => this.processQueue(), 100);
+            }
         }
     }
 
@@ -693,21 +785,21 @@ class SubtitleSystem {
         try {
             // Debug subtitleContainer
             console.log('🔍 [DEBUG] subtitleContainer:', this.subtitleContainer);
-            
+
             // Đảm bảo subtitleContainer tồn tại
             if (!this.subtitleContainer) {
                 console.log('🔄 Creating subtitle container...');
                 this.createSubtitleContainer();
             }
-            
+
             // Thêm vào history
             this.subtitleHistory.push(subtitle);
-            
+
             // Giới hạn history
             if (this.subtitleHistory.length > 10) {
                 this.subtitleHistory.shift();
             }
-            
+
             // Translate text nếu cần
             let displayText = subtitle.originalText;
             if (this.config.language !== 'vi' && subtitle.originalText) {
@@ -719,33 +811,33 @@ class SubtitleSystem {
                     displayText = subtitle.originalText; // Fallback
                 }
             }
-            
+
             // Hiển thị subtitle với animation mượt mà
             this.subtitleContainer.textContent = displayText;
             this.subtitleContainer.style.display = 'block';
             this.subtitleContainer.style.opacity = '0';
             this.subtitleContainer.style.transform = 'translateY(20px)';
-            
+
             // Animation fade in
             setTimeout(() => {
                 this.subtitleContainer.style.transition = 'all 0.3s ease';
                 this.subtitleContainer.style.opacity = '1';
                 this.subtitleContainer.style.transform = 'translateY(0)';
             }, 50);
-            
+
             // Tự động ẩn sau 15 giây với animation fade out
             setTimeout(() => {
                 this.subtitleContainer.style.transition = 'all 0.3s ease';
                 this.subtitleContainer.style.opacity = '0';
                 this.subtitleContainer.style.transform = 'translateY(-20px)';
-                
+
                 setTimeout(() => {
                     this.subtitleContainer.style.display = 'none';
                 }, 300);
             }, this.config.subtitleDisplayTime);
-            
+
             console.log('📺 Subtitle displayed:', displayText);
-            
+
         } catch (error) {
             console.error('❌ Error displaying subtitle:', error);
         }
@@ -756,7 +848,7 @@ class SubtitleSystem {
         const notification = document.createElement('div');
         notification.className = `subtitle-notification ${type}`;
         notification.textContent = message;
-        
+
         // Chọn màu dựa trên type
         let backgroundColor;
         switch (type) {
@@ -772,7 +864,7 @@ class SubtitleSystem {
             default:
                 backgroundColor = '#2196F3';
         }
-        
+
         notification.style.cssText = `
             position: fixed;
             top: 20px;
@@ -786,9 +878,9 @@ class SubtitleSystem {
             animation: slideIn 0.3s ease;
             box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         `;
-        
+
         document.body.appendChild(notification);
-        
+
         // Tự động xóa sau 3 giây
         setTimeout(() => {
             notification.remove();
@@ -809,12 +901,12 @@ class SubtitleSystem {
 
     getSessionId() {
         // Lấy session ID từ videocall.js hoặc fallback
-        const sessionId = window.currentSessionId || 
-                         document.querySelector('[data-session-id]')?.dataset.sessionId;
-        
+        const sessionId = window.currentSessionId ||
+            document.querySelector('[data-session-id]')?.dataset.sessionId;
+
         // Log để debug
         console.log('🔍 Session ID from getSessionId():', sessionId);
-        
+
         return sessionId || "00000000-0000-0000-0000-000000000000";
     }
 
@@ -854,19 +946,19 @@ class SubtitleSystem {
 
     destroy() {
         this.stopRecording();
-        
+
         if (this.subtitleContainer) {
             this.subtitleContainer.remove();
         }
-        
+
         if (this.audioContext) {
             this.audioContext.close();
         }
-        
+
         if (this.connection) {
             this.connection.stop();
         }
-        
+
         console.log('🗑️ Subtitle System destroyed');
     }
 
@@ -875,47 +967,47 @@ class SubtitleSystem {
             // Hiển thị subtitle từ user khác với màu khác
             const speakerName = subtitle.speakerName || `User ${subtitle.speakerId}`;
             const displayText = `${speakerName}: ${subtitle.originalText}`;
-            
+
             // Thêm vào history
             this.subtitleHistory.push({
                 ...subtitle,
                 displayText: displayText,
                 isFromOtherUser: true
             });
-            
+
             // Giới hạn history
             if (this.subtitleHistory.length > 10) {
                 this.subtitleHistory.shift();
             }
-            
+
             // Hiển thị subtitle với màu khác cho user khác
             this.subtitleContainer.textContent = displayText;
             this.subtitleContainer.style.display = 'block';
             this.subtitleContainer.style.opacity = '0';
             this.subtitleContainer.style.transform = 'translateY(20px)';
             this.subtitleContainer.style.color = '#4CAF50'; // Màu xanh cho user khác
-            
+
             // Animation fade in
             setTimeout(() => {
                 this.subtitleContainer.style.transition = 'all 0.3s ease';
                 this.subtitleContainer.style.opacity = '1';
                 this.subtitleContainer.style.transform = 'translateY(0)';
             }, 50);
-            
+
             // Tự động ẩn sau 5 giây với animation fade out
             setTimeout(() => {
                 this.subtitleContainer.style.transition = 'all 0.3s ease';
                 this.subtitleContainer.style.opacity = '0';
                 this.subtitleContainer.style.transform = 'translateY(-20px)';
-                
+
                 setTimeout(() => {
                     this.subtitleContainer.style.display = 'none';
                     this.subtitleContainer.style.color = ''; // Reset màu
                 }, 300);
             }, this.config.subtitleDisplayTime);
-            
+
             console.log('📺 Subtitle from other user displayed:', displayText);
-            
+
         } catch (error) {
             console.error('❌ Error displaying subtitle from other user:', error);
         }
