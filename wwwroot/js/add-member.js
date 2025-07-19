@@ -1,7 +1,9 @@
 // Add Member Functionality
 $(document).ready(function() {
     console.log('=== Add Member Script Loading ===');
-    
+    console.log('jQuery version:', $.fn.jquery);
+    console.log('Bootstrap version:', typeof bootstrap !== 'undefined' ? 'Loaded' : 'Not loaded');
+
     let selectedUsers = [];
     let currentGroupId = null;
     let addMemberModal = null;
@@ -9,16 +11,22 @@ $(document).ready(function() {
     // Check if modal element exists
     const modalElement = document.getElementById('addMemberModal');
     console.log('Modal element found:', modalElement);
-    
+
     // Check if Bootstrap is available
     console.log('Bootstrap Modal available:', typeof bootstrap !== 'undefined' && bootstrap.Modal);
-    
+
     // Check if jQuery is available
     console.log('jQuery available:', typeof $ !== 'undefined');
+
+    // Check if modal element exists in DOM
+    console.log('Modal element in DOM:', document.querySelector('#addMemberModal'));
 
     // Initialize add member modal
     function initializeModal() {
         const modalElement = document.getElementById('addMemberModal');
+        console.log('Modal element found:', modalElement);
+        console.log('Bootstrap available:', typeof bootstrap !== 'undefined' && bootstrap.Modal);
+
         if (modalElement && !addMemberModal) {
             try {
                 addMemberModal = new bootstrap.Modal(modalElement);
@@ -34,13 +42,19 @@ $(document).ready(function() {
     }
 
     // Initialize modal on page load
+    console.log('Initializing modal on page load...');
     initializeModal();
+
+    // Check if modal was initialized successfully
+    setTimeout(() => {
+        console.log('Modal initialization check:', addMemberModal);
+    }, 1000);
 
     // Handle add member button click - use event delegation for dynamically loaded content
     $(document).on('click', '#btnAddMember', function(e) {
         e.preventDefault();
         console.log('=== Add member button clicked ===');
-        
+
         // Re-initialize modal if needed
         if (!addMemberModal) {
             console.log('Re-initializing modal...');
@@ -50,12 +64,18 @@ $(document).ready(function() {
         // Get current group ID from the sidebar
         const sidebarElement = document.querySelector('.chat-info-panel');
         console.log('Sidebar element found:', sidebarElement);
-        
+
         if (sidebarElement) {
             currentGroupId = sidebarElement.dataset.groupId;
             console.log('Current group ID:', currentGroupId);
         }
-        
+
+        // Fallback: try to get from body data attribute
+        if (!currentGroupId) {
+            currentGroupId = document.body.getAttribute('data-group-id');
+            console.log('Fallback group ID from body:', currentGroupId);
+        }
+
         if (!currentGroupId) {
             console.error('No group ID found');
             showToast('Không thể xác định nhóm hiện tại', 'error');
@@ -64,7 +84,7 @@ $(document).ready(function() {
 
         // Reset modal state
         resetModal();
-        
+
         // Show modal
         if (addMemberModal) {
             console.log('Showing modal...');
@@ -78,6 +98,7 @@ $(document).ready(function() {
     // Handle search button click
     $(document).on('click', '#searchUserBtn', function() {
         console.log('Search button clicked');
+        console.log('Current group ID for search:', currentGroupId);
         performSearch();
     });
 
@@ -85,6 +106,7 @@ $(document).ready(function() {
     $(document).on('keypress', '#searchUserInput', function(e) {
         if (e.which === 13) {
             e.preventDefault();
+            console.log('Enter key pressed in search input');
             performSearch();
         }
     });
@@ -92,6 +114,8 @@ $(document).ready(function() {
     // Handle submit add members
     $(document).on('click', '#submitAddMembers', function() {
         console.log('Submit button clicked');
+        console.log('Selected users count:', selectedUsers.length);
+
         if (selectedUsers.length === 0) {
             showToast('Vui lòng chọn ít nhất một người dùng', 'warning');
             return;
@@ -106,9 +130,11 @@ $(document).ready(function() {
         const userName = $(this).data('user-name');
         const userAvatar = $(this).data('user-avatar');
 
+        console.log('Selecting user:', userId, userName);
+
         // Check if user is already selected
         const existingIndex = selectedUsers.findIndex(u => u.userId === userId);
-        
+
         if (existingIndex === -1) {
             // Add user to selected list
             selectedUsers.push({
@@ -116,29 +142,33 @@ $(document).ready(function() {
                 userName: userName,
                 userAvatar: userAvatar
             });
-            
+
+            console.log('Selected users after adding:', selectedUsers);
+
             // Update UI
             updateSelectedUsersList();
             updateSubmitButton();
-            
+
             // Change button to "Đã chọn"
             $(this).removeClass('btn-outline-primary').addClass('btn-success')
-                   .html('<i class="bi bi-check me-1"></i>Đã chọn')
-                   .prop('disabled', true);
+                .html('<i class="bi bi-check me-1"></i>Đã chọn')
+                .prop('disabled', true);
         }
     });
 
     // Handle remove selected user
     $(document).on('click', '.selected-user-item .btn-remove', function() {
         const userId = $(this).data('user-id');
-        
+        console.log('Removing user:', userId);
+
         // Remove from selected users
         selectedUsers = selectedUsers.filter(u => u.userId !== userId);
-        
+        console.log('Selected users after removal:', selectedUsers);
+
         // Update UI
         updateSelectedUsersList();
         updateSubmitButton();
-        
+
         // Reset button in search results
         $(`.user-item .btn-select[data-user-id="${userId}"]`)
             .removeClass('btn-success').addClass('btn-outline-primary')
@@ -149,7 +179,9 @@ $(document).ready(function() {
     // Perform search
     function performSearch() {
         const searchTerm = $('#searchUserInput').val().trim();
-        
+        console.log('Performing search with term:', searchTerm);
+        console.log('Current group ID:', currentGroupId);
+
         if (!searchTerm) {
             showToast('Vui lòng nhập từ khóa tìm kiếm', 'warning');
             return;
@@ -165,6 +197,7 @@ $(document).ready(function() {
         hideResults();
 
         // Call API
+        console.log('Calling API with:', { searchTerm, groupId: currentGroupId });
         $.ajax({
             url: '/GroupChat/SearchUsers',
             type: 'GET',
@@ -173,8 +206,9 @@ $(document).ready(function() {
                 groupId: currentGroupId
             },
             success: function(users) {
+                console.log('Search API success:', users);
                 showLoading(false);
-                
+
                 if (users && users.length > 0) {
                     displaySearchResults(users);
                 } else {
@@ -182,6 +216,7 @@ $(document).ready(function() {
                 }
             },
             error: function(xhr) {
+                console.error('Search API error:', xhr);
                 showLoading(false);
                 let errorMessage = 'Có lỗi xảy ra khi tìm kiếm';
                 if (xhr.responseJSON && xhr.responseJSON.message) {
@@ -260,60 +295,92 @@ $(document).ready(function() {
         const submitBtn = $('#submitAddMembers');
         if (selectedUsers.length > 0) {
             submitBtn.prop('disabled', false)
-                    .html(`<i class="bi bi-person-plus me-1"></i>Thêm ${selectedUsers.length} thành viên`);
+                .html(`<i class="bi bi-person-plus me-1"></i>Thêm ${selectedUsers.length} thành viên`);
         } else {
             submitBtn.prop('disabled', true)
-                    .html('<i class="bi bi-person-plus me-1"></i>Thêm thành viên');
+                .html('<i class="bi bi-person-plus me-1"></i>Thêm thành viên');
         }
     }
 
     // Add members to group
     function addMembersToGroup() {
+        console.log('=== Adding members to group ===');
+        console.log('Selected users:', selectedUsers);
+        console.log('Current group ID:', currentGroupId);
+
         const submitBtn = $('#submitAddMembers');
         const originalText = submitBtn.html();
-        
+
         submitBtn.prop('disabled', true)
-                .html('<i class="bi bi-hourglass-split me-1"></i>Đang thêm...');
+            .html('<i class="bi bi-hourglass-split me-1"></i>Đang thêm...');
+
+        let successCount = 0;
+        let errorCount = 0;
+        let completedCount = 0;
 
         // Add each user to group
-        const promises = selectedUsers.map(user => {
-            return $.ajax({
+        selectedUsers.forEach(user => {
+            console.log('Adding user to group:', user);
+            $.ajax({
                 url: '/GroupChat/AddMember',
                 type: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 data: {
                     groupId: currentGroupId,
                     userId: user.userId
+                },
+                success: function(response) {
+                    if (response.success) {
+                        successCount++;
+                    } else {
+                        errorCount++;
+                        console.error('Failed to add user:', user.userName, response.message);
+                    }
+                    completedCount++;
+                    checkCompletion();
+                },
+                error: function(xhr) {
+                    errorCount++;
+                    completedCount++;
+                    console.error('Failed to add user:', user.userName, xhr.responseText);
+                    checkCompletion();
                 }
             });
         });
 
-        Promise.all(promises)
-            .then(() => {
-                showToast(`Đã thêm ${selectedUsers.length} thành viên vào nhóm thành công!`, 'success');
+        function checkCompletion() {
+            console.log('Checking completion:', { completedCount, selectedUsersLength: selectedUsers.length, successCount, errorCount });
+
+            if (completedCount === selectedUsers.length) {
+                console.log('All requests completed');
+
+                if (errorCount === 0) {
+                    showToast(`Đã thêm ${successCount} thành viên vào nhóm thành công!`, 'success');
+                } else if (successCount === 0) {
+                    showToast('Không thể thêm thành viên nào vào nhóm', 'error');
+                } else {
+                    showToast(`Đã thêm ${successCount} thành viên thành công, ${errorCount} thành viên thất bại`, 'warning');
+                }
+
                 if (addMemberModal) {
                     addMemberModal.hide();
                 }
-                
+
                 // Reload group sidebar to show new members
                 if (typeof loadGroupSidebar === 'function') {
                     loadGroupSidebar(currentGroupId);
                 }
-                
+
                 // Reload page after a short delay to update member count
                 setTimeout(() => {
                     window.location.reload();
                 }, 1500);
-            })
-            .catch((error) => {
-                let errorMessage = 'Có lỗi xảy ra khi thêm thành viên';
-                if (error.responseJSON && error.responseJSON.message) {
-                    errorMessage = error.responseJSON.message;
-                }
-                showToast(errorMessage, 'error');
-            })
-            .finally(() => {
+
                 submitBtn.prop('disabled', false).html(originalText);
-            });
+            }
+        }
     }
 
     // Reset modal state
@@ -358,10 +425,10 @@ $(document).ready(function() {
             window.showToast(message, type);
         } else {
             // Fallback toast implementation
-            const toastClass = type === 'success' ? 'alert-success' : 
-                             type === 'warning' ? 'alert-warning' : 
-                             type === 'error' ? 'alert-danger' : 'alert-info';
-            
+            const toastClass = type === 'success' ? 'alert-success' :
+                type === 'warning' ? 'alert-warning' :
+                    type === 'error' ? 'alert-danger' : 'alert-info';
+
             const toastHtml = `
                 <div class="alert ${toastClass} alert-dismissible fade show position-fixed" 
                      style="top: 20px; right: 20px; z-index: 9999;" role="alert">
@@ -369,9 +436,9 @@ $(document).ready(function() {
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             `;
-            
+
             $('body').append(toastHtml);
-            
+
             // Auto remove after 5 seconds
             setTimeout(() => {
                 $('.alert').alert('close');
@@ -381,7 +448,7 @@ $(document).ready(function() {
 
     // Debug: Log when script is loaded
     console.log('=== Add member script loaded successfully ===');
-    
+
     // Test button click after a delay
     setTimeout(() => {
         const testButton = document.getElementById('btnAddMember');

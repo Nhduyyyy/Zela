@@ -1,0 +1,394 @@
+/* Voice Record Fallback Styles */
+/* Đảm bảo tương thích với các trình duyệt cũ */
+
+/* Fallback cho backdrop-filter */
+@supports not (backdrop-filter: blur(10px)) {
+    .voice-dropdown-content {
+        background: rgba(255, 255, 255, 0.95);
+    }
+    
+    .recording-popup {
+        background: rgba(255, 255, 255, 0.95);
+    }
+    
+    .loading-overlay {
+        background: rgba(255, 255, 255, 0.95);
+    }
+}
+
+/* Fallback cho CSS Grid */
+@supports not (display: grid) {
+    .voice-dropdown-content .button-group {
+        display: flex;
+        flex-direction: row;
+    }
+    
+    .recording-popup .recording-controls {
+        display: flex;
+        flex-direction: row;
+    }
+}
+
+/* Fallback cho CSS Variables */
+@supports not (color: var(--primary-color)) {
+    .voice-dropdown-content {
+        background: #ffffff;
+        border: 1px solid #FBEFF5;
+        color: #2c2c2c;
+    }
+    
+    .voice-dropdown-content .start-record-btn {
+        background: linear-gradient(135deg, #FCCBF0 0%, #FF5A57 100%);
+        color: #ffffff;
+    }
+    
+    .recording-popup {
+        background: #ffffff;
+        border: 2px solid #FBEFF5;
+        color: #2c2c2c;
+    }
+    
+    .recording-popup .recording-icon {
+        background: linear-gradient(135deg, #FCCBF0 0%, #FF5A57 100%);
+        color: #ffffff;
+    }
+    
+    .loading-overlay {
+        background: rgba(255, 255, 255, 0.9);
+    }
+    
+    .loading-container {
+        background: #ffffff;
+        border: 2px solid #FBEFF5;
+        color: #2c2c2c;
+    }
+    
+    .loading-spinner {
+        border: 4px solid #FBEFF5;
+        border-top: 4px solid #FF5A57;
+    }
+    
+    .loading-progress {
+        background: #f3f4f6;
+    }
+    
+    .loading-progress-bar {
+        background: linear-gradient(135deg, #FCCBF0 0%, #FF5A57 100%);
+    }
+    
+    .loading-dot {
+        background: #FF5A57;
+    }
+}
+
+/* Fallback cho flexbox */
+@supports not (display: flex) {
+    .voice-dropdown-content .button-group {
+        display: block;
+    }
+    
+    .voice-dropdown-content .start-record-btn,
+    .voice-dropdown-content .close-btn {
+        display: block;
+        width: 100%;
+        margin-bottom: 8px;
+    }
+    
+    .recording-popup {
+        text-align: center;
+    }
+    
+    .recording-popup .recording-controls {
+        text-align: center;
+    }
+    
+    .recording-popup .stop-record-btn,
+    .recording-popup .cancel-record-btn {
+        display: inline-block;
+        margin: 5px;
+    }
+    
+    .loading-container {
+        text-align: center;
+    }
+    
+    .loading-dots {
+        text-align: center;
+    }
+    
+    .loading-dot {
+        display: inline-block;
+        margin: 0 2px;
+    }
+}
+
+/* Fallback cho transform */
+@supports not (transform: translate(-50%, -50%)) {
+    .recording-popup {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        margin-top: -150px;
+        margin-left: -150px;
+    }
+}
+
+/* Fallback cho transition */
+@supports not (transition: all 0.3s ease) {
+    .voice-dropdown-content .start-record-btn:hover {
+        background: #c0392b;
+    }
+    
+    .voice-dropdown-content .close-btn:hover {
+        background: #6c7b7d;
+    }
+    
+    .recording-popup .stop-record-btn:hover {
+        background: #c0392b;
+    }
+    
+    .recording-popup .cancel-record-btn:hover {
+        background: #6c7b7d;
+    }
+}
+
+/* Fallback cho border-radius */
+@supports not (border-radius: 12px) {
+    .voice-dropdown-content {
+        border-radius: 8px;
+    }
+    
+    .voice-dropdown-content .language-select {
+        border-radius: 4px;
+    }
+    
+    .voice-dropdown-content .start-record-btn,
+    .voice-dropdown-content .close-btn {
+        border-radius: 4px;
+    }
+    
+    .recording-popup {
+        border-radius: 8px;
+    }
+    
+    .recording-popup .recording-icon {
+        border-radius: 50%;
+    }
+    
+    .recording-popup .stop-record-btn,
+    .recording-popup .cancel-record-btn {
+        border-radius: 20px;
+    }
+    
+    .loading-container {
+        border-radius: 8px;
+    }
+    
+    .loading-spinner {
+        border-radius: 50%;
+    }
+    
+    .loading-progress {
+        border-radius: 2px;
+    }
+    
+    .loading-progress-bar {
+        border-radius: 2px;
+    }
+    
+    .loading-dot {
+        border-radius: 50%;
+    }
+}
+
+/* Fallback cho box-shadow */
+@supports not (box-shadow: 0 8px 32px rgba(255, 90, 87, 0.15)) {
+    .voice-dropdown-content {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    }
+    
+    .recording-popup {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+    
+    .recording-popup .recording-icon {
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+    
+    .loading-container {
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Fallback cho animation */
+@supports not (animation: pulse 1.5s infinite) {
+    .voice-record-dropdown .bi-mic.text-danger {
+        opacity: 0.7;
+    }
+    
+    .recording-popup .recording-icon {
+        opacity: 0.9;
+    }
+    
+    .loading-spinner {
+        border-top-color: #FF5A57;
+    }
+    
+    .loading-progress-bar {
+        width: 70%;
+    }
+    
+    .loading-dot {
+        opacity: 0.7;
+    }
+}
+
+/* IE11 specific fixes */
+@media all and (-ms-high-contrast: none), (-ms-high-contrast: active) {
+    .voice-dropdown-content {
+        background: #ffffff;
+        border: 1px solid #FBEFF5;
+    }
+    
+    .recording-popup {
+        background: #ffffff;
+        border: 2px solid #FBEFF5;
+    }
+    
+    .loading-overlay {
+        background: rgba(255, 255, 255, 0.9);
+    }
+    
+    .loading-container {
+        background: #ffffff;
+        border: 2px solid #FBEFF5;
+    }
+    
+    /* Disable animations for IE11 */
+    .voice-record-dropdown .bi-mic.text-danger,
+    .recording-popup .recording-icon,
+    .loading-spinner,
+    .loading-progress-bar,
+    .loading-dot {
+        animation: none;
+    }
+}
+
+/* Safari specific fixes */
+@media screen and (-webkit-min-device-pixel-ratio: 0) {
+    .voice-dropdown-content {
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+    }
+    
+    .recording-popup {
+        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
+    }
+    
+    .loading-overlay {
+        -webkit-backdrop-filter: blur(5px);
+        backdrop-filter: blur(5px);
+    }
+}
+
+/* Firefox specific fixes */
+@-moz-document url-prefix() {
+    .voice-dropdown-content {
+        background: rgba(255, 255, 255, 0.95);
+    }
+    
+    .recording-popup {
+        background: rgba(255, 255, 255, 0.95);
+    }
+    
+    .loading-overlay {
+        background: rgba(255, 255, 255, 0.9);
+    }
+}
+
+/* Mobile specific fallbacks */
+@media (max-width: 768px) {
+    @supports not (display: flex) {
+        .voice-dropdown-content .button-group {
+            display: block;
+        }
+        
+        .recording-popup .recording-controls {
+            display: block;
+        }
+        
+        .recording-popup .stop-record-btn,
+        .recording-popup .cancel-record-btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+        }
+    }
+    
+    @supports not (border-radius: 12px) {
+        .recording-popup {
+            border-radius: 8px;
+        }
+        
+        .loading-container {
+            border-radius: 8px;
+        }
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .voice-dropdown-content {
+        border: 2px solid #000000;
+        background: #ffffff;
+    }
+    
+    .recording-popup {
+        border: 3px solid #000000;
+        background: #ffffff;
+    }
+    
+    .loading-container {
+        border: 3px solid #000000;
+        background: #ffffff;
+    }
+    
+    .voice-dropdown-content .start-record-btn {
+        background: #000000;
+        color: #ffffff;
+        border: 2px solid #000000;
+    }
+    
+    .recording-popup .stop-record-btn {
+        background: #000000;
+        color: #ffffff;
+        border: 2px solid #000000;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .voice-record-dropdown .bi-mic.text-danger,
+    .recording-popup .recording-icon,
+    .loading-spinner,
+    .loading-progress-bar,
+    .loading-dot {
+        animation: none;
+    }
+    
+    .voice-dropdown-content .start-record-btn:hover,
+    .voice-dropdown-content .close-btn:hover,
+    .recording-popup .stop-record-btn:hover,
+    .recording-popup .cancel-record-btn:hover {
+        transform: none;
+    }
+    
+    .recording-popup.show {
+        animation: none;
+    }
+    
+    .loading-overlay.show {
+        animation: none;
+    }
+} 
