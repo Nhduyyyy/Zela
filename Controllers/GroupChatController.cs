@@ -5,7 +5,7 @@ using Zela.Services;
 using Zela.Models;
 using Zela.ViewModels;
 using System.IO;
-using System.Text.Json;
+using Zela.Services.Interface;
 
 namespace Zela.Controllers
 {
@@ -13,10 +13,12 @@ namespace Zela.Controllers
     public class GroupChatController : Controller
     {
         private readonly IChatService _chatService;
+        private readonly IVoiceToTextService _voiceToTextService;
 
-        public GroupChatController(IChatService chatService)
+        public GroupChatController(IChatService chatService, IVoiceToTextService voiceToTextService)
         {
             _chatService = chatService;
+            _voiceToTextService = voiceToTextService;
         }
 
         // Trang danh sách nhóm
@@ -27,26 +29,29 @@ namespace Zela.Controllers
             return View(groups);
         }
 
-        // Trả về JSON chứa lịch sử chat nhóm
+        // Trả về View chứa lịch sử chat nhóm
         [HttpGet]
         public async Task<IActionResult> GetGroupMessages(int groupId)
         {
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
-            var messages = await _chatService.GetGroupMessagesAsync(groupId);
+            var messages = await _chatService.GetGroupMessagesWithUserContextAsync(groupId, userId);
+            var group = await _chatService.GetGroupDetailsAsync(groupId);
             
-            // Set IsMine for each message
-            foreach (var msg in messages)
+            var viewModel = new GroupMessagesViewModel
             {
-                msg.IsMine = msg.SenderId == userId;
-                
-                // Update reactions to show if current user has reacted
-                foreach (var reaction in msg.Reactions)
-                {
-                    reaction.HasUserReaction = await _chatService.HasUserReactionAsync(msg.MessageId, userId, reaction.ReactionType);
-                }
+                GroupId = groupId,
+                GroupName = group?.Name ?? "Unknown Group",
+                Messages = messages,
+                Group = group
+            };
+            
+            // Kiểm tra nếu request là AJAX thì trả về JSON, ngược lại trả về View
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(messages);
             }
             
-            return Json(messages);
+            return View("Messages", viewModel);
         }
 
         // Gửi tin nhắn nhóm với file
@@ -54,28 +59,19 @@ namespace Zela.Controllers
         [RequestSizeLimit(50 * 1024 * 1024)] // 50MB limit
         public async Task<IActionResult> SendGroupMessage(int groupId, string content, List<IFormFile> files, long? replyToMessageId = null)
         {
-            try
+            int senderId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var (success, message, result) = await _chatService.SendGroupMessageWithValidationAsync(senderId, groupId, content, files, replyToMessageId);
+            
+            if (!success)
             {
-                int senderId = HttpContext.Session.GetInt32("UserId") ?? 0;
-                if (senderId == 0)
-                {
-                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
-                }
-
-                // Validate input
-                if (string.IsNullOrWhiteSpace(content) && (files == null || files.Count == 0))
-                {
-                    return BadRequest(new { message = "Vui lòng nhập nội dung tin nhắn hoặc chọn file" });
-                }
-
-                var message = await _chatService.SendGroupMessageAsync(senderId, groupId, content, files, replyToMessageId);
-                return Ok(new { success = true, message = message });
+                TempData["ErrorMessage"] = message;
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Error sending group message: {ex.Message}");
-                return StatusCode(500, new { message = "Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại." });
+                TempData["SuccessMessage"] = "Tin nhắn đã được gửi thành công!";
             }
+            
+            return RedirectToAction("GetGroupMessages", new { groupId });
         }
 
         // Tạo nhóm chat mới (hỗ trợ avatar, password, friendIds)
@@ -84,28 +80,53 @@ namespace Zela.Controllers
         {
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
             var (success, message, groupVm) = await _chatService.CreateGroupWithAvatarAndFriendsAsync(userId, name, description, avatar, password, friendIds);
+            
             if (!success)
-                return BadRequest(new { message });
-            return Json(new { success = true, group = groupVm });
+            {
+                TempData["ErrorMessage"] = message;
+            }
+            else
+            {
+                TempData["SuccessMessage"] = "Tạo nhóm thành công!";
+            }
+            
+            return RedirectToAction("Index");
         }
 
-        // Thêm thành viên vào nhóm (đã chuyển toàn bộ logic sang service)
+        // Thêm thành viên vào nhóm
         [HttpPost]
         public async Task<IActionResult> AddMember(int groupId, int userId)
         {
             int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
             var (success, message) = await _chatService.AddMemberWithValidationAsync(groupId, userId, currentUserId);
+            
             if (!success)
-                return BadRequest(new { message });
-            return Ok(new { message });
+            {
+                TempData["ErrorMessage"] = message;
+            }
+            else
+            {
+                TempData["SuccessMessage"] = message;
+            }
+            
+            return RedirectToAction("GetGroupMessages", new { groupId });
         }
 
         // Xóa thành viên khỏi nhóm
         [HttpPost]
         public async Task<IActionResult> RemoveMember(int groupId, int userId)
         {
-            await _chatService.RemoveMemberFromGroupAsync(groupId, userId);
-            return Ok();
+            try
+            {
+                await _chatService.RemoveMemberFromGroupAsync(groupId, userId);
+                TempData["SuccessMessage"] = "Đã xóa thành viên khỏi nhóm!";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa thành viên";
+            }
+            
+            return RedirectToAction("GetGroupMessages", new { groupId });
         }
 
         // Lấy chi tiết nhóm
@@ -113,126 +134,174 @@ namespace Zela.Controllers
         public async Task<IActionResult> GetGroupDetails(int groupId)
         {
             var group = await _chatService.GetGroupDetailsAsync(groupId);
-            return Json(group);
+            if (group == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy nhóm";
+                return RedirectToAction("Index");
+            }
+            
+            return View("Details", group);
         }
 
         // Cập nhật thông tin nhóm
         [HttpPost]
         public async Task<IActionResult> UpdateGroup(int groupId, string name, string description)
         {
-            await _chatService.UpdateGroupAsync(groupId, name, description);
-            return Ok();
+            try
+            {
+                await _chatService.UpdateGroupAsync(groupId, name, description);
+                TempData["SuccessMessage"] = "Cập nhật nhóm thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Có lỗi xảy ra khi cập nhật nhóm";
+            }
+            
+            return RedirectToAction("GetGroupDetails", new { groupId });
         }
 
         // Xóa nhóm
         [HttpPost]
         public async Task<IActionResult> DeleteGroup(int groupId)
         {
-            await _chatService.DeleteGroupAsync(groupId);
-            return Ok();
+            try
+            {
+                await _chatService.DeleteGroupAsync(groupId);
+                TempData["SuccessMessage"] = "Đã xóa nhóm thành công!";
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "Có lỗi xảy ra khi xóa nhóm";
+            }
+            
+            return RedirectToAction("Index");
         }
 
-        // Tìm kiếm người dùng để thêm vào nhóm (đã chuyển lọc thành viên sang service)
+        // Lấy thông tin nhóm cho edit
+        [HttpGet]
+        public async Task<IActionResult> GetGroupInfoForEdit(int groupId)
+        {
+            var groupInfo = await _chatService.GetGroupInfoForEditAsync(groupId);
+            if (groupInfo == null)
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy nhóm";
+                return RedirectToAction("Index");
+            }
+            
+            return View("Edit", groupInfo);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> EditGroup(EditGroupViewModel model, IFormFile? avatarFile)
+        {
+            var (success, message) = await _chatService.EditGroupAsync(model, avatarFile);
+            
+            if (success)
+            {
+                TempData["SuccessMessage"] = message;
+            }
+            else
+            {
+                TempData["ErrorMessage"] = message;
+            }
+            
+            return RedirectToAction("Index", new { groupId = model.GroupId });
+        }
+
+        // Tìm kiếm người dùng để thêm vào nhóm
         [HttpGet]
         public async Task<IActionResult> SearchUsers(string searchTerm, int? groupId = null)
         {
             int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
             var users = await _chatService.SearchUsersWithGroupFilterAsync(searchTerm, currentUserId, groupId);
-            return Json(users);
+            
+            var viewModel = new SearchUsersViewModel
+            {
+                SearchTerm = searchTerm,
+                GroupId = groupId,
+                Users = users
+            };
+            
+            return View("SearchUsers", viewModel);
         }
 
-        // Trả về HTML cho sidebar right (dùng service dựng view model)
+        // Trả về HTML cho sidebar right
         [HttpGet]
         public async Task<IActionResult> GetGroupSidebar(int groupId)
         {
             var groupViewModel = await _chatService.BuildGroupSidebarViewModelAsync(groupId, 12);
             if (groupViewModel == null)
-                return NotFound();
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy nhóm";
+                return RedirectToAction("Index");
+            }
             return PartialView("_SidebarRight", groupViewModel);
         }
 
-        // Trả về HTML cho sidebar media (dùng service dựng view model)
+        // Trả về HTML cho sidebar media
         [HttpGet]
         public async Task<IActionResult> GetGroupSidebarMedia(int groupId)
         {
             var groupViewModel = await _chatService.BuildGroupSidebarMediaViewModelAsync(groupId, 100);
             if (groupViewModel == null)
-                return NotFound();
+            {
+                TempData["ErrorMessage"] = "Không tìm thấy nhóm";
+                return RedirectToAction("Index");
+            }
             return PartialView("_SidebarMedia", groupViewModel);
         }
 
-        // Message Reaction Endpoints
+        // Message Reaction Actions
         [HttpPost]
-        public async Task<IActionResult> AddReaction([FromBody] AddReactionRequest request)
+        public async Task<IActionResult> AddReaction(int messageId, string reactionType, int groupId)
         {
-            try
+            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var (success, message, result) = await _chatService.AddReactionWithValidationAsync(messageId, userId, reactionType);
+            
+            if (!success)
             {
-                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
-                if (userId == 0)
-                {
-                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
-                }
-
-                var reaction = await _chatService.AddReactionAsync(request.MessageId, userId, request.ReactionType);
-                
-                if (reaction == null)
-                {
-                    // Reaction đã bị xóa
-                    return Json(new { success = true, action = "removed" });
-                }
-                else
-                {
-                    // Reaction đã được thêm hoặc cập nhật
-                    return Json(new { success = true, action = "added", reaction = reaction });
-                }
+                TempData["ErrorMessage"] = message;
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Error adding reaction: {ex.Message}");
-                return StatusCode(500, new { message = "Có lỗi xảy ra khi thêm biểu tượng cảm xúc" });
+                TempData["SuccessMessage"] = "Đã thêm biểu tượng cảm xúc!";
             }
+            
+            return RedirectToAction("GetGroupMessages", new { groupId });
         }
 
         [HttpGet]
-        public async Task<IActionResult> GetMessageReactions(long messageId)
+        public async Task<IActionResult> GetMessageReactions(long messageId, int groupId)
         {
-            try
+            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var (success, message, result) = await _chatService.GetMessageReactionsWithValidationAsync(messageId, userId);
+            
+            if (!success)
             {
-                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
-                if (userId == 0)
-                {
-                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
-                }
-
-                var reactions = await _chatService.GetMessageReactionsAsync(messageId, userId);
-                return Json(new { success = true, reactions = reactions });
+                TempData["ErrorMessage"] = message;
+                return RedirectToAction("GetGroupMessages", new { groupId });
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error getting reactions: {ex.Message}");
-                return StatusCode(500, new { message = "Có lỗi xảy ra khi lấy biểu tượng cảm xúc" });
-            }
+            
+            // Chuyển đến trang hiển thị reactions
+            return View("MessageReactions", new { MessageId = messageId, GroupId = groupId, Reactions = result });
         }
 
         [HttpPost]
-        public async Task<IActionResult> RemoveReaction([FromBody] RemoveReactionRequest request)
+        public async Task<IActionResult> RemoveReaction(int messageId, int groupId)
         {
-            try
+            int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var (success, message) = await _chatService.RemoveReactionWithValidationAsync(messageId, userId);
+            
+            if (!success)
             {
-                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
-                if (userId == 0)
-                {
-                    return Unauthorized(new { message = "Không tìm thấy thông tin người dùng" });
-                }
-
-                await _chatService.RemoveReactionAsync(request.MessageId, userId);
-                return Json(new { success = true });
+                TempData["ErrorMessage"] = message;
             }
-            catch (Exception ex)
+            else
             {
-                Console.WriteLine($"Error removing reaction: {ex.Message}");
-                return StatusCode(500, new { message = "Có lỗi xảy ra khi xóa biểu tượng cảm xúc" });
+                TempData["SuccessMessage"] = "Đã xóa biểu tượng cảm xúc!";
             }
+            
+            return RedirectToAction("GetGroupMessages", new { groupId });
         }
         
         // Tham gia nhóm bằng link
@@ -241,26 +310,34 @@ namespace Zela.Controllers
         public async Task<IActionResult> Join(int groupId)
         {
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
-            if (userId == 0)
+            var (success, message) = await _chatService.JoinGroupAsync(groupId, userId);
+            
+            if (!success && message.Contains("đăng nhập"))
             {
-                TempData["ErrorMessage"] = "Bạn cần đăng nhập để tham gia nhóm.";
+                TempData["ErrorMessage"] = message;
                 return RedirectToAction("Login", "Account");
             }
-            var group = await _chatService.GetGroupDetailsAsync(groupId);
-            if (group == null)
+            
+            if (success)
             {
-                TempData["ErrorMessage"] = "Nhóm không tồn tại.";
-                return RedirectToAction("Index");
+                TempData["SuccessMessage"] = message;
             }
-            var isMember = group.Members.Any(m => m.UserId == userId);
-            if (isMember)
+            else
             {
-                TempData["InfoMessage"] = "Bạn đã là thành viên của nhóm này.";
-                return RedirectToAction("Index", new { groupId });
+                TempData["InfoMessage"] = message;
             }
-            await _chatService.AddMemberToGroupAsync(groupId, userId);
-            TempData["SuccessMessage"] = "Bạn đã tham gia nhóm thành công!";
+            
             return RedirectToAction("Index", new { groupId });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> VoiceToText(IFormFile audio, string language)
+        {
+            if (audio == null || audio.Length == 0)
+                return BadRequest(new { text = "" });
+            using var stream = audio.OpenReadStream();
+            var text = await _voiceToTextService.ConvertVoiceToTextAsync(stream, language);
+            return Json(new { text });
         }
     }
 } 

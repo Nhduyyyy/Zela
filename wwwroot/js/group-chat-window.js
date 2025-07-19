@@ -18,6 +18,18 @@ function initializeCurrentUserId() {
     } else {
         console.warn("currentUserId not found!");
     }
+    
+    // Initialize currentGroupId if not set
+    if (!currentGroupId) {
+        const groupIdElement = document.querySelector('[data-group-id]');
+        if (groupIdElement) {
+            currentGroupId = groupIdElement.dataset.groupId;
+            console.log("currentGroupId set from data attribute:", currentGroupId);
+        } else if (typeof window.currentGroupId !== 'undefined') {
+            currentGroupId = window.currentGroupId;
+            console.log("currentGroupId set from window variable:", currentGroupId);
+        }
+    }
 }
 
 // Kết nối SignalR với UserId
@@ -83,9 +95,18 @@ function startSignalRConnection() {
     
     // Only start if not already connected or connecting
     if (connection.state === signalR.HubConnectionState.Disconnected) {
-        connection.start().catch(err => console.error('GroupChat SignalR start error:', err.toString()));
+        connection.start()
+            .then(() => {
+                console.log('GroupChat SignalR connected successfully');
+            })
+            .catch(err => console.error('GroupChat SignalR start error:', err.toString()));
     }
 }
+
+// Initialize when document is ready
+$(document).ready(function() {
+    startSignalRConnection();
+});
 
 // ===== INDEX PAGE FUNCTIONALITY =====
 
@@ -157,38 +178,61 @@ async function loadGroupSidebar(groupId) {
 
 // Load tin nhắn nhóm
 function loadGroupMessages() {
-    $.get('/GroupChat/GetGroupMessages', { groupId: currentGroupId }, function(messages) {
-        let chatContent = $('.chat-content');
-        chatContent.html(''); // Clear existing messages
+    console.log('loadGroupMessages called with currentGroupId:', currentGroupId);
+    
+    if (!currentGroupId) {
+        console.error('currentGroupId is not set!');
+        return;
+    }
+    
+    $.ajax({
+        url: '/GroupChat/GetGroupMessages',
+        method: 'GET',
+        data: { groupId: currentGroupId },
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        success: function(messages) {
+            console.log('Received messages:', messages);
+            let chatContent = $('.chat-content');
+            chatContent.html(''); // Clear existing messages
 
-        if (messages && messages.length > 0) {
-            messages.forEach(function(msg) {
-                // The currentUserId should be available globally in this script.
-                const messageHtml = renderGroupMessage(msg);
-                chatContent.append(messageHtml);
-            });
-        } else {
-            // Optional: show a message if there are no messages
-            chatContent.html('<div class="no-messages">Chưa có tin nhắn nào trong nhóm này.</div>');
-        }
+            if (messages && messages.length > 0) {
+                messages.forEach(function(msg) {
+                    console.log('Rendering message:', msg);
+                    // The currentUserId should be available globally in this script.
+                    const messageHtml = renderGroupMessage(msg);
+                    chatContent.append(messageHtml);
+                });
+            } else {
+                // Optional: show a message if there are no messages
+                chatContent.html('<div class="no-messages">Chưa có tin nhắn nào trong nhóm này.</div>');
+            }
 
-        scrollToBottom();
+            scrollToBottom();
 
-        // Initialize reaction functionality for new messages
-        if (window.messageReactions && window.messageReactions.updateAllMessageReactions) {
-            window.messageReactions.updateAllMessageReactions();
+            // Initialize reaction functionality for new messages
+            if (window.messageReactions && window.messageReactions.updateAllMessageReactions) {
+                window.messageReactions.updateAllMessageReactions();
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error('Error loading group messages:', error);
+            console.error('Response:', xhr.responseText);
+            $('.chat-content').html('<div class="error-message">Có lỗi xảy ra khi tải tin nhắn.</div>');
         }
     });
 }
 
 // Gửi tin nhắn nhóm (nhấn Enter hoặc bấm icon gửi) - Index page
-$(document).on('click', '.bi-send', function() {
-    sendGroupMessage();
-});
+// NOTE: This binding is now handled in Index.cshtml to avoid conflicts
+// $(document).on('click', '.bi-send', function() {
+//     sendGroupMessage();
+// });
 
-$('.chat-input-bar input').on('keypress', function(e) {
-    if (e.which === 13) sendGroupMessage();
-});
+// $('.chat-input-bar input').on('keypress', function(e) {
+//     if (e.which === 13) sendGroupMessage();
+// });
 
 // ===== DETAILS PAGE FUNCTIONALITY =====
 
@@ -213,11 +257,6 @@ function initializeDetailsPage() {
         // Xử lý gửi tin nhắn
         $("#messageForm").submit(function(e) {
             e.preventDefault();
-            const message = $("#messageInput").val();
-            if (message) {
-                connection.invoke("SendGroupMessage", currentGroupId, message);
-                $("#messageInput").val("");
-            }
             sendMessageWithFiles();
         });
     }

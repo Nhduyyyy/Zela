@@ -50,4 +50,24 @@ public interface IChatService
     Task<List<MessageViewModel>> SearchMessagesAsync(int userId, int friendId, string keyword);
     Task<List<long>> MarkAsSeenAsync(long messageId, int userId);
     Task<List<long>> MarkAsDeliveredAsync(long messageId, int userId);
+    Task<string> UploadGroupAvatarAsync(IFormFile avatarFile);
+    Task UpdateGroupFullAsync(int groupId, string name, string? description, string? avatarUrl, string? password);
+    
+    // Group edit methods
+    Task<EditGroupViewModel> GetGroupInfoForEditAsync(int groupId);
+    Task<(bool Success, string Message)> EditGroupAsync(EditGroupViewModel model, IFormFile? avatarFile);
+    
+    // Group join methods
+    Task<(bool Success, string Message)> JoinGroupAsync(int groupId, int userId);
+    
+    // Message reaction methods with validation
+    Task<(bool Success, string Message, object Result)> AddReactionWithValidationAsync(long messageId, int userId, string reactionType);
+    Task<(bool Success, string Message, object Result)> GetMessageReactionsWithValidationAsync(long messageId, int userId);
+    Task<(bool Success, string Message)> RemoveReactionWithValidationAsync(long messageId, int userId);
+    
+    // Group message methods with validation
+    Task<(bool Success, string Message, GroupMessageViewModel Result)> SendGroupMessageWithValidationAsync(int senderId, int groupId, string content, List<IFormFile> files, long? replyToMessageId);
+    
+    // Group messages with user context
+    Task<List<GroupMessageViewModel>> GetGroupMessagesWithUserContextAsync(int groupId, int userId);
 }

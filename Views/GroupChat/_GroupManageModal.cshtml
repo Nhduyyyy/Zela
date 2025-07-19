@@ -1,5 +1,6 @@
 @* Modal Quản lý nhóm - Đậm chất Zela, tông tím-xanh, magenta, glass, shadow, bo góc lớn *@
 <link rel="stylesheet" href="/css/components/group-manage-modal.css" />
+<script src="/js/group-manage-modal.js"></script>
 <div class="modal fade" id="groupManageModal" tabindex="-1" aria-labelledby="groupManageModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content group-manage-modal">
@@ -10,6 +11,10 @@
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
+                @* TempData message containers *@
+                <div data-tempdata-success="@TempData["SuccessMessage"]"></div>
+                <div data-tempdata-error="@TempData["ErrorMessage"]"></div>
+                
                 <div class="row g-3">
                     <div class="col-12 col-md-4 mb-3 mb-md-0">
                         <ul class="nav nav-pills flex-column group-manage-nav" id="groupManageTab" role="tablist">
@@ -20,7 +25,7 @@
                             </li>
                             <li class="nav-item" role="presentation">
                                 <button class="nav-link" id="settings-tab" data-bs-toggle="pill" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">
-                                    <i class="bi bi-sliders me-2"></i>Tùy chỉnh nhóm
+                                    <i class="bi bi-pencil-square me-2"></i>Chỉnh sửa thông tin nhóm
                                 </button>
                             </li>
                             <li class="nav-item" role="presentation">
@@ -50,8 +55,37 @@
                                 </div>
                             </div>
                             <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
-                                <h6>Tùy chỉnh nhóm</h6>
-                                <p>Thay đổi thông tin, cài đặt nhóm. (Nội dung chi tiết sẽ bổ sung sau)</p>
+                                <h6>Chỉnh sửa thông tin nhóm</h6>
+                                <form asp-action="EditGroup" asp-controller="GroupChat" method="post" enctype="multipart/form-data" id="editGroupForm">
+                                    <input type="hidden" name="GroupId" value="@Model.GroupId" />
+                                    <div class="mb-3">
+                                        <label for="Name" class="form-label">Tên nhóm</label>
+                                        <input type="text" class="form-control" id="Name" name="Name" value="@Model.Name" required>
+                                        <div class="invalid-feedback">Tên nhóm là bắt buộc</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="Description" class="form-label">Mô tả</label>
+                                        <input type="text" class="form-control" id="Description" name="Description" value="@Model.Description">
+                                        <div class="invalid-feedback">Mô tả không được vượt quá 50 ký tự</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="Password" class="form-label">Mật khẩu nhóm (nếu có)</label>
+                                        <input type="password" class="form-control" id="Password" name="Password" autocomplete="new-password">
+                                        <div class="invalid-feedback">Mật khẩu không được vượt quá 50 ký tự</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Ảnh đại diện nhóm hiện tại</label><br />
+                                        <img src="@Model.AvatarUrl" alt="Avatar nhóm" class="rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Đổi ảnh đại diện nhóm (upload cloud)</label>
+                                        <input type="file" name="avatarFile" class="form-control" accept="image/*" />
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    </div>
+                                </form>
                             </div>
                             <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
                                 <h6>Yêu cầu tham gia</h6>
