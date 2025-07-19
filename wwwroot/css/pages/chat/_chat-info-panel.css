@@ -3,6 +3,7 @@
 /*=======================================================================================*/
 
 .chat-info-panel {
+    height: 100%;
     width: 320px;
     border-left: 1px solid var(--theme-border-color);
     background: rgba(11, 29, 52, 0.7);
@@ -234,6 +235,11 @@
 }
 
 .file-name {
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
     color: var(--theme-text-primary);
     font-weight: 500;
     display: block;

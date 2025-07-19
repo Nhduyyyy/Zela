@@ -82,7 +82,7 @@
                     }
                 }
             </div>
-            <a href="#" class="view-all-link">
+            <a href="#" class="view-all-link" onclick="showSidebarMedia()">
                 <i class="bi bi-arrow-right me-1"></i>Xem tất cả (@(Model.Images.Count + Model.Videos.Count) items)
             </a>
         }
@@ -176,3 +176,5 @@
         </div>
     </div>
 </div>
+<!-- Thêm container riêng cho sidebar media, nằm ngoài chat-info-panel -->
+<div id="sidebar-media-container" class="d-none"></div>

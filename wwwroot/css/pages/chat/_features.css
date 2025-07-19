@@ -143,7 +143,7 @@
 
 /* Sidebar media container */
 #sidebar-media-container {
-    padding-right: 8px;
+    height: 100%;
     background: var(--theme-bg-secondary);
     border-left: 1px solid var(--theme-border-color);
     transition: margin-right .5s;

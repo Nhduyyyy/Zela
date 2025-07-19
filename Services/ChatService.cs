@@ -1007,4 +1007,198 @@ public class ChatService : IChatService
         }
         return sb.ToString().Normalize(System.Text.NormalizationForm.FormC);
     }
+
+    public async Task<string> UploadGroupAvatarAsync(IFormFile avatarFile)
+    {
+        // Sử dụng dịch vụ upload cloud đã có
+        return await _fileUploadService.UploadAsync(avatarFile, "group-avatar");
+    }
+
+    public async Task UpdateGroupFullAsync(int groupId, string name, string? description, string? avatarUrl, string? password)
+    {
+        var group = await _dbContext.ChatGroups.FindAsync(groupId);
+        if (group == null)
+            throw new Exception("Group not found");
+        group.Name = name;
+        group.Description = string.IsNullOrEmpty(description) ? "" : description;
+        if (!string.IsNullOrEmpty(avatarUrl))
+            group.AvatarUrl = avatarUrl;
+        group.Password = string.IsNullOrEmpty(password) ? null : password;
+        await _dbContext.SaveChangesAsync();
+    }
+
+    // Group edit methods
+    public async Task<EditGroupViewModel> GetGroupInfoForEditAsync(int groupId)
+    {
+        var group = await GetGroupDetailsAsync(groupId);
+        if (group == null) return null;
+        
+        return new EditGroupViewModel
+        {
+            GroupId = group.GroupId,
+            Name = group.Name,
+            Description = group.Description,
+            AvatarUrl = group.AvatarUrl,
+            Password = group.Password
+        };
+    }
+
+    public async Task<(bool Success, string Message)> EditGroupAsync(EditGroupViewModel model, IFormFile? avatarFile)
+    {
+        try
+        {
+            // Validate model
+            if (model == null || model.GroupId <= 0)
+                return (false, "Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.");
+
+            if (string.IsNullOrWhiteSpace(model.Name))
+                return (false, "Tên nhóm không được để trống.");
+
+            // Upload avatar nếu có file mới
+            if (avatarFile != null && avatarFile.Length > 0)
+            {
+                var avatarUrl = await UploadGroupAvatarAsync(avatarFile);
+                model.AvatarUrl = avatarUrl;
+            }
+
+            await UpdateGroupFullAsync(model.GroupId, model.Name, model.Description, model.AvatarUrl, model.Password);
+            
+            return (true, "Cập nhật nhóm thành công!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating group: {ex.Message}");
+            return (false, "Có lỗi xảy ra khi cập nhật nhóm");
+        }
+    }
+
+    // Group join methods
+    public async Task<(bool Success, string Message)> JoinGroupAsync(int groupId, int userId)
+    {
+        try
+        {
+            if (userId == 0)
+                return (false, "Bạn cần đăng nhập để tham gia nhóm.");
+
+            var group = await GetGroupDetailsAsync(groupId);
+            if (group == null)
+                return (false, "Nhóm không tồn tại.");
+
+            var isMember = group.Members.Any(m => m.UserId == userId);
+            if (isMember)
+                return (false, "Bạn đã là thành viên của nhóm này.");
+
+            await AddMemberToGroupAsync(groupId, userId);
+            return (true, "Bạn đã tham gia nhóm thành công!");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error joining group: {ex.Message}");
+            return (false, "Có lỗi xảy ra khi tham gia nhóm");
+        }
+    }
+
+    // Message reaction methods with validation
+    public async Task<(bool Success, string Message, object Result)> AddReactionWithValidationAsync(long messageId, int userId, string reactionType)
+    {
+        try
+        {
+            if (userId == 0)
+                return (false, "Không tìm thấy thông tin người dùng", null);
+
+            var reaction = await AddReactionAsync(messageId, userId, reactionType);
+            
+            if (reaction == null)
+            {
+                // Reaction đã bị xóa
+                return (true, "Reaction removed", new { action = "removed" });
+            }
+            else
+            {
+                // Reaction đã được thêm hoặc cập nhật
+                return (true, "Reaction added", new { action = "added", reaction = reaction });
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding reaction: {ex.Message}");
+            return (false, "Có lỗi xảy ra khi thêm biểu tượng cảm xúc", null);
+        }
+    }
+
+    public async Task<(bool Success, string Message, object Result)> GetMessageReactionsWithValidationAsync(long messageId, int userId)
+    {
+        try
+        {
+            if (userId == 0)
+                return (false, "Không tìm thấy thông tin người dùng", null);
+
+            var reactions = await GetMessageReactionsAsync(messageId, userId);
+            return (true, "Success", new { reactions = reactions });
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error getting reactions: {ex.Message}");
+            return (false, "Có lỗi xảy ra khi lấy biểu tượng cảm xúc", null);
+        }
+    }
+
+    public async Task<(bool Success, string Message)> RemoveReactionWithValidationAsync(long messageId, int userId)
+    {
+        try
+        {
+            if (userId == 0)
+                return (false, "Không tìm thấy thông tin người dùng");
+
+            await RemoveReactionAsync(messageId, userId);
+            return (true, "Reaction removed successfully");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error removing reaction: {ex.Message}");
+            return (false, "Có lỗi xảy ra khi xóa biểu tượng cảm xúc");
+        }
+    }
+
+    // Group message methods with validation
+    public async Task<(bool Success, string Message, GroupMessageViewModel Result)> SendGroupMessageWithValidationAsync(int senderId, int groupId, string content, List<IFormFile> files, long? replyToMessageId)
+    {
+        try
+        {
+            if (senderId == 0)
+                return (false, "Không tìm thấy thông tin người dùng", null);
+
+            // Validate input
+            if (string.IsNullOrWhiteSpace(content) && (files == null || files.Count == 0))
+                return (false, "Vui lòng nhập nội dung tin nhắn hoặc chọn file", null);
+
+            var message = await SendGroupMessageAsync(senderId, groupId, content, files, replyToMessageId);
+            return (true, "Message sent successfully", message);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error sending group message: {ex.Message}");
+            return (false, "Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại.", null);
+        }
+    }
+
+    // Group messages with user context
+    public async Task<List<GroupMessageViewModel>> GetGroupMessagesWithUserContextAsync(int groupId, int userId)
+    {
+        var messages = await GetGroupMessagesAsync(groupId);
+        
+        // Set IsMine for each message
+        foreach (var msg in messages)
+        {
+            msg.IsMine = msg.SenderId == userId;
+            
+            // Update reactions to show if current user has reacted
+            foreach (var reaction in msg.Reactions)
+            {
+                reaction.HasUserReaction = await HasUserReactionAsync(msg.MessageId, userId, reaction.ReactionType);
+            }
+        }
+        
+        return messages;
+    }
 }

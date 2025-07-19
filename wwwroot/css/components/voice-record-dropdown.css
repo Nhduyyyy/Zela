@@ -1,0 +1,126 @@
+/* Voice Record Dropdown Styles */
+.voice-record-dropdown {
+    padding: 7px;
+    position: relative;
+    display: inline-block;
+}
+
+.voice-dropdown-content {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    background: #2c3e50;
+    border: 1px solid #34495e;
+    border-radius: 8px;
+    padding: 10px;
+    min-width: 200px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.voice-dropdown-content .language-label {
+    margin-bottom: 10px;
+    color: #ecf0f1;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.voice-dropdown-content .language-select {
+    width: 100%;
+    padding: 8px;
+    border-radius: 4px;
+    border: 1px solid #34495e;
+    background: #34495e;
+    color: #ecf0f1;
+    margin-bottom: 10px;
+}
+
+.voice-dropdown-content .button-group {
+    display: flex;
+    gap: 8px;
+}
+
+.voice-dropdown-content .start-record-btn {
+    flex: 1;
+    padding: 8px;
+    background: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s ease;
+}
+
+.voice-dropdown-content .start-record-btn:hover {
+    background: #c0392b;
+}
+
+.voice-dropdown-content .start-record-btn:disabled {
+    background: #95a5a6;
+    cursor: not-allowed;
+}
+
+.voice-dropdown-content .close-btn {
+    padding: 8px;
+    background: #7f8c8d;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background-color 0.3s ease;
+}
+
+.voice-dropdown-content .close-btn:hover {
+    background: #6c7b7d;
+}
+
+/* Recording state styles */
+.voice-record-dropdown .bi-mic.text-danger {
+    color: #e74c3c !important;
+    animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.5;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* File preview styles */
+.file-preview-area {
+    display: none;
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 5px;
+}
+
+.hidden-file-input {
+    display: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .voice-dropdown-content {
+        min-width: 180px;
+        left: -50px;
+    }
+    
+    .voice-dropdown-content .button-group {
+        flex-direction: column;
+    }
+    
+    .voice-dropdown-content .start-record-btn,
+    .voice-dropdown-content .close-btn {
+        width: 100%;
+    }
+} 

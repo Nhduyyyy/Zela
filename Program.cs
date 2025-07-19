@@ -139,6 +139,9 @@ builder.Services.AddHttpClient<Zela.Services.Interface.IChatGPTService, Zela.Ser
 // Đăng ký FileSummaryService
 builder.Services.AddScoped<IFileSummaryService, FileSummaryService>();
 
+// Đăng ký dịch vụ VoiceToTextService
+builder.Services.AddScoped<IVoiceToTextService, VoiceToTextService>();
+
 // Configure form options for file uploads
 builder.Services.Configure<FormOptions>(options =>
 {
