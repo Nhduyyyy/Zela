@@ -10,6 +10,7 @@
     <link rel="stylesheet" href="~/css/pages/chat/_reactions.css"/>
     <link rel="stylesheet" href="~/css/pages/chat/_group-chat-messages.css"/>
     <link rel="stylesheet" href="~/css/components/voice-record-dropdown.css"/>
+    <link rel="stylesheet" href="~/css/components/voice-record-fallback.css"/>
 }
 
 <section class="chat-window">
@@ -137,6 +138,7 @@
     <script src="~/js/add-member.js"></script>
     <script src="~/js/message-reactions.js"></script>
     <script src="~/js/sidebar-media.js"></script>
+    <script src="~/js/voice-record-system.js"></script>
     <script>
         // File upload functionality for Index page
         let indexSelectedFiles = [];
@@ -333,136 +335,5 @@
             clearIndexFilePreview();
             console.log('Index: Files cleared');
         };
-
-        // Voice-to-text recording logic
-        let isRecording = false;
-        let mediaRecorder;
-        let audioChunks = [];
-
-        const voiceBtn = document.getElementById('voiceRecordBtn');
-        const voiceDropdown = document.getElementById('voiceDropdown');
-        const startVoiceRecordBtn = document.getElementById('startVoiceRecord');
-        const closeVoiceDropdownBtn = document.getElementById('closeVoiceDropdown');
-        const langSelect = document.getElementById('voiceLangSelect');
-        const groupChatInput = document.getElementById('groupChatInput');
-
-        // Toggle dropdown when clicking voice button
-        if (voiceBtn) {
-            voiceBtn.addEventListener('click', function (e) {
-                e.stopPropagation();
-                if (isRecording) {
-                    // If recording, stop it
-                    stopRecording();
-                } else {
-                    // Show dropdown
-                    voiceDropdown.style.display = voiceDropdown.style.display === 'none' ? 'block' : 'none';
-                }
-            });
-        }
-
-        // Close dropdown when clicking close button
-        if (closeVoiceDropdownBtn) {
-            closeVoiceDropdownBtn.addEventListener('click', function () {
-                voiceDropdown.style.display = 'none';
-            });
-        }
-
-        // Start recording when clicking start button
-        if (startVoiceRecordBtn) {
-            startVoiceRecordBtn.addEventListener('click', function () {
-                startRecording();
-            });
-        }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', function (e) {
-            if (!e.target.closest('.voice-record-dropdown')) {
-                voiceDropdown.style.display = 'none';
-            }
-        });
-
-        async function startRecording() {
-            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('Trình duyệt không hỗ trợ ghi âm!');
-                return;
-            }
-
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                mediaRecorder = new MediaRecorder(stream);
-                audioChunks = [];
-
-                mediaRecorder.ondataavailable = event => {
-                    if (event.data.size > 0) {
-                        audioChunks.push(event.data);
-                    }
-                };
-
-                mediaRecorder.onstop = async () => {
-                    await processAudioRecording();
-                };
-
-                mediaRecorder.start();
-                isRecording = true;
-                
-                // Update UI
-                voiceBtn.classList.add('text-danger');
-                voiceBtn.title = 'Đang ghi âm... Bấm để dừng';
-                voiceDropdown.style.display = 'none';
-                startVoiceRecordBtn.textContent = 'Đang ghi âm...';
-                startVoiceRecordBtn.disabled = true;
-            } catch (err) {
-                alert('Không thể truy cập micro!');
-            }
-        }
-
-        function stopRecording() {
-            if (mediaRecorder && isRecording) {
-                mediaRecorder.stop();
-                isRecording = false;
-                
-                // Update UI
-                voiceBtn.classList.remove('text-danger');
-                voiceBtn.title = 'Ghi âm giọng nói';
-                startVoiceRecordBtn.textContent = 'Bắt đầu ghi âm';
-                startVoiceRecordBtn.disabled = false;
-            }
-        }
-
-        async function processAudioRecording() {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            const formData = new FormData();
-            formData.append('audio', audioBlob);
-            formData.append('language', langSelect.value);
-
-            try {
-                voiceBtn.classList.add('bi-hourglass-split');
-                voiceBtn.title = 'Đang xử lý...';
-                
-                const response = await fetch('/GroupChat/VoiceToText', {
-                    method: 'POST',
-                    body: formData
-                });
-                
-                voiceBtn.classList.remove('bi-hourglass-split');
-                voiceBtn.title = 'Ghi âm giọng nói';
-                
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data && data.text) {
-                        groupChatInput.value = data.text;
-                        groupChatInput.focus();
-                    } else {
-                        alert('Không nhận diện được nội dung!');
-                    }
-                } else {
-                    alert('Có lỗi khi nhận diện giọng nói!');
-                }
-            } catch (err) {
-                voiceBtn.classList.remove('bi-hourglass-split');
-                voiceBtn.title = 'Ghi âm giọng nói';
-                alert('Lỗi gửi file ghi âm!');
-            }
-        }
     </script>
 } 

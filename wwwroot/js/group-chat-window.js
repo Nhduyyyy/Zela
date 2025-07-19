@@ -18,7 +18,7 @@ function initializeCurrentUserId() {
     } else {
         console.warn("currentUserId not found!");
     }
-    
+
     // Initialize currentGroupId if not set
     if (!currentGroupId) {
         const groupIdElement = document.querySelector('[data-group-id]');
@@ -63,6 +63,7 @@ connection.on("ReceiveGroupMessage", function (msg) {
             // Index page - append to chat-content
             $('.chat-content').append(renderGroupMessage(msg));
             scrollToBottom();
+            bindFileSummaryButtons(); // Bind file summary buttons for new message
         }
     }
 });
@@ -86,13 +87,14 @@ connection.on("ReceiveGroupSticker", function (msg) {
         msg.isMine = Number(msg.senderId) === Number(currentUserId);
         $('.chat-content').append(renderGroupMessage(msg));
         scrollToBottom();
+        bindFileSummaryButtons(); // Bind file summary buttons for new sticker
     }
 });
 
 // Start connection after initializing currentUserId
 function startSignalRConnection() {
     initializeCurrentUserId();
-    
+
     // Only start if not already connected or connecting
     if (connection.state === signalR.HubConnectionState.Disconnected) {
         connection.start()
@@ -106,6 +108,40 @@ function startSignalRConnection() {
 // Initialize when document is ready
 $(document).ready(function() {
     startSignalRConnection();
+
+    // Đăng ký event listener cho nút đóng preview/summary
+    document.addEventListener('click', function(e) {
+        if (e.target.classList.contains('close-preview-btn') || e.target.classList.contains('close-summary-btn')) {
+            console.log('Close button clicked:', e.target.className);
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Tìm container chứa nội dung cần đóng
+            const previewBox = e.target.closest('.file-preview-box');
+            const summaryBox = e.target.closest('.file-summary-box');
+
+            if (previewBox) {
+                console.log('Closing preview box');
+                previewBox.style.display = 'none';
+            }
+
+            if (summaryBox) {
+                console.log('Closing summary box');
+                summaryBox.style.display = 'none';
+            }
+
+            // Fallback: tìm theo file-summary-block
+            if (!previewBox && !summaryBox) {
+                const block = e.target.closest('.file-summary-block');
+                if (block) {
+                    const previewDiv = block.querySelector('.file-preview-content');
+                    const summaryDiv = block.querySelector('.file-summary-content');
+                    if (previewDiv) previewDiv.style.display = 'none';
+                    if (summaryDiv) summaryDiv.style.display = 'none';
+                }
+            }
+        }
+    });
 });
 
 // ===== INDEX PAGE FUNCTIONALITY =====
@@ -179,12 +215,12 @@ async function loadGroupSidebar(groupId) {
 // Load tin nhắn nhóm
 function loadGroupMessages() {
     console.log('loadGroupMessages called with currentGroupId:', currentGroupId);
-    
+
     if (!currentGroupId) {
         console.error('currentGroupId is not set!');
         return;
     }
-    
+
     $.ajax({
         url: '/GroupChat/GetGroupMessages',
         method: 'GET',
@@ -210,6 +246,7 @@ function loadGroupMessages() {
             }
 
             scrollToBottom();
+            bindFileSummaryButtons(); // Bind file summary buttons after loading messages
 
             // Initialize reaction functionality for new messages
             if (window.messageReactions && window.messageReactions.updateAllMessageReactions) {
@@ -275,45 +312,17 @@ function loadMessages() {
             });
         }
         scrollToBottom();
+        bindFileSummaryButtons(); // Bind file summary buttons after loading messages
     });
 }
 
 // Thêm tin nhắn mới - Details page
 function appendMessage(message) {
-    let mediaHtml = '';
-
-    // Render media nếu có
-    if (message.media && message.media.length > 0) {
-        for (const media of message.media) {
-            if (media.mediaType && media.mediaType.startsWith('image/')) {
-                mediaHtml += `<img src="${media.url}" class="message-media-img" alt="Ảnh gửi" />`;
-            } else if (media.mediaType && media.mediaType.startsWith('video/')) {
-                mediaHtml += `<video src="${media.url}" class="message-media-video" controls></video>`;
-            } else {
-                const fileName = media.fileName || media.url.split('/').pop();
-                mediaHtml += `
-                <div class="chat-file-attachment">
-                    <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
-                    <span class="file-name">${fileName}</span>
-                    <a href="${media.url}" download="${fileName}" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
-                </div>`;
-            }
-        }
-    }
-
-    const messageHtml = `
-        <div class="message ${message.isMine ? 'right' : 'left'}">
-            ${!message.isMine ? `<img src="${message.avatarUrl}" class="message-avatar" />` : ''}
-            <div class="message-content">
-                ${!message.isMine ? `<div class="message-sender">${message.senderName}</div>` : ''}
-                <span class="message-time">${new Date(message.sentAt).toLocaleTimeString()}</span>
-                ${mediaHtml}
-                ${message.content && message.content !== "[Đã gửi file]" ? `<span class="message-bubble">${message.content}</span>` : ''}
-            </div>
-        </div>
-    `;
-    $("#chatMessages").append(messageHtml);
+    let chatMessages = $('#chatMessages');
+    let messageHtml = renderGroupMessage(message);
+    chatMessages.append(messageHtml);
     scrollToBottom();
+    bindFileSummaryButtons(); // Bind file summary buttons after appending new message
 }
 
 // ===== COMMON FUNCTIONALITY =====
@@ -399,12 +408,40 @@ function renderGroupMessage(msg) {
                 mediaHtml += `<video src="${media.url}" class="message-media-video" controls></video>`;
             } else {
                 const fileName = media.fileName || media.url.split('/').pop();
-                mediaHtml += `
-                    <div class="chat-file-attachment">
-                        <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
-                        <span class="file-name">${fileName}</span>
-                        <a href="${media.url}" download="${fileName}" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
-                    </div>`;
+                const isTextDoc = fileName && (fileName.endsWith('.txt') || fileName.endsWith('.doc') || fileName.endsWith('.docx'));
+
+                if (isTextDoc) {
+                    mediaHtml += `
+                        <div class="file-block file-summary-block" data-media-url="${media.url}" data-filename="${fileName}">
+                            <div class="chat-file-attachment-group">
+                                <div class="chat-file-attachment">
+                                    <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                                    <span class="file-name">${fileName}</span>
+                                    <a href="${media.url}" download="${fileName}" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                                </div>
+                                <div class="chat-file-attachment">
+                                    <button type="button" class="btn btn-primary btn-preview-file" data-media-url="${media.url}" data-filename="${fileName}">
+                                        Xem trước
+                                    </button>
+                                    <button type="button" class="btn btn-primary btn-summarize-file" data-media-url="${media.url}" data-filename="${fileName}">
+                                        <span class="btn-summarize-text">Tóm tắt file</span>
+                                        <span class="btn-summarize-loading" style="display:none;">
+                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang tóm tắt...
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="file-preview-content" style="display:none;"></div>
+                            <div class="file-summary-content" style="display:none;"></div>
+                        </div>`;
+                } else {
+                    mediaHtml += `
+                        <div class="chat-file-attachment">
+                            <span class="file-icon"><i class="bi bi-file-earmark"></i></span>
+                            <span class="file-name">${fileName}</span>
+                            <a href="${media.url}" download="${fileName}" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                        </div>`;
+                }
             }
         }
     }
@@ -1008,4 +1045,95 @@ $(document).on('click', '#toggle-member-list', function (event) {
         $btn.find('span').removeClass('bi-eye-slash').addClass('bi-eye');
         $btn.contents().last()[0].textContent = '';
     }
-}); 
+});
+
+// ===== FILE SUMMARY FUNCTIONALITY FOR GROUP CHAT =====
+
+// Xử lý preview và tóm tắt file văn bản
+function bindFileSummaryButtons() {
+    // Xem trước file
+    document.querySelectorAll('.btn-preview-file').forEach(btn => {
+        btn.onclick = function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const block = btn.closest('.file-summary-block');
+            const url = btn.getAttribute('data-media-url');
+            const filename = btn.getAttribute('data-filename');
+            const previewDiv = block.querySelector('.file-preview-content');
+
+            console.log('Preview button clicked for:', filename);
+
+            // Ẩn summary nếu đang hiển thị
+            const summaryDiv = block.querySelector('.file-summary-content');
+            if (summaryDiv) summaryDiv.style.display = 'none';
+
+            previewDiv.innerHTML = '<em>Đang tải xem trước...</em>';
+            previewDiv.style.display = 'block';
+
+            fetch(`/File/Preview?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`)
+                .then(res => res.text())
+                .then(html => {
+                    previewDiv.innerHTML = html;
+                    previewDiv.style.display = 'block';
+                })
+                .catch(() => {
+                    previewDiv.innerHTML = '<div class="file-preview-box"><div class="text-danger">Không thể xem trước.</div></div>';
+                    previewDiv.style.display = 'block';
+                });
+        };
+    });
+
+    // Tóm tắt file
+    document.querySelectorAll('.btn-summarize-file').forEach(btn => {
+        btn.onclick = function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const block = btn.closest('.file-summary-block');
+            const url = btn.getAttribute('data-media-url');
+            const filename = btn.getAttribute('data-filename');
+            const summaryDiv = block.querySelector('.file-summary-content');
+            const btnText = btn.querySelector('.btn-summarize-text');
+            const btnLoading = btn.querySelector('.btn-summarize-loading');
+
+            console.log('Summarize button clicked for:', filename);
+
+            // Ẩn preview nếu đang hiển thị
+            const previewDiv = block.querySelector('.file-preview-content');
+            if (previewDiv) previewDiv.style.display = 'none';
+
+            // Hiệu ứng loading
+            btn.disabled = true;
+            btnText.style.display = 'none';
+            btnLoading.style.display = 'inline-block';
+
+            summaryDiv.innerHTML = '';
+            summaryDiv.style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('url', url);
+            formData.append('filename', filename);
+            fetch('/File/Summarize', {
+                method: 'POST',
+                body: formData
+            })
+                .then(res => res.text())
+                .then(html => {
+                    summaryDiv.innerHTML = html;
+                    summaryDiv.style.display = 'block';
+                })
+                .catch(() => {
+                    summaryDiv.innerHTML = '<span class="text-danger">Có lỗi xảy ra khi tóm tắt file.</span>';
+                    summaryDiv.style.display = 'block';
+                })
+                .finally(() => {
+                    btn.disabled = false;
+                    btnText.style.display = 'inline';
+                    btnLoading.style.display = 'none';
+                });
+        };
+    });
+}
+
+ 

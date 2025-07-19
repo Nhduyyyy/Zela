@@ -100,16 +100,7 @@ namespace Zela.Controllers
             int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
             var (success, message) = await _chatService.AddMemberWithValidationAsync(groupId, userId, currentUserId);
             
-            if (!success)
-            {
-                TempData["ErrorMessage"] = message;
-            }
-            else
-            {
-                TempData["SuccessMessage"] = message;
-            }
-            
-            return RedirectToAction("GetGroupMessages", new { groupId });
+            return Json(new { success, message });
         }
 
         // Xóa thành viên khỏi nhóm
@@ -215,14 +206,7 @@ namespace Zela.Controllers
             int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
             var users = await _chatService.SearchUsersWithGroupFilterAsync(searchTerm, currentUserId, groupId);
             
-            var viewModel = new SearchUsersViewModel
-            {
-                SearchTerm = searchTerm,
-                GroupId = groupId,
-                Users = users
-            };
-            
-            return View("SearchUsers", viewModel);
+            return Json(users);
         }
 
         // Trả về HTML cho sidebar right
