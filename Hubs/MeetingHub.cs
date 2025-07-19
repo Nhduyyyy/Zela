@@ -339,5 +339,59 @@ namespace Zela.Hubs
                 Console.WriteLine($"Error leaving stats room: {ex.Message}");
             }
         }
+
+        // ======== SUBTITLE SHARING METHODS ========
+        
+        public async Task JoinSubtitleGroup(string sessionId)
+        {
+            try
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, $"subtitle_{sessionId}");
+                Console.WriteLine($"User joined subtitle group for session {sessionId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error joining subtitle group: {ex.Message}");
+            }
+        }
+
+        public async Task LeaveSubtitleGroup(string sessionId)
+        {
+            try
+            {
+                await Groups.RemoveFromGroupAsync(Context.ConnectionId, $"subtitle_{sessionId}");
+                Console.WriteLine($"User left subtitle group for session {sessionId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error leaving subtitle group: {ex.Message}");
+            }
+        }
+
+        public async Task SendSubtitle(string sessionId, object subtitle)
+        {
+            try
+            {
+                await Clients.Group($"subtitle_{sessionId}").SendAsync("ReceiveSubtitle", subtitle);
+                Console.WriteLine($"Subtitle sent to group subtitle_{sessionId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error sending subtitle: {ex.Message}");
+            }
+        }
+
+        public async Task UserSubtitleToggled(string sessionId, int userId, bool enabled)
+        {
+            try
+            {
+                await Clients.Group($"subtitle_{sessionId}").SendAsync("UserSubtitleToggled", userId, enabled);
+                Console.WriteLine($"User {userId} subtitle toggled: {enabled} for session {sessionId}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error broadcasting subtitle toggle: {ex.Message}");
+            }
+        }
     }
 }
