@@ -6,6 +6,8 @@ using Zela.Services;
 using Zela.Services.Interface;
 using Zela.ViewModels;
 using Microsoft.Extensions.Logging;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace Zela.Controllers
 {
@@ -15,14 +17,18 @@ namespace Zela.Controllers
         private readonly IMeetingService _meetingService; // Service xử lý các nghiệp vụ liên quan đến Meeting (phòng họp)
         private readonly IRecordingService _recordingService; // Service xử lý các nghiệp vụ liên quan đến Recording (ghi âm/ghi hình)
         private readonly IMeetingRoomMessageService _meetingRoomMessageService; // Service xử lý tin nhắn trong phòng
+        private readonly IAudioTranscriptionService _audioTranscriptionService; // Service xử lý audio transcription
+        private readonly IChatGPTService _chatGPTService; // Service xử lý translation
 
         // Constructor của MeetingController, được gọi khi controller này được khởi tạo
-        public MeetingController(IMeetingService meetingService, IRecordingService recordingService, IMeetingRoomMessageService meetingRoomMessageService)
+        public MeetingController(IMeetingService meetingService, IRecordingService recordingService, IMeetingRoomMessageService meetingRoomMessageService, IAudioTranscriptionService audioTranscriptionService, IChatGPTService chatGPTService)
         {
             // Gán các service được inject từ bên ngoài vào biến thành viên để sử dụng trong các action của controller
             _meetingService = meetingService;
             _recordingService = recordingService;
             _meetingRoomMessageService = meetingRoomMessageService;
+            _audioTranscriptionService = audioTranscriptionService;
+            _chatGPTService = chatGPTService;
         }
 
         // Đánh dấu action này sẽ xử lý các HTTP GET request đến /Meeting hoặc /Meeting/Index
@@ -768,6 +774,383 @@ namespace Zela.Controllers
             }
         }
 
+        // ======== REAL-TIME SUBTITLE ENDPOINTS ========
 
+        [HttpPost]
+        public async Task<IActionResult> TranscribeAudio()
+        {
+            try
+            {
+                // Debug raw request body BEFORE model binding
+                Request.EnableBuffering();
+                Request.Body.Position = 0;
+                using var reader = new StreamReader(Request.Body, leaveOpen: true);
+                var rawBody = await reader.ReadToEndAsync();
+                Request.Body.Position = 0;
+                
+                Console.WriteLine($"🎵 [DEBUG] Raw request body (first 200 chars): {rawBody.Substring(0, Math.Min(200, rawBody.Length))}");
+                Console.WriteLine($"🎵 [DEBUG] Request.ContentType: {Request.ContentType}");
+                Console.WriteLine($"🎵 [DEBUG] Request.ContentLength: {Request.ContentLength}");
+                
+                // Debug the raw JSON structure first
+                Console.WriteLine($"🎵 [DEBUG] Full raw JSON length: {rawBody.Length}");
+                
+                // Try to parse as JsonDocument to see the structure
+                try
+                {
+                    using var jsonDoc = System.Text.Json.JsonDocument.Parse(rawBody);
+                    var root = jsonDoc.RootElement;
+                    
+                    Console.WriteLine($"🎵 [DEBUG] JSON root element type: {root.ValueKind}");
+                    Console.WriteLine($"🎵 [DEBUG] Available properties: {string.Join(", ", root.EnumerateObject().Select(p => p.Name))}");
+                    
+                    if (root.TryGetProperty("sessionId", out var sessionIdElement))
+                    {
+                        Console.WriteLine($"🎵 [DEBUG] sessionId value: '{sessionIdElement.GetString()}'");
+                        Console.WriteLine($"🎵 [DEBUG] sessionId value type: {sessionIdElement.ValueKind}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ [DEBUG] sessionId property not found in JSON");
+                    }
+                    
+                    if (root.TryGetProperty("speakerId", out var speakerIdElement))
+                    {
+                        Console.WriteLine($"🎵 [DEBUG] speakerId value: '{speakerIdElement}'");
+                        Console.WriteLine($"🎵 [DEBUG] speakerId value type: {speakerIdElement.ValueKind}");
+                        
+                        if (speakerIdElement.ValueKind == JsonValueKind.Number)
+                        {
+                            Console.WriteLine($"🎵 [DEBUG] speakerId as number: {speakerIdElement.GetInt32()}");
+                        }
+                        else if (speakerIdElement.ValueKind == JsonValueKind.String)
+                        {
+                            Console.WriteLine($"🎵 [DEBUG] speakerId as string: {speakerIdElement.GetString()}");
+                        }
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ [DEBUG] speakerId property not found in JSON");
+                    }
+                    
+                    if (root.TryGetProperty("audioData", out var audioDataElement))
+                    {
+                        Console.WriteLine($"🎵 [DEBUG] audioData length: {audioDataElement.GetString()?.Length ?? 0}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"❌ [DEBUG] audioData property not found in JSON");
+                    }
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    Console.WriteLine($"❌ [DEBUG] JSON parsing error: {ex.Message}");
+                }
+                
+                // Now try to deserialize manually
+                try
+                {
+                    var request = System.Text.Json.JsonSerializer.Deserialize<AudioTranscriptionRequest>(rawBody);
+                    Console.WriteLine($"🎵 [DEBUG] Manual deserialization - AudioData length: {request?.AudioData?.Length ?? 0}");
+                    Console.WriteLine($"🎵 [DEBUG] Manual deserialization - SessionId: {request?.SessionId}");
+                    Console.WriteLine($"🎵 [DEBUG] Manual deserialization - SpeakerId: {request?.SpeakerId}");
+                    Console.WriteLine($"🎵 [DEBUG] Manual deserialization - Language: {request?.Language}");
+                    
+                    if (request == null)
+                    {
+                        return BadRequest(new { success = false, error = "Failed to deserialize request" });
+                    }
+                    
+                    // Continue with the rest of the logic using the manually deserialized request
+                    return await ProcessTranscriptionRequest(request);
+                }
+                catch (System.Text.Json.JsonException ex)
+                {
+                    Console.WriteLine($"❌ [DEBUG] JSON deserialization error: {ex.Message}");
+                    return BadRequest(new { success = false, error = "Invalid JSON format" });
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error reading request body: {ex.Message}");
+                return BadRequest(new { 
+                    success = false, 
+                    error = ex.Message 
+                });
+            }
+        }
+
+        private async Task<IActionResult> ProcessTranscriptionRequest(AudioTranscriptionRequest request)
+        {
+            try
+            {
+                // Validate request
+                if (string.IsNullOrEmpty(request?.AudioData))
+                {
+                    Console.WriteLine("❌ [DEBUG] AudioData is null or empty");
+                    return BadRequest(new { success = false, error = "AudioData is required" });
+                }
+                
+                if (request.SessionId == Guid.Empty)
+                {
+                    Console.WriteLine("❌ [DEBUG] SessionId is empty");
+                    return BadRequest(new { success = false, error = "Valid SessionId is required" });
+                }
+                
+                if (request.SpeakerId <= 0)
+                {
+                    Console.WriteLine("❌ [DEBUG] SpeakerId is invalid");
+                    return BadRequest(new { success = false, error = "Valid SpeakerId is required" });
+                }
+
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (userId == 0)
+                {
+                    userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                }
+
+                if (userId == 0)
+                    return Unauthorized();
+
+                Console.WriteLine($"🎵 Received audio chunk from user {userId} for session {request.SessionId}");
+                Console.WriteLine($"🔤 Audio data length: {request.AudioData.Length} characters");
+                Console.WriteLine($"📦 Audio data preview: {request.AudioData.Substring(0, Math.Min(50, request.AudioData.Length))}...");
+
+                // Convert base64 to stream
+                var audioBytes = Convert.FromBase64String(request.AudioData);
+                using var audioStream = new MemoryStream(audioBytes);
+
+                // Process audio with AI
+                var subtitle = await _audioTranscriptionService.ProcessRealTimeAudioAsync(
+                    audioStream, 
+                    request.SessionId, 
+                    request.SpeakerId, 
+                    request.Language ?? "vi"
+                );
+
+                if (subtitle == null)
+                {
+                    return Json(new { success = false, error = "No text transcribed from audio" });
+                }
+
+                Console.WriteLine($"📝 Transcribed text: {subtitle.OriginalText}");
+
+                // Broadcast via SignalR (sẽ implement sau)
+                // await _hub.Clients.Group(request.SessionId.ToString()).SendAsync("ReceiveSubtitle", subtitle);
+
+                return Json(new { 
+                    success = true, 
+                    subtitle = subtitle,
+                    message = "Audio processed successfully" 
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error processing audio: {ex.Message}");
+                return BadRequest(new { 
+                    success = false, 
+                    error = ex.Message 
+                });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> TranslateText([FromBody] TranslationRequest request)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(request?.Text))
+                {
+                    return BadRequest(new { success = false, error = "Text is required" });
+                }
+
+                if (string.IsNullOrEmpty(request?.TargetLanguage))
+                {
+                    return BadRequest(new { success = false, error = "Target language is required" });
+                }
+
+                Console.WriteLine($"🌍 Translating: '{request.Text}' to {request.TargetLanguage}");
+
+                // Sử dụng ChatGPT để translate
+                var translatedText = await _chatGPTService.TranslateTextAsync(
+                    request.Text, 
+                    request.SourceLanguage ?? "vi", 
+                    request.TargetLanguage
+                );
+
+                if (string.IsNullOrEmpty(translatedText))
+                {
+                    return Json(new { success = false, error = "Translation failed" });
+                }
+
+                Console.WriteLine($"🌍 Translated: '{request.Text}' → '{translatedText}'");
+
+                return Json(new { 
+                    success = true, 
+                    translatedText = translatedText,
+                    sourceLanguage = request.SourceLanguage ?? "vi",
+                    targetLanguage = request.TargetLanguage
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error translating text: {ex.Message}");
+                return BadRequest(new { 
+                    success = false, 
+                    error = ex.Message 
+                });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> SaveLanguagePreference([FromBody] LanguagePreferenceRequest request)
+        {
+            try
+            {
+                if (request?.SessionId == Guid.Empty)
+                {
+                    return BadRequest(new { success = false, error = "Valid SessionId is required" });
+                }
+
+                if (string.IsNullOrEmpty(request?.Language))
+                {
+                    return BadRequest(new { success = false, error = "Language is required" });
+                }
+
+                Console.WriteLine($"🌍 Saving language preference: {request.Language} for session {request.SessionId}");
+
+                // Lưu preference vào database hoặc cache
+                // TODO: Implement database storage
+
+                return Json(new { 
+                    success = true, 
+                    message = "Language preference saved" 
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"❌ Error saving language preference: {ex.Message}");
+                return BadRequest(new { 
+                    success = false, 
+                    error = ex.Message 
+                });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> ToggleSubtitles([FromBody] ToggleSubtitlesRequest request)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (userId == 0)
+                {
+                    userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                }
+
+                if (userId == 0)
+                    return Unauthorized();
+
+                var enabled = await _audioTranscriptionService.EnableSubtitlesForUserAsync(
+                    request.SessionId, 
+                    userId, 
+                    request.Enabled
+                );
+
+                // Notify other participants via SignalR (sẽ implement sau)
+                // await _hub.Clients.Group(request.SessionId.ToString()).SendAsync("SubtitleToggled", userId, request.Enabled);
+
+                return Json(new { success = true, enabled = enabled });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { success = false, error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetSessionSubtitles(Guid sessionId)
+        {
+            try
+            {
+                var subtitles = await _audioTranscriptionService.GetSessionSubtitlesAsync(sessionId);
+                return Json(subtitles);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> GetUserSubtitlePreference(Guid sessionId)
+        {
+            try
+            {
+                var userId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
+                if (userId == 0)
+                {
+                    userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                }
+
+                if (userId == 0)
+                    return Unauthorized();
+
+                var enabled = await _audioTranscriptionService.GetUserSubtitlePreferenceAsync(sessionId, userId);
+                return Json(new { enabled = enabled });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> TestOpenAI()
+        {
+            try
+            {
+                // Test OpenAI API với một đoạn audio nhỏ
+                var testAudio = new byte[] { 0x52, 0x49, 0x46, 0x46 }; // WAV header
+                
+                var result = await _audioTranscriptionService.TranscribeAudioChunkAsync(testAudio, "vi-VN");
+                
+                return Json(new { 
+                    success = true, 
+                    message = "OpenAI API test completed",
+                    result = result 
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { 
+                    success = false, 
+                    error = ex.Message,
+                    stackTrace = ex.StackTrace 
+                });
+            }
+        }
+    }
+
+    // Request models cho subtitle system
+    public class AudioTranscriptionRequest
+    {
+        [JsonPropertyName("audioData")]
+        public string AudioData { get; set; }
+        
+        [JsonPropertyName("sessionId")]
+        public Guid SessionId { get; set; }
+        
+        [JsonPropertyName("language")]
+        public string Language { get; set; } = "vi";
+        
+        [JsonPropertyName("speakerId")]
+        public int SpeakerId { get; set; }
+    }
+
+    public class ToggleSubtitlesRequest
+    {
+        public Guid SessionId { get; set; }
+        public bool Enabled { get; set; }
     }
 }

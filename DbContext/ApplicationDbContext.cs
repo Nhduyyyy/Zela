@@ -72,6 +72,9 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
 
     public DbSet<FileSummary> FileSummaries { get; set; }
 
+    // ------------ Real-time Subtitle System ------------
+    public DbSet<RealTimeSubtitle> RealTimeSubtitles { get; set; }
+
     #endregion
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -712,6 +715,33 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
         modelBuilder.Entity<CallSession>()
             .HasIndex(cs => cs.CreatedBy);
             
+        #endregion
+        
+        // ======== REAL-TIME SUBTITLE RELATIONSHIPS ========
+        
+        #region RealTimeSubtitle Relationships
+        
+        modelBuilder.Entity<RealTimeSubtitle>()
+            .HasOne(rts => rts.CallSession)
+            .WithMany()
+            .HasForeignKey(rts => rts.SessionId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<RealTimeSubtitle>()
+            .HasOne(rts => rts.Speaker)
+            .WithMany()
+            .HasForeignKey(rts => rts.SpeakerId)
+            .OnDelete(DeleteBehavior.Restrict); // Tránh multiple cascade paths
+
+        // Cấu hình precision cho decimal properties
+        modelBuilder.Entity<RealTimeSubtitle>()
+            .Property(rts => rts.StartTime)
+            .HasPrecision(18, 3);
+
+        modelBuilder.Entity<RealTimeSubtitle>()
+            .Property(rts => rts.EndTime)
+            .HasPrecision(18, 3);
+        
         #endregion
     }
 }

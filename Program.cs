@@ -142,6 +142,9 @@ builder.Services.AddScoped<IFileSummaryService, FileSummaryService>();
 // Đăng ký dịch vụ VoiceToTextService
 builder.Services.AddScoped<IVoiceToTextService, VoiceToTextService>();
 
+// Đăng ký AudioTranscriptionService cho real-time subtitle
+builder.Services.AddHttpClient<IAudioTranscriptionService, AudioTranscriptionService>();
+
 // Configure form options for file uploads
 builder.Services.Configure<FormOptions>(options =>
 {

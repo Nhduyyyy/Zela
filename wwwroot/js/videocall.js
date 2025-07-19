@@ -336,7 +336,7 @@ async function start() {
         // Join room with user ID for tracking
         await connection.invoke('JoinRoom', meetingCode, currentUserId);
         console.log('Joined room', meetingCode, 'with user ID', currentUserId);
-        
+
         // Lấy session ID từ meeting service
         try {
             const response = await fetch(`/Meeting/GetActiveSession?code=${encodeURIComponent(meetingCode)}`);
@@ -373,7 +373,7 @@ async function start() {
             });
             console.log('Generated temporary session ID (error fallback):', window.currentSessionId);
         }
-        
+
         // Lưu thông tin room và session để chat system có thể sử dụng
         window.currentRoomId = meetingCode;
         window.currentUserId = currentUserId;
@@ -481,6 +481,9 @@ async function connectSignalRWithRetry() {
                     console.log('🔄 Starting SignalR connection...');
                     await connection.start();
                     console.log('✅ SignalR connected successfully');
+
+                    // Expose connection for subtitle system
+                    window.signalRConnection = connection;
                     retryCount = 0; // Reset retry count on success
                     return;
                 } else {
@@ -928,19 +931,28 @@ function setupControls() {
                         // Lấy audio track từ stream (microphone)
                         // getAudioTracks() trả về array, [0] lấy track đầu tiên
                         const audioTrack = localStream.getAudioTracks()[0];
-                        
+
                         if (audioTrack) {  // Kiểm tra có audio track không
                             // Bật/tắt microphone bằng cách thay đổi thuộc tính enabled
                             // !audioTrack.enabled: đảo ngược trạng thái hiện tại
                             audioTrack.enabled = !audioTrack.enabled;
-                            
+
                             // Cập nhật text button dựa trên trạng thái mới
                             // Nếu enabled = true → "Tắt mic", nếu false → "Bật mic"
-                            toggleMicBtn.textContent = audioTrack.enabled ? 'Tắt mic' : 'Bật mic';
-                            
+                            toggleMicBtn.textContent = audioTrack.enabled ? '🎤 Micro' : '🔇 Micro';
+
                             // Thêm/xóa class 'active' để thay đổi style button
                             // classList.toggle(class, condition): thêm class nếu condition = true
                             toggleMicBtn.classList.toggle('active', !audioTrack.enabled);
+
+                            // Toggle subtitle system khi mic thay đổi
+                            if (window.subtitleSystem) {
+                                if (audioTrack.enabled) {
+                                    window.subtitleSystem.enable();
+                                } else {
+                                    window.subtitleSystem.disable();
+                                }
+                            }
                         }
                     }
                 } catch (error) {
@@ -958,11 +970,11 @@ function setupControls() {
                     if (localStream) {
                         // Lấy video track từ stream (camera)
                         const videoTrack = localStream.getVideoTracks()[0];
-                        
+
                         if (videoTrack) {
                             // Bật/tắt camera tương tự như microphone
                             videoTrack.enabled = !videoTrack.enabled;
-                            
+
                             // Cập nhật text và style button
                             toggleCamBtn.textContent = videoTrack.enabled ? 'Tắt cam' : 'Bật cam';
                             toggleCamBtn.classList.toggle('active', !videoTrack.enabled);
@@ -1016,7 +1028,29 @@ function setupControls() {
             });
         }
 
-        // ====== BƯỚC 6: THIẾT LẬP NÚT KẾT THÚC CUỘC HỌP (CHỈ HOST) ======
+        // ====== BƯỚC 6: THIẾT LẬP NÚT BẬT/TẮT PHỤ ĐỀ ======
+        const toggleSubtitlesBtn = document.getElementById('toggle-subtitles');
+        if (toggleSubtitlesBtn) {
+            toggleSubtitlesBtn.addEventListener('click', () => {
+                try {
+                    if (window.subtitleSystem) {
+                        window.subtitleSystem.toggleSubtitles();
+
+                        // Cập nhật UI button
+                        const isEnabled = window.subtitleSystem.subtitleEnabled;
+                        toggleSubtitlesBtn.textContent = isEnabled ? '📝 Phụ đề' : '📝 Phụ đề';
+                        toggleSubtitlesBtn.classList.toggle('active', isEnabled);
+                    } else {
+                        showError('Hệ thống phụ đề chưa sẵn sàng', true);
+                    }
+                } catch (error) {
+                    console.error('Error toggling subtitles:', error);
+                    showError('Lỗi khi bật/tắt phụ đề', true);
+                }
+            });
+        }
+
+        // ====== BƯỚC 7: THIẾT LẬP NÚT KẾT THÚC CUỘC HỌP (CHỈ HOST) ======
         if (endBtn) {
             // Sử dụng async vì connection.invoke() trả về Promise
             endBtn.addEventListener('click', async () => {
@@ -1025,7 +1059,7 @@ function setupControls() {
                     if (confirm('Bạn có chắc muốn kết thúc cuộc họp cho tất cả mọi người?')) {
                         // Lấy meeting code từ HTML data attribute
                         const code = document.getElementById('video-grid')?.dataset?.meetingCode;
-                        
+
                         if (code) {
                             // Gọi method EndRoom trên server để kết thúc cuộc họp
                             // Server sẽ thông báo cho tất cả user khác
@@ -1113,16 +1147,16 @@ function handleScreenShareError(error) {
  * Hàm thay thế video track trong cuộc gọi video
  * Được gọi khi user bắt đầu hoặc dừng chia sẻ màn hình
  * Mục đích: Thay thế camera video bằng screen video (hoặc ngược lại)
- * 
+ *
  * LUỒNG HOẠT ĐỘNG:
  * 1. startScreenShare() → replaceTrack(screenTrack) → Thay camera bằng screen
  * 2. stopScreenShare() → replaceTrack(cameraTrack) → Thay screen bằng camera
- * 
+ *
  * QUAN HỆ VỚI WEBRTC:
  * - Thay đổi track trong localStream (MediaStream)
  * - Cập nhật tất cả peer connections (RTCPeerConnection)
  * - Đảm bảo tất cả participants nhận được video mới
- * 
+ *
  * BIẾN GLOBAL ĐƯỢC SỬ DỤNG:
  * - localStream: MediaStream hiện tại (camera + microphone)
  * - peers: Object chứa tất cả peer connections
@@ -1133,12 +1167,12 @@ async function replaceTrack(newTrack) {
         // Lấy video track cũ từ localStream (camera hoặc screen hiện tại)
         // Optional chaining (?.) để tránh lỗi nếu localStream = null
         const oldTrack = localStream?.getVideoTracks()[0];
-        
+
         if (oldTrack) {
             // Xóa track cũ khỏi localStream
             // removeTrack() chỉ xóa track khỏi stream, không dừng track
             localStream.removeTrack(oldTrack);
-            
+
             // Dừng track cũ để giải phóng tài nguyên
             // stop() sẽ tắt camera hoặc dừng screen sharing
             oldTrack.stop();
@@ -1161,7 +1195,7 @@ async function replaceTrack(newTrack) {
                     // Tìm sender có track cùng loại với newTrack (video)
                     s.track && s.track.kind === newTrack.kind
                 );
-                
+
                 if (sender) {
                     // Thay thế track trong peer connection
                     // replaceTrack() sẽ gửi track mới đến peer bên kia
@@ -1190,13 +1224,13 @@ async function replaceTrack(newTrack) {
  * Hàm dừng chia sẻ màn hình và khôi phục camera
  * Được gọi khi user click nút "Dừng chia sẻ" hoặc browser tự động dừng
  * Mục đích: Chuyển từ screen video về camera video
- * 
+ *
  * LUỒNG HOẠT ĐỘNG:
  * 1. Dừng screen sharing tracks → Giải phóng tài nguyên
  * 2. Lấy lại camera stream → Khôi phục video camera
  * 3. Thay thế track → Cập nhật tất cả peer connections
  * 4. Cập nhật UI → Reset button state
- * 
+ *
  * QUAN HỆ VỚI CÁC HÀM KHÁC:
  * - startScreenShare(): Hàm đối nghịch, bắt đầu chia sẻ màn hình
  * - replaceTrack(): Thay thế video track trong peer connections
@@ -1221,7 +1255,7 @@ function stopScreenShare(button) {
                 console.error('Error stopping screen track:', error);
             }
         });
-        
+
         // Xóa reference đến screen stream
         screenStream = null;  // Cho phép garbage collector dọn dẹp
 
@@ -1232,11 +1266,11 @@ function stopScreenShare(button) {
             .then(async (camStream) => {
                 // Lấy video track từ camera stream
                 const camTrack = camStream.getVideoTracks()[0];
-                
+
                 // Thay thế screen track bằng camera track
                 // replaceTrack() sẽ cập nhật tất cả peer connections
                 await replaceTrack(camTrack);
-                
+
                 // ====== BƯỚC 3: CẬP NHẬT UI - RESET BUTTON STATE ======
                 button.textContent = 'Chia sẻ màn hình';  // Reset text button
                 button.classList.remove('active');        // Xóa class active
@@ -1245,7 +1279,7 @@ function stopScreenShare(button) {
                 // ====== XỬ LÝ LỖI KHI KHÔNG LẤY ĐƯỢC CAMERA ======
                 console.error('Error getting camera back:', error);
                 showError('Không thể khôi phục camera', true);
-                
+
                 // Reset button state dù có lỗi
                 button.textContent = 'Chia sẻ màn hình';
                 button.classList.remove('active');
@@ -1263,12 +1297,12 @@ function stopScreenShare(button) {
  * Hàm xử lý lỗi chung cho toàn bộ hệ thống video call
  * Được gọi khi có bất kỳ lỗi nào xảy ra trong quá trình hoạt động
  * Mục đích: Chuyển đổi lỗi kỹ thuật thành thông báo thân thiện với user
- * 
+ *
  * LUỒNG HOẠT ĐỘNG:
  * 1. Nhận error object và context → Phân tích loại lỗi
  * 2. Map lỗi kỹ thuật → Thông báo user-friendly
  * 3. Hiển thị thông báo lỗi → User hiểu được vấn đề
- * 
+ *
  * QUAN HỆ VỚI CÁC HÀM KHÁC:
  * - showError(): Hiển thị thông báo lỗi trên UI
  * - ERROR_MESSAGES: Object chứa mapping lỗi → thông báo
@@ -1286,25 +1320,25 @@ function handleError(error, context = '') {
     let errorMessage = 'Đã xảy ra lỗi không xác định';
 
     // ====== BƯỚC 3: MAP LỖI KỸ THUẬT THÀNH THÔNG BÁO USER-FRIENDLY ======
-    
+
     // Kiểm tra 1: Lỗi có message và có trong ERROR_MESSAGES không
     if (error.message && ERROR_MESSAGES[error.message]) {
         // Sử dụng thông báo đã được định nghĩa sẵn
         // ERROR_MESSAGES là object chứa mapping: error.message → user-friendly message
         errorMessage = ERROR_MESSAGES[error.message];
-    } 
+    }
     // Kiểm tra 2: Lỗi NotAllowedError (user từ chối quyền truy cập)
     else if (error.name === 'NotAllowedError') {
         // Lỗi này xảy ra khi user từ chối cấp quyền camera/microphone
         // Sử dụng thông báo từ ERROR_TYPES.MEDIA_ACCESS_DENIED
         errorMessage = ERROR_MESSAGES[ERROR_TYPES.MEDIA_ACCESS_DENIED];
-    } 
+    }
     // Kiểm tra 3: Lỗi NotFoundError (không tìm thấy thiết bị)
     else if (error.name === 'NotFoundError') {
         // Lỗi này xảy ra khi không tìm thấy camera/microphone
         // Sử dụng thông báo từ ERROR_TYPES.MEDIA_NOT_FOUND
         errorMessage = ERROR_MESSAGES[ERROR_TYPES.MEDIA_NOT_FOUND];
-    } 
+    }
     // Kiểm tra 4: Có context được cung cấp
     else if (context) {
         // Tạo thông báo tùy chỉnh dựa trên context
@@ -1322,7 +1356,7 @@ function handleError(error, context = '') {
 /**
  * Hai event handler này bắt tất cả lỗi chưa được xử lý trong ứng dụng
  * Đây là "safety net" - lưới an toàn để bắt lỗi mà developer quên handle
- * 
+ *
  * MỤC ĐÍCH:
  * - Bắt lỗi JavaScript chưa được try-catch
  * - Bắt Promise rejection chưa được .catch()
@@ -1333,14 +1367,14 @@ function handleError(error, context = '') {
 // ====== 1. ERROR EVENT HANDLER ======
 window.addEventListener('error', (event) => {
     // ====== BẮT LỖI JAVASCRIPT CHƯA ĐƯỢC XỬ LÝ ======
-    
+
     // event.error: Error object chứa thông tin lỗi
     // Ví dụ: ReferenceError, TypeError, SyntaxError, etc.
     console.error('Global error:', event.error);
-    
+
     // Chuyển lỗi kỹ thuật thành thông báo user-friendly
     handleError(event.error, 'Lỗi hệ thống');
-    
+
     // ====== CÁC LOẠI LỖI CÓ THỂ BẮT ======
     // - ReferenceError: Biến chưa được định nghĩa
     // - TypeError: Gọi method trên null/undefined
@@ -1352,14 +1386,14 @@ window.addEventListener('error', (event) => {
 // ====== 2. UNHANDLED REJECTION EVENT HANDLER ======
 window.addEventListener('unhandledrejection', (event) => {
     // ====== BẮT PROMISE REJECTION CHƯA ĐƯỢC XỬ LÝ ======
-    
+
     // event.reason: Lý do Promise bị reject
     // Có thể là Error object hoặc string/object khác
     console.error('Unhandled promise rejection:', event.reason);
-    
+
     // Chuyển lỗi thành thông báo user-friendly
     handleError(event.reason, 'Lỗi xử lý');
-    
+
     // Ngăn browser hiển thị error message mặc định
     // Nếu không có dòng này, browser sẽ hiển thị "Uncaught (in promise)"
     event.preventDefault();
@@ -1370,12 +1404,12 @@ window.addEventListener('unhandledrejection', (event) => {
  * Event handler xử lý khi user chuyển tab hoặc ẩn/hiện browser
  * Được kích hoạt khi user: chuyển tab, minimize browser, hoặc quay lại tab
  * Mục đích: Tối ưu hiệu suất và tự động kết nối lại khi cần thiết
- * 
+ *
  * LUỒNG HOẠT ĐỘNG:
  * 1. User chuyển tab → document.hidden = true → Pause video (tiết kiệm CPU)
  * 2. User quay lại tab → document.hidden = false → Resume video + check connection
  * 3. Nếu mất kết nối → Tự động thử kết nối lại SignalR
- * 
+ *
  * QUAN HỆ VỚI CÁC HÀM KHÁC:
  * - connectSignalRWithRetry(): Kết nối lại SignalR khi cần
  * - showError()/hideError(): Hiển thị thông báo trạng thái
@@ -1386,25 +1420,25 @@ document.addEventListener('visibilitychange', () => {
     if (document.hidden) {
         // ====== KHI PAGE BỊ ẨN (CHUYỂN TAB/MINIMIZE) ======
         console.log('Page hidden - pausing video');
-        
+
         // TODO: Có thể thêm logic pause video để tiết kiệm CPU
         // Ví dụ: localStream.getVideoTracks().forEach(track => track.enabled = false);
         // Hiện tại chỉ log, chưa implement pause video
     } else {
         // ====== KHI PAGE ĐƯỢC HIỂN THỊ LẠI (QUAY LẠI TAB) ======
         console.log('Page visible - resuming video');
-        
+
         // ====== BƯỚC 2: KIỂM TRA TRẠNG THÁI KẾT NỐI ======
         if (connectionState === 'disconnected') {
             // ====== NẾU ĐANG MẤT KẾT NỐI → THỬ KẾT NỐI LẠI ======
-            
+
             // Hiển thị thông báo cho user biết đang thử kết nối lại
             showError('Đang thử kết nối lại...', true);
-            
+
             // ====== BƯỚC 3: KIỂM TRA XEM CÓ ĐANG KẾT NỐI KHÔNG ======
             if (!isConnecting) {
                 // ====== CHƯA CÓ KẾT NỐI ĐANG TIẾN HÀNH → BẮT ĐẦU KẾT NỐI LẠI ======
-                
+
                 // Gọi hàm kết nối lại SignalR (không khởi tạo lại toàn bộ)
                 connectSignalRWithRetry().then(() => {
                     // ====== KẾT NỐI LẠI THÀNH CÔNG ======
@@ -1431,12 +1465,12 @@ document.addEventListener('visibilitychange', () => {
  * Event handler xử lý khi user rời khỏi trang (đóng tab, refresh, navigate)
  * Được kích hoạt trước khi trang bị unload
  * Mục đích: Dọn dẹp tài nguyên và thông báo server user đã rời phòng
- * 
+ *
  * LUỒNG HOẠT ĐỘNG:
  * 1. User đóng tab/refresh → beforeunload event được trigger
  * 2. Gọi stopAll() → Dọn dẹp tất cả tài nguyên
  * 3. Thông báo server → Server cập nhật database và thông báo user khác
- * 
+ *
  * QUAN HỆ VỚI CÁC HÀM KHÁC:
  * - stopAll(): Hàm dọn dẹp chính, gọi LeaveRoom trên server
  * - MeetingHub.LeaveRoom(): Server method xử lý user rời phòng
@@ -1444,7 +1478,7 @@ document.addEventListener('visibilitychange', () => {
 window.addEventListener('beforeunload', () => {
     // ====== GỌI HÀM DỌN DẸP CHÍNH ======
     stopAll(); // Dọn dẹp tất cả: peer connections, media streams, SignalR
-    
+
     // LƯU Ý: Không cần return false vì modern browsers không cho phép
     // custom message trong beforeunload dialog nữa
 });
@@ -1454,12 +1488,12 @@ window.addEventListener('beforeunload', () => {
  * Hàm lấy lịch sử cuộc gọi từ server
  * Được gọi khi cần hiển thị thông tin về các cuộc gọi trước đó
  * Mục đích: Hiển thị danh sách các cuộc gọi đã tham gia
- * 
+ *
  * LUỒNG HOẠT ĐỘNG:
  * 1. Lấy meetingCode từ DOM → Kiểm tra có tồn tại không
  * 2. Gọi server method GetCallHistory → Nhận dữ liệu lịch sử
  * 3. Server trả về → Client xử lý và hiển thị
- * 
+ *
  * QUAN HỆ VỚI SERVER:
  * - MeetingHub.GetCallHistory(): Server method trả về call history
  * - CallSession model: Database entity lưu thông tin cuộc gọi
@@ -1468,7 +1502,7 @@ window.addEventListener('beforeunload', () => {
 function getCallHistory() {
     // ====== BƯỚC 1: LẤY MEETING CODE TỪ DOM ======
     const meetingCode = document.getElementById('video-grid')?.dataset?.meetingCode;
-    
+
     // ====== BƯỚC 2: KIỂM TRA VÀ GỌI SERVER ======
     if (meetingCode) {
         // Gọi SignalR method để lấy lịch sử cuộc gọi
@@ -1486,17 +1520,17 @@ function getCallHistory() {
  * Hàm lấy thống kê cuộc gọi từ server
  * Được gọi khi cần hiển thị thông tin thống kê về cuộc gọi hiện tại
  * Mục đích: Hiển thị metrics như thời gian, số người tham gia, chất lượng
- * 
+ *
  * LUỒNG HOẠT ĐỘNG:
  * 1. Lấy meetingCode từ DOM → Kiểm tra có tồn tại không
  * 2. Gọi server method GetCallStatistics → Nhận dữ liệu thống kê
  * 3. Server trả về → Client xử lý và hiển thị
- * 
+ *
  * QUAN HỆ VỚI SERVER:
  * - MeetingHub.GetCallStatistics(): Server method trả về call stats
  * - AnalyticsEvent model: Database entity lưu thông tin thống kê
  * - SignalR event 'CallStatistics': Nhận dữ liệu từ server
- * 
+ *
  * DỮ LIỆU CÓ THỂ BAO GỒM:
  * - Thời gian cuộc gọi
  * - Số người tham gia
@@ -1507,7 +1541,7 @@ function getCallHistory() {
 function getCallStatistics() {
     // ====== BƯỚC 1: LẤY MEETING CODE TỪ DOM ======
     const meetingCode = document.getElementById('video-grid')?.dataset?.meetingCode;
-    
+
     // ====== BƯỚC 2: KIỂM TRA VÀ GỌI SERVER ======
     if (meetingCode) {
         // Gọi SignalR method để lấy thống kê cuộc gọi
@@ -1526,12 +1560,12 @@ function getCallStatistics() {
  * Hàm kết nối Quality Control System với Video Call System
  * Được gọi từ Room.cshtml sau khi cả hai hệ thống đã khởi tạo
  * Mục đích: Thiết lập communication giữa hai hệ thống độc lập
- * 
+ *
  * LUỒNG HOẠT ĐỘNG:
  * 1. Room.cshtml khởi tạo qualityController → Gọi setQualityController()
  * 2. Lưu reference và thiết lập callback functions
  * 3. Khi user thay đổi quality → Callback được trigger → Cập nhật video
- * 
+ *
  * QUAN HỆ VỚI CÁC HÀM KHÁC:
  * - updateVideoQualityForPeers(): Được gọi khi quality thay đổi
  * - qualityController.onQualityChange: Callback từ quality control system
@@ -1548,7 +1582,7 @@ function setQualityController(controller) {
             // type: 'video' hoặc 'audio' (hiện tại chỉ xử lý video)
             // quality: 'low', 'medium', 'high', 'auto'
             console.log(`📊 Quality changed: ${type} -> ${quality}`);
-            
+
             // ====== CHỈ XỬ LÝ VIDEO QUALITY HIỆN TẠI ======
             if (type === 'video' && localStream) {
                 // Gọi hàm cập nhật video quality cho tất cả peers
@@ -1565,7 +1599,7 @@ function setQualityController(controller) {
             // stats: Object chứa thông tin về connection quality
             // Ví dụ: { bandwidth: 1500, latency: 50, packetLoss: 0.1 }
             console.log('📊 Connection stats updated:', stats);
-            
+
             // Có thể thêm logic xử lý stats nếu cần
             // Ví dụ: Auto-adjust quality dựa trên network conditions
             // if (stats.bandwidth < 500) {
@@ -1580,32 +1614,32 @@ function setQualityController(controller) {
  * Hàm cập nhật chất lượng video cho tất cả peer connections
  * Được gọi khi user thay đổi video quality setting
  * Mục đích: Áp dụng video constraints mới cho local stream
- * 
+ *
  * LUỒNG HOẠT ĐỘNG:
  * 1. User thay đổi quality → onQualityChange callback
  * 2. Gọi updateVideoQualityForPeers() → Lấy quality profile
  * 3. Áp dụng constraints → Cập nhật video track
  * 4. WebRTC tự động sync → Tất cả peers nhận được video mới
- * 
+ *
  * QUAN HỆ VỚI WEBRTC:
  * - applyConstraints(): WebRTC API để thay đổi video constraints
  * - getVideoTracks(): Lấy video track từ MediaStream
  * - Tự động sync với tất cả peer connections
- * 
+ *
  * QUALITY PROFILES (từ quality-control.js):
  * - low: 640x360, 20fps
- * - medium: 854x480, 24fps  
+ * - medium: 854x480, 24fps
  * - high: 1280x720, 30fps
  * - auto: Tự động điều chỉnh
  */
 function updateVideoQualityForPeers(quality) {
     // ====== BƯỚC 1: KIỂM TRA ĐIỀU KIỆN ======
-    if (!qualityController || !localStream) return; 
+    if (!qualityController || !localStream) return;
     // Không có controller hoặc chưa có local stream
 
     // ====== BƯỚC 2: LẤY QUALITY PROFILE ======
     const profile = qualityController.qualityProfiles[quality];
-    if (!profile || quality === 'auto') return; 
+    if (!profile || quality === 'auto') return;
     // Không có profile hoặc auto mode (không cần thay đổi thủ công)
 
     // ====== BƯỚC 3: ÁP DỤNG CONSTRAINTS CHO VIDEO TRACK ======
@@ -1613,7 +1647,7 @@ function updateVideoQualityForPeers(quality) {
     if (videoTrack) {
         // Lấy constraints từ quality profile
         const constraints = profile.video;
-        
+
         // Áp dụng constraints mới cho video track
         videoTrack.applyConstraints({
             width: { ideal: constraints.width },      // Chiều rộng video
@@ -1622,7 +1656,7 @@ function updateVideoQualityForPeers(quality) {
         }).then(() => {
             // ====== THÀNH CÔNG ======
             console.log(`✅ Applied video constraints: ${constraints.width}x${constraints.height}@${constraints.frameRate}fps`);
-            
+
             // WebRTC sẽ tự động:
             // 1. Cập nhật local video stream
             // 2. Gửi video stream mới đến tất cả peers
@@ -1631,7 +1665,7 @@ function updateVideoQualityForPeers(quality) {
         }).catch(error => {
             // ====== THẤT BẠI ======
             console.warn('⚠️ Failed to apply video constraints:', error);
-            
+
             // Có thể xảy ra khi:
             // - Camera không hỗ trợ resolution này
             // - Browser không hỗ trợ applyConstraints API
@@ -1648,20 +1682,20 @@ function updateVideoQualityForPeers(quality) {
  * Hàm lấy thông tin metrics về trạng thái kết nối hiện tại
  * Được gọi bởi các hệ thống khác để kiểm tra tình trạng video call
  * Mục đích: Cung cấp thông tin realtime về số lượng peers, trạng thái kết nối, và media streams
- * 
+ *
  * LUỒNG HOẠT ĐỘNG:
  * 1. Đếm số lượng peer connections hiện tại
  * 2. Kiểm tra trạng thái SignalR connection
  * 3. Kiểm tra trạng thái local media stream
  * 4. Đếm số lượng video/audio tracks
  * 5. Trả về object chứa tất cả thông tin
- * 
+ *
  * QUAN HỆ VỚI CÁC HÀM KHÁC:
  * - Quality Control System: Sử dụng để hiển thị connection stats
  * - Recording System: Kiểm tra có stream để record không
  * - Stats Sidebar: Hiển thị thông tin realtime
  * - Error Handling: Kiểm tra trạng thái trước khi thực hiện actions
- * 
+ *
  * BIẾN GLOBAL ĐƯỢC SỬ DỤNG:
  * - peers: Object chứa tất cả peer connections
  * - connectionState: Trạng thái SignalR connection
@@ -1673,17 +1707,17 @@ function getConnectionMetrics() {
     // peers = { "peer1": SimplePeerObject, "peer2": SimplePeerObject, ... }
     // Object.keys(peers) = ["peer1", "peer2", ...]
     // .length = Số lượng peer connections hiện tại
-    
+
     // ====== BƯỚC 2: LẤY TRẠNG THÁI SIGNALR CONNECTION ======
     // connectionState có thể là: 'connected', 'connecting', 'disconnected', 'reconnecting'
     // Được cập nhật bởi updateConnectionStatus() function
-    
+
     // ====== BƯỚC 3: KIỂM TRA TRẠNG THÁI LOCAL STREAM ======
     const localStreamActive = localStream && localStream.active;
     // localStream: MediaStream object từ getUserMedia()
     // .active: Boolean cho biết stream có đang hoạt động không
     // Có thể false khi: user tắt camera/mic, browser suspend, network issues
-    
+
     // ====== BƯỚC 4: ĐẾM SỐ LƯỢNG MEDIA TRACKS ======
     const streamTracks = localStream ? {
         video: localStream.getVideoTracks().length,  // Số video tracks (thường là 1)
@@ -1692,7 +1726,7 @@ function getConnectionMetrics() {
     // getVideoTracks(): Trả về array các video tracks
     // getAudioTracks(): Trả về array các audio tracks
     // .length: Số lượng tracks của mỗi loại
-    
+
     // ====== BƯỚC 5: TRẢ VỀ OBJECT CHỨA TẤT CẢ METRICS ======
     return {
         peerCount: peerCount,                    // Số người tham gia cuộc gọi

@@ -53,5 +53,52 @@ namespace Zela.Services
                 .GetString();
             return summary;
         }
+
+        public async Task<string> TranslateTextAsync(string text, string sourceLanguage, string targetLanguage)
+        {
+            var languageNames = new Dictionary<string, string>
+            {
+                { "vi", "Vietnamese" },
+                { "en", "English" },
+                { "zh", "Chinese" },
+                { "ja", "Japanese" },
+                { "ko", "Korean" },
+                { "fr", "French" },
+                { "de", "German" },
+                { "es", "Spanish" }
+            };
+
+            var sourceLangName = languageNames.GetValueOrDefault(sourceLanguage, sourceLanguage);
+            var targetLangName = languageNames.GetValueOrDefault(targetLanguage, targetLanguage);
+
+            var requestBody = new
+            {
+                model = "gpt-4",
+                messages = new[]
+                {
+                    new { role = "system", content = $"You are a professional translator. Translate the following text from {sourceLangName} to {targetLangName}. Provide only the translated text without any explanations or additional content." },
+                    new { role = "user", content = text }
+                },
+                max_tokens = 200,
+                temperature = 0.3
+            };
+
+            var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
+            request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+            
+            var response = await _httpClient.SendAsync(request);
+            response.EnsureSuccessStatusCode();
+            
+            var json = await response.Content.ReadAsStringAsync();
+            using var doc = JsonDocument.Parse(json);
+            var translatedText = doc.RootElement
+                .GetProperty("choices")[0]
+                .GetProperty("message")
+                .GetProperty("content")
+                .GetString();
+                
+            return translatedText ?? text;
+        }
     }
 } 
