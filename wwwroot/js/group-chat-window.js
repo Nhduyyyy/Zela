@@ -1051,88 +1051,80 @@ $(document).on('click', '#toggle-member-list', function (event) {
 
 // Xử lý preview và tóm tắt file văn bản
 function bindFileSummaryButtons() {
-    // Xem trước file
-    document.querySelectorAll('.btn-preview-file').forEach(btn => {
-        btn.onclick = function (e) {
+    // Event delegation cho preview/tóm tắt file
+    document.addEventListener('click', function(e) {
+        // Preview
+        if (e.target.classList.contains('btn-preview-file')) {
             e.preventDefault();
             e.stopPropagation();
-
+            const btn = e.target;
             const block = btn.closest('.file-summary-block');
             const url = btn.getAttribute('data-media-url');
             const filename = btn.getAttribute('data-filename');
             const previewDiv = block.querySelector('.file-preview-content');
-
-            console.log('Preview button clicked for:', filename);
-
-            // Ẩn summary nếu đang hiển thị
             const summaryDiv = block.querySelector('.file-summary-content');
             if (summaryDiv) summaryDiv.style.display = 'none';
-
-            previewDiv.innerHTML = '<em>Đang tải xem trước...</em>';
-            previewDiv.style.display = 'block';
-
-            fetch(`/File/Preview?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`)
-                .then(res => res.text())
-                .then(html => {
-                    previewDiv.innerHTML = html;
-                    previewDiv.style.display = 'block';
-                })
-                .catch(() => {
-                    previewDiv.innerHTML = '<div class="file-preview-box"><div class="text-danger">Không thể xem trước.</div></div>';
-                    previewDiv.style.display = 'block';
-                });
-        };
-    });
-
-    // Tóm tắt file
-    document.querySelectorAll('.btn-summarize-file').forEach(btn => {
-        btn.onclick = function (e) {
+            if (getComputedStyle(previewDiv).display === 'block') {
+                previewDiv.style.display = 'none';
+            } else {
+                previewDiv.innerHTML = '<em>Đang tải xem trước...</em>';
+                previewDiv.style.display = 'block';
+                fetch(`/File/Preview?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`)
+                    .then(res => res.text())
+                    .then(html => {
+                        previewDiv.innerHTML = html;
+                        previewDiv.style.display = 'block';
+                    })
+                    .catch(() => {
+                        previewDiv.innerHTML = '<div class="file-preview-box"><div class="text-danger">Không thể xem trước.</div></div>';
+                        previewDiv.style.display = 'block';
+                    });
+            }
+        }
+        // Summarize
+        if (e.target.classList.contains('btn-summarize-file')) {
             e.preventDefault();
             e.stopPropagation();
-
+            const btn = e.target;
             const block = btn.closest('.file-summary-block');
             const url = btn.getAttribute('data-media-url');
             const filename = btn.getAttribute('data-filename');
             const summaryDiv = block.querySelector('.file-summary-content');
+            const previewDiv = block.querySelector('.file-preview-content');
             const btnText = btn.querySelector('.btn-summarize-text');
             const btnLoading = btn.querySelector('.btn-summarize-loading');
-
-            console.log('Summarize button clicked for:', filename);
-
-            // Ẩn preview nếu đang hiển thị
-            const previewDiv = block.querySelector('.file-preview-content');
             if (previewDiv) previewDiv.style.display = 'none';
-
-            // Hiệu ứng loading
-            btn.disabled = true;
-            btnText.style.display = 'none';
-            btnLoading.style.display = 'inline-block';
-
-            summaryDiv.innerHTML = '';
-            summaryDiv.style.display = 'none';
-
-            const formData = new FormData();
-            formData.append('url', url);
-            formData.append('filename', filename);
-            fetch('/File/Summarize', {
-                method: 'POST',
-                body: formData
-            })
-                .then(res => res.text())
-                .then(html => {
-                    summaryDiv.innerHTML = html;
-                    summaryDiv.style.display = 'block';
+            if (getComputedStyle(summaryDiv).display === 'block') {
+                summaryDiv.style.display = 'none';
+            } else {
+                btn.disabled = true;
+                btnText.style.display = 'none';
+                btnLoading.style.display = 'inline-block';
+                summaryDiv.innerHTML = '';
+                summaryDiv.style.display = 'block';
+                const formData = new FormData();
+                formData.append('url', url);
+                formData.append('filename', filename);
+                fetch('/File/Summarize', {
+                    method: 'POST',
+                    body: formData
                 })
-                .catch(() => {
-                    summaryDiv.innerHTML = '<span class="text-danger">Có lỗi xảy ra khi tóm tắt file.</span>';
-                    summaryDiv.style.display = 'block';
-                })
-                .finally(() => {
-                    btn.disabled = false;
-                    btnText.style.display = 'inline';
-                    btnLoading.style.display = 'none';
-                });
-        };
+                    .then(res => res.text())
+                    .then(html => {
+                        summaryDiv.innerHTML = html;
+                        summaryDiv.style.display = 'block';
+                    })
+                    .catch(() => {
+                        summaryDiv.innerHTML = '<span class="text-danger">Có lỗi xảy ra khi tóm tắt file.</span>';
+                        summaryDiv.style.display = 'block';
+                    })
+                    .finally(() => {
+                        btn.disabled = false;
+                        btnText.style.display = 'inline';
+                        btnLoading.style.display = 'none';
+                    });
+            }
+        }
     });
 }
 

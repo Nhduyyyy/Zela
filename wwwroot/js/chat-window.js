@@ -1495,44 +1495,57 @@
         console.log('✅ Beautiful preview created');
     }
 
-    // Xử lý preview và tóm tắt file văn bản
-    function bindFileSummaryButtons() {
-        // Xem trước file
-        document.querySelectorAll('.btn-preview-file').forEach(btn => {
-            btn.onclick = function () {
-                const block = btn.closest('.file-summary-block');
-                const url = btn.getAttribute('data-media-url');
-                const filename = btn.getAttribute('data-filename');
-                const previewDiv = block.querySelector('.file-preview-content');
+    // Event delegation cho preview/tóm tắt file
+    document.addEventListener('click', function(e) {
+        // Preview
+        if (e.target.classList.contains('btn-preview-file')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const btn = e.target;
+            const block = btn.closest('.file-summary-block');
+            const url = btn.getAttribute('data-media-url');
+            const filename = btn.getAttribute('data-filename');
+            const previewDiv = block.querySelector('.file-preview-content');
+            const summaryDiv = block.querySelector('.file-summary-content');
+            if (summaryDiv) summaryDiv.style.display = 'none';
+            if (getComputedStyle(previewDiv).display === 'block') {
+                previewDiv.style.display = 'none';
+            } else {
                 previewDiv.innerHTML = '<em>Đang tải xem trước...</em>';
+                previewDiv.style.display = 'block';
                 fetch(`/File/Preview?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`)
                     .then(res => res.text())
                     .then(html => {
                         previewDiv.innerHTML = html;
                         previewDiv.style.display = 'block';
                     })
-                    .catch(() => { previewDiv.innerHTML = 'Không thể xem trước.'; });
-            };
-        });
-
-        // Tóm tắt file
-        document.querySelectorAll('.btn-summarize-file').forEach(btn => {
-            btn.onclick = function () {
-                const block = btn.closest('.file-summary-block');
-                const url = btn.getAttribute('data-media-url');
-                const filename = btn.getAttribute('data-filename');
-                const summaryDiv = block.querySelector('.file-summary-content');
-                const btnText = btn.querySelector('.btn-summarize-text');
-                const btnLoading = btn.querySelector('.btn-summarize-loading');
-
-                // Hiệu ứng loading
+                    .catch(() => {
+                        previewDiv.innerHTML = '<div class="file-preview-box"><div class="text-danger">Không thể xem trước.</div></div>';
+                        previewDiv.style.display = 'block';
+                    });
+            }
+        }
+        // Summarize
+        if (e.target.classList.contains('btn-summarize-file')) {
+            e.preventDefault();
+            e.stopPropagation();
+            const btn = e.target;
+            const block = btn.closest('.file-summary-block');
+            const url = btn.getAttribute('data-media-url');
+            const filename = btn.getAttribute('data-filename');
+            const summaryDiv = block.querySelector('.file-summary-content');
+            const previewDiv = block.querySelector('.file-preview-content');
+            const btnText = btn.querySelector('.btn-summarize-text');
+            const btnLoading = btn.querySelector('.btn-summarize-loading');
+            if (previewDiv) previewDiv.style.display = 'none';
+            if (getComputedStyle(summaryDiv).display === 'block') {
+                summaryDiv.style.display = 'none';
+            } else {
                 btn.disabled = true;
                 btnText.style.display = 'none';
                 btnLoading.style.display = 'inline-block';
-
                 summaryDiv.innerHTML = '';
-                summaryDiv.style.display = 'none';
-
+                summaryDiv.style.display = 'block';
                 const formData = new FormData();
                 formData.append('url', url);
                 formData.append('filename', filename);
@@ -1554,16 +1567,9 @@
                         btnText.style.display = 'inline';
                         btnLoading.style.display = 'none';
                     });
-            };
-        });
-    }
-
-    // Initialize drag and drop when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initializeDragAndDrop);
-    } else {
-        initializeDragAndDrop();
-    }
+            }
+        }
+    });
 
     // Gán 1 lần duy nhất khi trang load
     document.addEventListener('click', function(e) {
