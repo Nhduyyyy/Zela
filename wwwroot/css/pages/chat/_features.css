@@ -1111,9 +1111,94 @@
 
 .file-preview-box {
     position: relative;
-    padding-top: 32px; /* Đảm bảo nội dung không bị nút X che */
+    padding-top: 22px; /* Đảm bảo nội dung không bị nút X che */
 }
 
 .file-preview-content-inner {
     margin-top: 18px; /* Đủ để tránh nút X */
+}
+
+.file-block.file-summary-block {
+    display: inline-block;
+    width: fit-content;
+    max-width: 70%; /* Nếu muốn không vượt quá 70% */
+    word-break: break-word;
+}
+
+/* =============================
+   File Summary & Preview Boxes
+   ============================= */
+.file-summary-box, .file-preview-box {
+    background: var(--theme-bg-secondary);
+    border: 1.5px solid var(--theme-border-color);
+    border-radius: 14px;
+    padding: 22px 24px 18px 24px;
+    margin: 18px auto 12px auto;
+    max-width: 600px;
+    color: var(--theme-text-primary);
+    font-size: 16px;
+    box-shadow: var(--theme-shadow-sm);
+    position: relative;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+.file-summary-header {
+    font-weight: 600;
+    color: var(--theme-accent-green);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+    gap: 8px;
+}
+
+.file-summary-header i {
+    font-size: 20px;
+    color: var(--theme-accent-green);
+}
+
+.file-summary-content {
+    background: transparent;
+    border: none;
+    padding: 0;
+    margin: 0;
+    font-size: 16px;
+    color: var(--theme-text-primary);
+}
+
+.file-summary-content strong {
+    color: var(--theme-accent-green);
+    font-weight: 700;
+    background: var(--theme-bg-glass-light);
+    padding: 1px 4px;
+    border-radius: 4px;
+}
+
+.close-summary-btn, .close-preview-btn {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    font-size: 22px;
+    color: var(--theme-accent-green);
+    cursor: pointer;
+    z-index: 2;
+    transition: color 0.2s;
+    padding: 0;
+    line-height: 1;
+}
+.close-summary-btn:hover, .close-preview-btn:hover {
+    color: var(--theme-accent-red);
+}
+
+.file-preview-box .text-danger,
+.file-summary-box .text-danger {
+    color: var(--theme-accent-red);
+    background: var(--theme-bg-glass-light);
+    border-radius: 6px;
+    padding: 8px 12px;
+    margin-top: 8px;
+    font-size: 15px;
 } 
