@@ -15,7 +15,7 @@
 * {
     margin: 0;
     padding: 0;
-    
+
 }
 
 body {
@@ -151,6 +151,20 @@ body {
 .btn-facebook:hover {
     background: var(--facebook-color);
     color: var(--bg-white);
+}
+
+/* Disabled buttons */
+.btn-oauth:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: #f5f5f5;
+    color: #999;
+    border-color: #ddd;
+}
+.btn-oauth:disabled:hover {
+    background: #f5f5f5;
+    color: #999;
+    border-color: #ddd;
 }
 
 /* Responsive */

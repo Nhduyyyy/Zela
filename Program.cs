@@ -7,6 +7,7 @@
 
 using Microsoft.AspNetCore.Authentication.Cookies; // Thư viện để cấu hình Cookie Authentication
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore; // Thư viện Entity Framework Core
 using Zela.DbContext;
@@ -87,6 +88,22 @@ builder.Services.AddAuthentication(options =>
         //      ta phải thêm scope "profile" và "email".
         options.Scope.Add("profile"); // Yêu cầu quyền lấy thông tin hồ sơ (tên, ảnh, v.v.)
         options.Scope.Add("email"); // Yêu cầu quyền lấy địa chỉ email của user
+    })
+    // 4.5) Thêm Facebook OAuth Authentication
+    .AddFacebook(options =>
+    {
+        // 4.5a) AppId: ID ứng dụng được cấp khi đăng ký OAuth trên Facebook Developer Console.
+        options.AppId = builder.Configuration["Authentication:Facebook:AppId"];
+        
+        // 4.5b) AppSecret: Khóa bí mật tương ứng với AppId, dùng để Facebook xác thực ứng dụng của bạn.
+        options.AppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+        
+        // 4.5c) Yêu cầu trường email từ Facebook
+        options.Fields.Add("email");
+        options.Scope.Add("email");
+        
+        // 4.5d) Callback mặc định: /signin-facebook
+        // Có thể tùy chỉnh nếu cần: options.CallbackPath = "/signin-facebook";
     });
 
 // ---------------------------------------------

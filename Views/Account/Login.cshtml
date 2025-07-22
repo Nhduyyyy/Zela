@@ -30,18 +30,19 @@
                 </button>
             </form>
 
-            <!-- Optional GitHub / Facebook -->
-            <form asp-controller="Account" asp-action="GoogleLogin" method="post">
-                <button type="submit" class="btn-oauth btn-github">
-                    <i class="bi bi-github"></i>
-                    <span>Đăng nhập bằng GitHub</span>
-                </button>
-            </form>
-            
-            <form asp-controller="Account" asp-action="GoogleLogin" method="post">
+            <!-- Facebook Login Razor with Icon -->
+            <form asp-controller="Account" asp-action="FacebookLogin" method="post">
                 <button type="submit" class="btn-oauth btn-facebook">
                     <i class="bi bi-facebook"></i>
                     <span>Đăng nhập bằng Facebook</span>
+                </button>
+            </form>
+
+            <!-- Optional GitHub (placeholder for future implementation) -->
+            <form asp-controller="Account" asp-action="GoogleLogin" method="post">
+                <button type="submit" class="btn-oauth btn-github" disabled>
+                    <i class="bi bi-github"></i>
+                    <span>Đăng nhập bằng GitHub (Sắp ra mắt)</span>
                 </button>
             </form>
         </div>

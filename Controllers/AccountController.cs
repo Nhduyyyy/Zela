@@ -8,6 +8,7 @@
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
@@ -129,6 +130,49 @@ namespace Zela.Controllers
             // Kết quả: Thư viện sẽ trả về một ChallengeResult và ASP.NET Core tự động trả HTTP 302 
             // với header Location = [URL Google OAuth endpoint]?client_id=...&redirect_uri=...&scope=...
             return Challenge(properties, GoogleDefaults.AuthenticationScheme);
+        }
+
+        // ---------------------------------------------
+        // Author : A–DUY
+        // Date   : 2025-01-XX
+        // Task   : Khởi tạo quá trình đăng nhập với Facebook OAuth.
+        // ---------------------------------------------
+        /// <summary>
+        /// Khi người dùng nhấn nút "Đăng nhập bằng Facebook", hàm này sẽ được gọi.
+        /// Nó thực hiện 2 việc chính:
+        /// 1) Xác định đường dẫn (URL) mà Facebook sẽ gọi lại (callback) khi hoàn tất xác thực.
+        /// 2) Bắt đầu quá trình xác thực (Challenge) bằng Facebook.
+        /// </summary>
+        /// <param name="returnUrl">
+        /// Đây là đường dẫn nội bộ của ứng dụng để chuyển hướng tiếp theo 
+        /// khi đăng nhập thành công. Mặc định là "/Chat/Index".
+        /// </param>
+        /// <returns>
+        /// Một đối tượng ChallengeResult, tức là yêu cầu ASP.NET Core tự động 
+        /// điều hướng (redirect) trình duyệt web sang trang xác thực của Facebook.
+        /// </returns>
+        [HttpPost]
+        public IActionResult FacebookLogin(string returnUrl = "/Chat/Index")
+        {
+            // ──────────────────────────────────────────────────────────────────
+            // BƯỚC 1: Tạo AuthenticationProperties để chứa thông tin callback URL
+            // ──────────────────────────────────────────────────────────────────
+            var properties = new AuthenticationProperties
+            {
+                // Facebook sẽ callback về action FacebookResponse
+                RedirectUri = Url.Action("FacebookResponse", new { ReturnUrl = returnUrl })
+            };
+
+            // ──────────────────────────────────────────────────────────────────
+            // BƯỚC 2: Bắt đầu quá trình xác thực với Facebook (Challenge)
+            // ──────────────────────────────────────────────────────────────────
+            // Facebook OAuth flow tương tự Google OAuth:
+            //   1) Client gửi POST tới /Account/FacebookLogin
+            //   2) Server gọi Challenge với Facebook scheme
+            //   3) ASP.NET Core redirect đến Facebook OAuth endpoint
+            //   4) User đăng nhập Facebook và cấp quyền
+            //   5) Facebook callback về FacebookResponse action
+            return Challenge(properties, FacebookDefaults.AuthenticationScheme);
         }
 
 
@@ -348,6 +392,179 @@ namespace Zela.Controllers
             }
             
             // Nếu không phải Admin, chuyển hướng đến trang đích ban đầu (mặc định là Chat).
+            return Redirect(returnUrl);
+        }
+
+        // ---------------------------------------------
+        // Author : A–DUY
+        // Date   : 2025-01-XX
+        // Task   : Xử lý callback từ Facebook, lưu user và đăng nhập.
+        // ---------------------------------------------
+        /// <summary>
+        /// Phương thức này sẽ được gọi khi Facebook gửi người dùng trở lại
+        /// sau khi họ đã đăng nhập và cấp quyền cho ứng dụng. Nó thực hiện các bước:
+        /// 1) Lấy kết quả xác thực (authentication) đã lưu trong cookie.
+        /// 2) Đọc thông tin email, tên, avatar do Facebook trả về (claims).
+        /// 3) Kiểm tra hoặc tạo mới bản ghi user trong database.
+        /// 4) Lưu thông tin user vào session để các trang khác có thể sử dụng.
+        /// 5) Ghi nhận user đã đăng nhập (SignIn) bằng cách sử dụng cookie authentication.
+        /// 6) Cuối cùng, chuyển hướng (redirect) đến trang đích (returnUrl).
+        /// </summary>
+        /// <param name="returnUrl">
+        /// Đường dẫn nội bộ (trong ứng dụng) mà chúng ta muốn đưa user tới
+        /// sau khi quá trình đăng nhập thành công. Mặc định là "/Chat/Index".
+        /// </param>
+        /// <returns>
+        /// Nếu có lỗi (không lấy được xác thực hoặc email), trả về Redirect về Login.
+        /// Nếu thành công, trả về Redirect về returnUrl, cho phép user tiếp tục sử dụng hệ thống.
+        /// </returns>
+        [HttpGet]
+        public async Task<IActionResult> FacebookResponse(string returnUrl = "/Chat/Index")
+        {
+            // -------------------------------------------------------------------
+            // BƯỚC 1: Lấy kết quả xác thực (AuthenticateAsync) đã được middleware
+            //         lưu trong cookie trước đó. Middleware đã xử lý Facebook OAuth
+            //         và lưu vào cookie thông tin claims về user.
+            // -------------------------------------------------------------------
+            var result = await HttpContext.AuthenticateAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme);
+
+            // -------------------------------------------------------------------
+            // BƯỚC 2: Kiểm tra xem việc xác thực (authentication) có thành công hay không.
+            // -------------------------------------------------------------------
+            if (!result.Succeeded)
+                return RedirectToAction("Login");
+
+            // -------------------------------------------------------------------
+            // BƯỚC 3: Đọc các thông tin "claims" (tuyên bố) do Facebook gửi về.
+            // -------------------------------------------------------------------
+            var email = result.Principal.FindFirst(ClaimTypes.Email)?.Value;
+            var fullName = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
+            var avatarUrl = result.Principal.FindFirst("picture")?.Value;
+
+            // -------------------------------------------------------------------
+            // BƯỚC 4: Xử lý avatar mặc định nếu Facebook không trả về
+            // -------------------------------------------------------------------
+            if (string.IsNullOrEmpty(avatarUrl))
+                avatarUrl = "/images/default-avatar.jpeg";
+
+            // -------------------------------------------------------------------
+            // BƯỚC 5: Xử lý tên mặc định nếu Facebook không trả về
+            // -------------------------------------------------------------------
+            if (string.IsNullOrEmpty(fullName))
+                fullName = email ?? "";
+
+            // -------------------------------------------------------------------
+            // BƯỚC 6: Kiểm tra email - thông tin quan trọng để định danh user
+            // -------------------------------------------------------------------
+            if (string.IsNullOrEmpty(email))
+                return RedirectToAction("Login");
+
+            // -------------------------------------------------------------------
+            // BƯỚC 7: Tìm hoặc tạo mới bản ghi user trong database
+            // -------------------------------------------------------------------
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
+
+            if (user == null)
+            {
+                // -------------------------------------------------------------------
+                // BƯỚC 7a: Nếu user chưa tồn tại trong DB, tạo mới một đối tượng User
+                // -------------------------------------------------------------------
+                user = new User
+                {
+                    Email = email,
+                    FullName = fullName,
+                    AvatarUrl = avatarUrl,
+                    CreatedAt = DateTime.Now,
+                    LastLoginAt = DateTime.Now,
+                    IsPremium = false
+                };
+                _db.Users.Add(user);
+            }
+            else
+            {
+                // -------------------------------------------------------------------
+                // BƯỚC 7b: Nếu user đã tồn tại, cập nhật thông tin
+                // -------------------------------------------------------------------
+                user.LastLoginAt = DateTime.Now;
+                if (!string.IsNullOrEmpty(fullName))
+                    user.FullName = fullName;
+                if (!string.IsNullOrEmpty(avatarUrl))
+                    user.AvatarUrl = avatarUrl;
+            }
+
+            // -------------------------------------------------------------------
+            // BƯỚC 8: Lưu thay đổi vào database
+            // -------------------------------------------------------------------
+            await _db.SaveChangesAsync();
+
+            // -------------------------------------------------------------------
+            // BƯỚC 9: Đảm bảo mỗi User luôn có ít nhất 1 Role
+            // -------------------------------------------------------------------
+            var hasAnyRole = await _db.Roles.AnyAsync(r => r.UserId == user.UserId);
+            if (!hasAnyRole)
+            {
+                _db.Roles.Add(new Role
+                {
+                    UserId = user.UserId,
+                    RoleName = "User",
+                    CreateAt = DateTime.Now
+                });
+
+                // Nếu chưa tồn tại Admin trong hệ thống, gán luôn Admin cho user hiện tại
+                var hasAdmin = await _db.Roles.AnyAsync(r => r.RoleName == "Admin");
+                if (!hasAdmin)
+                {
+                    _db.Roles.Add(new Role
+                    {
+                        UserId = user.UserId,
+                        RoleName = "Admin",
+                        CreateAt = DateTime.Now
+                    });
+                }
+
+                await _db.SaveChangesAsync();
+            }
+
+            // -------------------------------------------------------------------
+            // BƯỚC 10: Lưu thông tin user vào Session
+            // -------------------------------------------------------------------
+            HttpContext.Session.SetInt32("UserId", user.UserId);
+            HttpContext.Session.SetString("FullName", user.FullName ?? "");
+            HttpContext.Session.SetString("AvatarUrl", user.AvatarUrl ?? "");
+
+            // -------------------------------------------------------------------
+            // BƯỚC 11: Tạo claims identity và sign in
+            // -------------------------------------------------------------------
+            var claims = result.Principal.Claims.ToList();
+            claims.Add(new Claim("UserId", user.UserId.ToString()));
+
+            // Bổ sung các role của user vào claims
+            var userRoles = await _db.Roles
+                .Where(r => r.UserId == user.UserId)
+                .Select(r => r.RoleName)
+                .ToListAsync();
+
+            foreach (var roleName in userRoles)
+            {
+                claims.Add(new Claim(ClaimTypes.Role, roleName));
+            }
+
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+
+            await HttpContext.SignInAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme,
+                principal);
+
+            // -------------------------------------------------------------------
+            // BƯỚC 12: Chuyển hướng người dùng dựa trên vai trò (Role)
+            // -------------------------------------------------------------------
+            if (userRoles.Contains("Admin"))
+            {
+                return RedirectToAction("Index", "Admin");
+            }
+
             return Redirect(returnUrl);
         }
 
