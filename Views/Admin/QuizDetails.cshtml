@@ -1,0 +1,514 @@
+@model Zela.Models.Quiz
+
+@{
+    ViewData["Title"] = "Chi tiết Quiz - " + Model.Title;
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <style>
+        .quiz-header {
+            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-secondary) 100%);
+            color: white;
+            padding: var(--admin-spacing-xl);
+            border-radius: var(--admin-radius-lg);
+            margin-bottom: var(--admin-spacing-lg);
+        }
+        
+        .quiz-status {
+            display: inline-block;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            margin-left: var(--admin-spacing-sm);
+        }
+        
+        .quiz-status.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .quiz-status.inactive {
+            background: rgba(239, 68, 68, 0.2);
+            color: #fecaca;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--admin-spacing-lg);
+            margin-bottom: var(--admin-spacing-xl);
+        }
+        
+        .stat-card {
+            background: var(--admin-bg-secondary);
+            padding: var(--admin-spacing-lg);
+            border-radius: var(--admin-radius-md);
+            text-align: center;
+            box-shadow: var(--admin-shadow-sm);
+            transition: transform 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--admin-shadow-md);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--admin-primary);
+            margin-bottom: var(--admin-spacing-xs);
+        }
+        
+        .stat-label {
+            color: var(--admin-text-secondary);
+            font-weight: 500;
+        }
+        
+        .chart-container {
+            background: var(--admin-bg-secondary);
+            padding: var(--admin-spacing-lg);
+            border-radius: var(--admin-radius-md);
+            margin-bottom: var(--admin-spacing-lg);
+        }
+        
+        .data-table {
+            background: var(--admin-bg-secondary);
+            border-radius: var(--admin-radius-md);
+            overflow: hidden;
+            box-shadow: var(--admin-shadow-sm);
+        }
+        
+        .table-header {
+            background: var(--admin-primary);
+            color: white;
+            padding: var(--admin-spacing-md) var(--admin-spacing-lg);
+            font-weight: 600;
+        }
+        
+        .question-accuracy {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .accuracy-high { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+        .accuracy-medium { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+        .accuracy-low { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+        
+        .action-buttons {
+            display: flex;
+            gap: var(--admin-spacing-sm);
+            margin-bottom: var(--admin-spacing-lg);
+        }
+    </style>
+}
+
+<!-- Quiz Header -->
+<div class="quiz-header">
+    <div class="d-flex justify-content-between align-items-start">
+        <div>
+            <h1 class="mb-2">
+                @Model.Title
+                <span class="quiz-status @(Model.IsHomework && Model.StartTime <= DateTime.Now && Model.EndTime >= DateTime.Now ? "active" : "inactive")">
+                    @(Model.IsHomework ? (Model.StartTime <= DateTime.Now && Model.EndTime >= DateTime.Now ? "Đang mở" : "Đã đóng") : "Quiz thường")
+                </span>
+            </h1>
+            @if (!string.IsNullOrEmpty(Model.Description))
+            {
+                <p class="mb-3 opacity-90">@Model.Description</p>
+            }
+            <div class="d-flex flex-wrap gap-4">
+                <span><i class="bi bi-person me-1"></i>Tạo bởi: @(Model.Creator?.FullName ?? "Không xác định")</span>
+                <span><i class="bi bi-calendar me-1"></i>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                @if (Model.TimeLimit > 0)
+                {
+                    <span><i class="bi bi-clock me-1"></i>Thời gian: @Model.TimeLimit phút</span>
+                }
+            </div>
+        </div>
+        <div class="action-buttons">
+            <a asp-action="Quizzes" class="admin-btn admin-btn-outline-light">
+                <i class="bi bi-arrow-left"></i> Quay lại
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value">@ViewBag.TotalAttempts</div>
+        <div class="stat-label">Tổng lượt làm</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@ViewBag.CompletedAttempts</div>
+        <div class="stat-label">Hoàn thành</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@ViewBag.AverageScore</div>
+        <div class="stat-label">Điểm trung bình</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@ViewBag.HighestScore</div>
+        <div class="stat-label">Điểm cao nhất</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@ViewBag.PassRate%</div>
+        <div class="stat-label">Tỷ lệ đậu</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@ViewBag.AverageTime</div>
+        <div class="stat-label">Thời gian TB (phút)</div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row">
+    <div class="col-lg-12">
+        <div class="chart-container">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h5>Thống kê hoạt động</h5>
+                <div class="btn-group" role="group">
+                    <input type="radio" class="btn-check" name="chartRange" id="week" value="week">
+                    <label class="btn btn-outline-primary btn-sm" for="week">7 ngày</label>
+                    <input type="radio" class="btn-check" name="chartRange" id="month" value="month" checked>
+                    <label class="btn btn-outline-primary btn-sm" for="month">30 ngày</label>
+                </div>
+            </div>
+            <canvas id="quizStatsChart" height="100"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Data Tables -->
+<div class="row">
+    <!-- Top Performers -->
+    <div class="col-lg-6 mb-4">
+        <div class="data-table">
+            <div class="table-header">
+                <i class="bi bi-trophy me-2"></i>Top Performers
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Học viên</th>
+                            <th>Điểm</th>
+                            <th>Thời gian</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.TopPerformers != null)
+                        {
+                            @foreach (var (attempt, index) in ((List<Zela.Models.QuizAttempt>)ViewBag.TopPerformers).Select((a, i) => (a, i)))
+                            {
+                                <tr>
+                                    <td>
+                                        @if (index < 3)
+                                        {
+                                            <i class="bi bi-trophy-fill text-warning"></i>
+                                        }
+                                        else
+                                        {
+                                            @(index + 1)
+                                        }
+                                    </td>
+                                    <td>@(attempt.User?.FullName ?? attempt.DisplayName ?? "Ẩn danh")</td>
+                                    <td><span class="badge bg-success">@attempt.Score.ToString("F1")</span></td>
+                                    <td>@((attempt.EndedAt - attempt.StartedAt).TotalMinutes.ToString("F0")) phút</td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Chưa có dữ liệu</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Attempts -->
+    <div class="col-lg-6 mb-4">
+        <div class="data-table">
+            <div class="table-header">
+                <i class="bi bi-clock-history me-2"></i>Lượt làm gần đây
+            </div>
+            <div class="table-responsive">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th>Học viên</th>
+                            <th>Điểm</th>
+                            <th>Thời gian</th>
+                            <th>Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (ViewBag.RecentAttempts != null)
+                        {
+                            @foreach (var attempt in (List<Zela.Models.QuizAttempt>)ViewBag.RecentAttempts)
+                            {
+                                <tr>
+                                    <td>@(attempt.User?.FullName ?? attempt.DisplayName ?? "Ẩn danh")</td>
+                                    <td>
+                                        @if (attempt.EndedAt > attempt.StartedAt)
+                                        {
+                                            <span class="badge bg-success">@attempt.Score.ToString("F1")</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-warning">Đang làm</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">@attempt.StartedAt.ToString("dd/MM HH:mm")</small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-warning btn-sm" onclick="resetAttempt('@attempt.AttemptId')">
+                                                <i class="bi bi-arrow-clockwise"></i>
+                                            </button>
+                                            <button class="btn btn-outline-danger btn-sm" onclick="deleteAttempt('@attempt.AttemptId', '@(attempt.User?.FullName ?? attempt.DisplayName)')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        }
+                        else
+                        {
+                            <tr>
+                                <td colspan="4" class="text-center text-muted">Chưa có dữ liệu</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Question Analytics -->
+<div class="data-table">
+    <div class="table-header">
+        <i class="bi bi-bar-chart me-2"></i>Phân tích câu hỏi
+    </div>
+    <div class="table-responsive">
+        <table class="table table-striped mb-0">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Câu hỏi</th>
+                    <th>Loại</th>
+                    <th>Điểm</th>
+                    <th>Lượt trả lời</th>
+                    <th>Độ chính xác</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (ViewBag.QuestionStats != null)
+                {
+                    @foreach (var (stat, index) in ((List<dynamic>)ViewBag.QuestionStats).Select((s, i) => (s, i)))
+                    {
+                        <tr>
+                            <td>@(index + 1)</td>
+                            <td>
+                                @{
+                                    string questionText = stat.Question.Content;
+                                    string displayText = questionText.Length > 60 ? questionText.Substring(0, 60) + "..." : questionText;
+                                }
+                                <span title="@questionText">@displayText</span>
+                            </td>
+                            <td>
+                                <small class="text-muted">@stat.Question.QuestionType</small>
+                            </td>
+                            <td>@stat.MaxScore</td>
+                            <td>@stat.TotalAnswers</td>
+                            <td>
+                                @{
+                                    double accuracy = stat.Accuracy;
+                                    string accuracyClass = accuracy >= 70 ? "accuracy-high" : accuracy >= 50 ? "accuracy-medium" : "accuracy-low";
+                                }
+                                <span class="question-accuracy @accuracyClass">@accuracy.ToString("F1")%</span>
+                            </td>
+                            <td>
+                                <button class="btn btn-outline-primary btn-sm" onclick="editQuestion(@stat.Question.QuestionId)">
+                                    <i class="bi bi-pencil"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="7" class="text-center text-muted">Chưa có câu hỏi nào</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let quizStatsChart;
+        
+        // Initialize chart
+        function initChart() {
+            const ctx = document.getElementById('quizStatsChart').getContext('2d');
+            quizStatsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Lượt làm bài',
+                            data: [],
+                            borderColor: '#3b82f6',
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Hoàn thành',
+                            data: [],
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Điểm trung bình',
+                            data: [],
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            yAxisID: 'y1'
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        y: {
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Số lượt'
+                            }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Điểm'
+                            },
+                            grid: {
+                                drawOnChartArea: false,
+                            },
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load chart data
+        function loadChartData(range = 'month') {
+            fetch(`/Admin/GetQuizStatsChart?range=${range}`)
+                .then(response => response.json())
+                .then(data => {
+                    quizStatsChart.data.labels = data.labels;
+                    quizStatsChart.data.datasets[0].data = data.attemptSeries;
+                    quizStatsChart.data.datasets[1].data = data.completedSeries;
+                    quizStatsChart.data.datasets[2].data = data.scoreSeries;
+                    quizStatsChart.update();
+                })
+                .catch(error => console.error('Error loading chart data:', error));
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            initChart();
+            loadChartData();
+
+            // Chart range buttons
+            document.querySelectorAll('input[name="chartRange"]').forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.checked) {
+                        loadChartData(this.value);
+                    }
+                });
+            });
+        });
+
+        // Action functions
+        function resetAttempt(attemptId) {
+            if (confirm('Bạn có chắc muốn reset lượt làm bài này? Học viên sẽ có thể làm lại từ đầu.')) {
+                const reason = prompt('Nhập lý do reset:');
+                if (reason) {
+                    fetch('/Admin/ResetQuizAttempt', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ attemptId, reason })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert('Lỗi: ' + data.message);
+                        }
+                    });
+                }
+            }
+        }
+
+        function deleteAttempt(attemptId, userName) {
+            if (confirm(`Bạn có chắc muốn xóa lượt làm bài của ${userName}?`)) {
+                const reason = prompt('Nhập lý do xóa:');
+                if (reason) {
+                    fetch('/Admin/DeleteQuizAttempt', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                        body: new URLSearchParams({ attemptId, reason })
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert(data.message);
+                            location.reload();
+                        } else {
+                            alert('Lỗi: ' + data.message);
+                        }
+                    });
+                }
+            }
+        }
+
+        function editQuestion(questionId) {
+            alert(`Chỉnh sửa câu hỏi ID: ${questionId} sẽ được triển khai sau`);
+        }
+    </script>
+} 

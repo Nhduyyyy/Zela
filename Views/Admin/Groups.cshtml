@@ -1,0 +1,243 @@
+@model List<Zela.Models.ChatGroup>
+
+@{
+    ViewData["Title"] = "Quản lý nhóm chat";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Page Header -->
+<div class="groups-header">
+    <h1>
+        <i class="bi bi-people-fill"></i>Quản lý nhóm chat
+        <span class="groups-badge">@ViewBag.TotalGroups nhóm</span>
+    </h1>
+    <p>Quản lý và giám sát các nhóm chat trong hệ thống Zela</p>
+</div>
+
+<!-- Search and Filters -->
+<div class="search-filters">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Tìm kiếm</label>
+            <input type="text" class="form-control" name="search" value="@ViewBag.Search" placeholder="Tên nhóm, mô tả...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Sắp xếp theo</label>
+            <select class="form-select" name="sortBy">
+                <option value="CreatedAt" selected="@(ViewBag.SortBy == "CreatedAt")">Ngày tạo</option>
+                <option value="Name" selected="@(ViewBag.SortBy == "Name")">Tên nhóm</option>
+                <option value="MemberCount" selected="@(ViewBag.SortBy == "MemberCount")">Số thành viên</option>
+                <option value="MessageCount" selected="@(ViewBag.SortBy == "MessageCount")">Số tin nhắn</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Trạng thái</label>
+            <select class="form-select" name="status">
+                <option value="">Tất cả</option>
+                <option value="Open" selected="@(ViewBag.Status == "Open")">Mở</option>
+                <option value="Closed" selected="@(ViewBag.Status == "Closed")">Đóng</option>
+            </select>
+        </div>
+        <div class="col-md-2 col-sm-12">
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter">
+                    <i class="bi bi-search"></i>
+                    Tìm kiếm
+                </button>
+                <a href="@Url.Action("Groups")" class="btn-reset">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Reset
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Groups Grid -->
+<div class="groups-grid">
+    @if (Model.Any())
+    {
+        @foreach (var group in Model)
+        {
+            <div class="group-card">
+                <!-- Group Header -->
+                <div class="group-header">
+                    <img src="@(group.AvatarUrl ?? "/images/default-group-avatar.png")" 
+                         alt="@group.Name" 
+                         class="group-avatar">
+                    <div class="group-info">
+                        <div class="group-name">@group.Name</div>
+                        <div class="group-description">@(string.IsNullOrEmpty(group.Description) ? "Không có mô tả" : group.Description)</div>
+                        <div class="group-meta">
+                            <div class="group-meta-item">
+                                <i class="bi bi-calendar"></i>
+                                <span>Tạo: @group.CreatedAt.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            <div class="group-meta-item">
+                                <i class="bi bi-person"></i>
+                                <span>@group.Creator?.FullName</span>
+                            </div>
+                        </div>
+                        <div class="group-status">
+                            @if (group.IsOpen)
+                            {
+                                <span class="status-badge active">
+                                    <i class="bi bi-check-circle"></i>
+                                    Mở
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-badge inactive">
+                                    <i class="bi bi-x-circle"></i>
+                                    Đóng
+                                </span>
+                            }
+                            @if (!string.IsNullOrEmpty(group.Password))
+                            {
+                                <span class="status-badge private">
+                                    <i class="bi bi-lock"></i>
+                                    Có mật khẩu
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Group Stats -->
+                <div class="group-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">@group.Members.Count</span>
+                        <span class="stat-label">Thành viên</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">@group.Messages.Count</span>
+                        <span class="stat-label">Tin nhắn</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">
+                            @{
+                                var mediaCount = group.Messages.Sum(m => m.Media?.Count ?? 0);
+                            }
+                            @mediaCount
+                        </span>
+                        <span class="stat-label">File</span>
+                    </div>
+                </div>
+
+                <!-- Group Actions -->
+                <div class="group-actions">
+                    <a asp-action="GroupDetails" asp-route-id="@group.GroupId" class="group-action-btn secondary">
+                        <i class="bi bi-eye"></i>
+                        Chi tiết
+                    </a>
+                    <button class="group-action-btn secondary" onclick="editGroup(@group.GroupId)">
+                        <i class="bi bi-pencil"></i>
+                        Sửa
+                    </button>
+                    <button class="group-action-btn secondary" onclick="manageMembers(@group.GroupId)">
+                        <i class="bi bi-people"></i>
+                        Thành viên
+                    </button>
+                    @if (group.IsOpen)
+                    {
+                        <button class="group-action-btn danger" onclick="closeGroup(@group.GroupId, '@group.Name')">
+                            <i class="bi bi-pause-circle"></i>
+                            Đóng nhóm
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="group-action-btn success" onclick="openGroup(@group.GroupId, '@group.Name')">
+                            <i class="bi bi-play-circle"></i>
+                            Mở nhóm
+                        </button>
+                    }
+                    <button class="group-action-btn danger" onclick="deleteGroup(@group.GroupId, '@group.Name')">
+                        <i class="bi bi-trash"></i>
+                        Xóa
+                    </button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="bi bi-people"></i>
+            <h3>Không có nhóm nào</h3>
+            <p>Chưa có nhóm chat nào được tạo trong hệ thống.</p>
+        </div>
+    }
+</div>
+
+<!-- Pagination -->
+@if (ViewBag.TotalPages > 1)
+{
+    <div class="pagination-wrapper">
+        <div class="pagination-info">
+            Hiển thị @ViewBag.StartIndex - @ViewBag.EndIndex của @ViewBag.TotalGroups nhóm
+        </div>
+        <div class="pagination-controls">
+            @if (ViewBag.CurrentPage > 1)
+            {
+                <a href="@Url.Action("Groups", new { page = ViewBag.CurrentPage - 1, search = ViewBag.Search, sortBy = ViewBag.SortBy, status = ViewBag.Status })" 
+                   class="page-btn">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            }
+            
+            @for (int i = Math.Max(1, ViewBag.CurrentPage - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2); i++)
+            {
+                <a href="@Url.Action("Groups", new { page = i, search = ViewBag.Search, sortBy = ViewBag.SortBy, status = ViewBag.Status })" 
+                   class="page-btn @(i == ViewBag.CurrentPage ? "active" : "")">
+                    @i
+                </a>
+            }
+            
+            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+            {
+                <a href="@Url.Action("Groups", new { page = ViewBag.CurrentPage + 1, search = ViewBag.Search, sortBy = ViewBag.SortBy, status = ViewBag.Status })" 
+                   class="page-btn">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Group action functions
+        function editGroup(groupId) {
+            // Implement edit group functionality
+            alert('Chức năng sửa nhóm sẽ được triển khai sau');
+        }
+
+        function manageMembers(groupId) {
+            // Implement manage members functionality
+            alert('Chức năng quản lý thành viên sẽ được triển khai sau');
+        }
+
+        function closeGroup(groupId, groupName) {
+            if (confirm(`Bạn có chắc muốn đóng nhóm "${groupName}"?`)) {
+                // Implement close functionality
+                alert('Chức năng đóng nhóm sẽ được triển khai sau');
+            }
+        }
+
+        function openGroup(groupId, groupName) {
+            if (confirm(`Bạn có chắc muốn mở nhóm "${groupName}"?`)) {
+                // Implement open functionality
+                alert('Chức năng mở nhóm sẽ được triển khai sau');
+            }
+        }
+
+        function deleteGroup(groupId, groupName) {
+            if (confirm(`Bạn có chắc muốn xóa nhóm "${groupName}"? Hành động này không thể hoàn tác.`)) {
+                // Implement delete functionality
+                alert('Chức năng xóa nhóm sẽ được triển khai sau');
+            }
+        }
+    </script>
+} 

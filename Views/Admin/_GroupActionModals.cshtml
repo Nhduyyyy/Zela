@@ -1,0 +1,136 @@
+<!-- Delete Group Modal -->
+<div class="modal fade" id="deleteGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xóa nhóm chat</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="deleteGroupForm">
+                    <input type="hidden" id="deleteGroupId" />
+                    <div class="mb-3">
+                        <label class="form-label">Nhóm:</label>
+                        <span id="deleteGroupName" class="fw-bold"></span>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Cảnh báo:</strong> Hành động này sẽ xóa nhóm chat khỏi hệ thống. Tất cả tin nhắn và dữ liệu liên quan sẽ không thể truy cập.
+                    </div>
+                    <div class="mb-3">
+                        <label for="deleteGroupReason" class="form-label">Lý do xóa nhóm:</label>
+                        <textarea class="form-control" id="deleteGroupReason" rows="3" placeholder="Nhập lý do xóa nhóm..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="submitDeleteGroup()">Xóa nhóm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Member Modal -->
+<div class="modal fade" id="addMemberModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Thêm thành viên vào nhóm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addMemberForm">
+                    <input type="hidden" id="addMemberGroupId" />
+                    <div class="mb-3">
+                        <label class="form-label">Nhóm:</label>
+                        <span id="addMemberGroupName" class="fw-bold"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="memberSearch" class="form-label">Tìm kiếm người dùng:</label>
+                        <input type="text" class="form-control" id="memberSearch" placeholder="Nhập email hoặc tên người dùng...">
+                    </div>
+                    <div id="userSearchResults" class="border rounded p-3" style="max-height: 300px; overflow-y: auto;">
+                        <p class="text-muted text-center">Nhập để tìm kiếm người dùng</p>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Group Modal -->
+<div class="modal fade" id="editGroupModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chỉnh sửa thông tin nhóm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editGroupForm">
+                    <input type="hidden" id="editGroupId" />
+                    <div class="mb-3">
+                        <label for="editGroupName" class="form-label">Tên nhóm:</label>
+                        <input type="text" class="form-control" id="editGroupName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editGroupDescription" class="form-label">Mô tả:</label>
+                        <textarea class="form-control" id="editGroupDescription" rows="3" placeholder="Mô tả nhóm..."></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editGroupAvatar" class="form-label">Avatar URL:</label>
+                        <input type="url" class="form-control" id="editGroupAvatar" placeholder="https://example.com/avatar.jpg">
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="editGroupIsPrivate">
+                            <label class="form-check-label" for="editGroupIsPrivate">
+                                Nhóm riêng tư
+                            </label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitEditGroup()">Lưu thay đổi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Member Management Modal -->
+<div class="modal fade" id="memberManagementModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quản lý thành viên nhóm</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6>Danh sách thành viên</h6>
+                        <div id="membersList" style="max-height: 400px; overflow-y: auto;">
+                            <!-- Members will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Thêm thành viên mới</h6>
+                        <input type="text" class="form-control mb-3" id="newMemberSearch" placeholder="Tìm kiếm người dùng...">
+                        <div id="newMemberResults" style="max-height: 300px; overflow-y: auto;">
+                            <!-- Search results will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div> 

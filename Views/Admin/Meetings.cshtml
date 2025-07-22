@@ -1,0 +1,267 @@
+@model List<Zela.Models.VideoRoom>
+
+@{
+    ViewData["Title"] = "Quản lý phòng họp";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Page Header -->
+<div class="meetings-header">
+    <h1>
+        <i class="bi bi-camera-video"></i>Quản lý phòng họp
+        <span class="meetings-badge">@ViewBag.TotalMeetings phòng</span>
+    </h1>
+    <p>Quản lý và giám sát các phòng họp trong hệ thống Zela</p>
+</div>
+
+<!-- Search and Filters -->
+<div class="search-filters">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Tìm kiếm</label>
+            <input type="text" class="form-control" name="search" value="@ViewBag.Search" placeholder="Tên phòng họp...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Sắp xếp theo</label>
+            <select class="form-select" name="sortBy">
+                <option value="CreatedAt" selected="@(ViewBag.SortBy == "CreatedAt")">Ngày tạo</option>
+                <option value="Name" selected="@(ViewBag.SortBy == "Name")">Tên phòng</option>
+                <option value="ParticipantCount" selected="@(ViewBag.SortBy == "ParticipantCount")">Số người tham gia</option>
+                <option value="MaxParticipants" selected="@(ViewBag.SortBy == "MaxParticipants")">Số người tối đa</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Thứ tự</label>
+            <select class="form-select" name="sortOrder">
+                <option value="desc" selected="@(ViewBag.SortOrder == "desc")">Giảm dần</option>
+                <option value="asc" selected="@(ViewBag.SortOrder == "asc")">Tăng dần</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Số/trang</label>
+            <select class="form-select" name="pageSize">
+                <option value="10" selected="@(ViewBag.PageSize == 10)">10</option>
+                <option value="20" selected="@(ViewBag.PageSize == 20)">20</option>
+                <option value="50" selected="@(ViewBag.PageSize == 50)">50</option>
+            </select>
+        </div>
+        <div class="col-md-1 d-flex align-items-end">
+            <button type="submit" class="btn btn-filter w-100">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Meetings List -->
+@if (Model.Any())
+{
+    <div class="meetings-grid">
+        @foreach (var meeting in Model)
+        {
+            <div class="meeting-card">
+                <div class="meeting-header">
+                    <div class="meeting-icon">
+                        <i class="bi bi-camera-video"></i>
+                    </div>
+                    <div class="meeting-info">
+                        <div class="meeting-name">
+                            @meeting.Name
+                            <span class="status-badge @(meeting.IsOpen ? "active" : "inactive")">
+                                @(meeting.IsOpen ? "Đang hoạt động" : "Đã kết thúc")
+                            </span>
+                        </div>
+                        <div class="meeting-description">
+                            Phòng họp @meeting.RoomType.ToString().ToLowerInvariant() được tạo bởi @(meeting.Creator?.FullName ?? "Không xác định")
+                        </div>
+                        <div class="meeting-meta">
+                            <div class="meeting-meta-item">
+                                <i class="bi bi-person"></i>
+                                <span>Tạo bởi: @(meeting.Creator?.FullName ?? "Không xác định")</span>
+                            </div>
+                            <div class="meeting-meta-item">
+                                <i class="bi bi-calendar"></i>
+                                <span>Tạo: @meeting.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            @if (meeting.ScheduledStartTime.HasValue)
+                            {
+                                <div class="meeting-meta-item">
+                                    <i class="bi bi-clock"></i>
+                                    <span>Lên lịch: @meeting.ScheduledStartTime.Value.ToString("dd/MM/yyyy HH:mm")</span>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Meeting Stats -->
+                <div class="meeting-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">@meeting.Participants.Count</span>
+                        <span class="stat-label">Tham gia</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">@meeting.MaxParticipants</span>
+                        <span class="stat-label">Tối đa</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">@meeting.RoomType</span>
+                        <span class="stat-label">Loại phòng</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">@(meeting.IsOpen ? "Mở" : "Đóng")</span>
+                        <span class="stat-label">Trạng thái</span>
+                    </div>
+                </div>
+                
+                <!-- Meeting Actions -->
+                <div class="meeting-actions">
+                    <a asp-action="MeetingDetails" asp-route-id="@meeting.RoomId" 
+                       class="meeting-action-btn primary">
+                        <i class="bi bi-eye"></i>
+                        Chi tiết
+                    </a>
+                    @if (meeting.IsOpen)
+                    {
+                        <button class="meeting-action-btn warning" 
+                                onclick="endMeeting(@meeting.RoomId, '@meeting.Name')">
+                            <i class="bi bi-stop-circle"></i>
+                            Kết thúc
+                        </button>
+                    }
+                    <button class="meeting-action-btn info" 
+                            onclick="manageMeeting(@meeting.RoomId, '@meeting.Name')">
+                        <i class="bi bi-gear"></i>
+                        Cài đặt
+                    </button>
+                    <button class="meeting-action-btn danger" 
+                            onclick="deleteMeeting(@meeting.RoomId, '@meeting.Name')">
+                        <i class="bi bi-trash"></i>
+                        Xóa
+                    </button>
+                </div>
+            </div>
+        }
+    </div>
+}
+else
+{
+    <div class="empty-state">
+        <i class="bi bi-camera-video"></i>
+        <h3>Không tìm thấy phòng họp nào</h3>
+        <p>Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc</p>
+    </div>
+}
+
+<!-- Pagination -->
+@if (ViewBag.TotalPages > 1)
+{
+    <div class="pagination-wrapper">
+        <div class="pagination-info">
+            Hiển thị @((ViewBag.Page - 1) * ViewBag.PageSize + 1) - @(Math.Min(ViewBag.Page * ViewBag.PageSize, ViewBag.TotalMeetings)) 
+            của @ViewBag.TotalMeetings phòng
+        </div>
+        <div class="pagination-controls">
+            @if (ViewBag.Page > 1)
+            {
+                <a class="page-btn" href="?search=@ViewBag.Search&sortBy=@ViewBag.SortBy&sortOrder=@ViewBag.SortOrder&pageSize=@ViewBag.PageSize&page=@(ViewBag.Page - 1)">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            }
+            
+            @for (int i = Math.Max(1, ViewBag.Page - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.Page + 2); i++)
+            {
+                <a class="page-btn @(i == ViewBag.Page ? "active" : "")" href="?search=@ViewBag.Search&sortBy=@ViewBag.SortBy&sortOrder=@ViewBag.SortOrder&pageSize=@ViewBag.PageSize&page=@i">@i</a>
+            }
+            
+            @if (ViewBag.Page < ViewBag.TotalPages)
+            {
+                <a class="page-btn" href="?search=@ViewBag.Search&sortBy=@ViewBag.SortBy&sortOrder=@ViewBag.SortOrder&pageSize=@ViewBag.PageSize&page=@(ViewBag.Page + 1)">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+}
+
+<!-- Modals -->
+@Html.Partial("~/Views/Admin/_MeetingActionModals.cshtml")
+
+@section Scripts {
+    <script>
+        function manageMeeting(meetingId, meetingName) {
+            alert(`Quản lý phòng họp "${meetingName}" sẽ được triển khai sau`);
+        }
+        
+        function endMeeting(meetingId, meetingName) {
+            if (confirm(`Bạn có chắc muốn kết thúc phòng họp "${meetingName}"?`)) {
+                const reason = prompt('Nhập lý do kết thúc phòng họp (tùy chọn):');
+                
+                fetch('/Admin/EndMeeting', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams({
+                        meetingId: meetingId,
+                        reason: reason || ''
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert(data.message);
+                        location.reload();
+                    } else {
+                        alert('Lỗi: ' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Có lỗi xảy ra khi kết thúc phòng họp');
+                });
+            }
+        }
+        
+        function deleteMeeting(meetingId, meetingName) {
+            document.getElementById('deleteMeetingId').value = meetingId;
+            document.getElementById('deleteMeetingName').textContent = meetingName;
+            document.getElementById('deleteMeetingReason').value = '';
+            new bootstrap.Modal(document.getElementById('deleteMeetingModal')).show();
+        }
+        
+        function submitDeleteMeeting() {
+            const meetingId = document.getElementById('deleteMeetingId').value;
+            const reason = document.getElementById('deleteMeetingReason').value;
+
+            if (!reason) {
+                alert('Vui lòng nhập lý do xóa phòng họp');
+                return;
+            }
+
+            fetch('/Admin/DeleteMeeting', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: new URLSearchParams({
+                    meetingId: meetingId,
+                    reason: reason
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Có lỗi xảy ra khi xóa phòng họp');
+            });
+        }
+    </script>
+} 

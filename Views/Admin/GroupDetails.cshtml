@@ -1,0 +1,280 @@
+@model Zela.Models.ChatGroup
+
+@{
+    ViewData["Title"] = "Chi tiết nhóm - " + Model.Name;
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Group Header -->
+<div class="group-detail-header">
+    <div class="row align-items-center">
+        <div class="col-md-3 text-center">
+            <img src="@(Model.AvatarUrl ?? "/images/default-group-avatar.png")" 
+                 alt="@Model.Name" 
+                 class="group-avatar-lg">
+        </div>
+        <div class="col-md-6">
+            <div class="group-header-info">
+                <h1>@Model.Name</h1>
+                <p><i class="bi bi-card-text"></i>@(string.IsNullOrEmpty(Model.Description) ? "Chưa có mô tả" : Model.Description)</p>
+                <p><i class="bi bi-calendar"></i>Tạo ngày @Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</p>
+                <p><i class="bi bi-shield-check"></i>@(string.IsNullOrEmpty(Model.Password) ? "Nhóm công khai" : "Nhóm riêng tư")</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="group-header-stats">
+                <div class="group-stat-item">
+                    <span class="group-stat-value">@Model.Members.Count</span>
+                    <span class="group-stat-label">Thành viên</span>
+                </div>
+                <div class="group-stat-item">
+                    <span class="group-stat-value">@Model.Messages.Count</span>
+                    <span class="group-stat-label">Tin nhắn</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Group Info -->
+    <div class="col-md-8">
+        <!-- General Info -->
+        <div class="group-info-card">
+            <h5><i class="bi bi-info-circle"></i>Thông tin chung</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-item">
+                        <label>Tên nhóm:</label>
+                        <span>@Model.Name</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Người tạo:</label>
+                        <span>@Model.Creator?.FullName (@Model.Creator?.Email)</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Ngày tạo:</label>
+                        <span>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-item">
+                        <label>Trạng thái:</label>
+                        <span>@(Model.IsOpen ? "Đang hoạt động" : "Đã đóng")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Loại nhóm:</label>
+                        <span>@(string.IsNullOrEmpty(Model.Password) ? "Công khai" : "Riêng tư")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Số thành viên:</label>
+                        <span>@Model.Members.Count người</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="group-info-card">
+            <h5><i class="bi bi-bar-chart"></i>Thống kê</h5>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-value">@Model.Members.Count</span>
+                    <span class="stat-label">Thành viên</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">@Model.Messages.Count</span>
+                    <span class="stat-label">Tin nhắn</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">
+                        @{
+                            var mediaCount = Model.Messages.Sum(m => m.Media?.Count ?? 0);
+                        }
+                        @mediaCount
+                    </span>
+                    <span class="stat-label">File</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-value">
+                        @{
+                            var activeMembers = Model.Members.Count(m => m.User?.LastLoginAt > DateTime.Now.AddDays(-7));
+                        }
+                        @activeMembers
+                    </span>
+                    <span class="stat-label">Hoạt động</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Members -->
+        <div class="group-info-card">
+            <h5><i class="bi bi-people"></i>Danh sách thành viên (@Model.Members.Count)</h5>
+            <div class="members-list">
+                @foreach (var member in Model.Members)
+                {
+                    <div class="member-item">
+                        <img src="@(member.User?.AvatarUrl ?? "/images/default-avatar.jpeg")" 
+                             alt="@member.User?.FullName" 
+                             class="member-avatar">
+                        <div class="member-info">
+                            <div class="member-name">@member.User?.FullName</div>
+                            <div class="member-email">@member.User?.Email</div>
+                            <div class="member-role">@(member.IsModerator ? "Quản trị viên" : "Thành viên")</div>
+                        </div>
+                        <div class="member-actions">
+                            @if (!member.IsModerator)
+                            {
+                                <button class="member-action-btn" onclick="makeAdmin(@member.UserId, '@member.User?.FullName')" title="Thăng làm admin">
+                                    <i class="bi bi-person-gear"></i>
+                                </button>
+                            }
+                            <button class="member-action-btn danger" onclick="removeMember(@member.UserId, '@member.User?.FullName')" title="Xóa khỏi nhóm">
+                                <i class="bi bi-person-x"></i>
+                            </button>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Recent Messages -->
+        <div class="group-info-card">
+            <h5><i class="bi bi-chat-dots"></i>Tin nhắn gần đây</h5>
+            <div class="messages-list">
+                @foreach (var message in Model.Messages.OrderByDescending(m => m.SentAt).Take(10))
+                {
+                    <div class="message-item">
+                        <img src="@(message.Sender?.AvatarUrl ?? "/images/default-avatar.jpeg")" 
+                             alt="@message.Sender?.FullName" 
+                             class="message-avatar">
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="message-author">@message.Sender?.FullName</span>
+                                <span class="message-time">@message.SentAt.ToString("dd/MM/yyyy HH:mm")</span>
+                            </div>
+                            <div class="message-text">@message.Content</div>
+                            <div class="message-meta">
+                                @if (message.Media?.Any() == true)
+                                {
+                                    <span><i class="bi bi-paperclip"></i> @message.Media.Count file</span>
+                                }
+                                @if (message.Reactions?.Any() == true)
+                                {
+                                    <div class="message-reactions">
+                                        @foreach (var reaction in message.Reactions.GroupBy(r => r.ReactionType))
+                                        {
+                                            <span class="message-reaction">@reaction.Key @reaction.Count()</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Top Contributors -->
+        <div class="group-info-card">
+            <h5><i class="bi bi-trophy"></i>Thành viên tích cực</h5>
+            @{
+                var topContributors = Model.Messages
+                    .GroupBy(m => m.SenderId)
+                    .Select(g => new { UserId = g.Key, Count = g.Count(), User = g.First().Sender })
+                    .OrderByDescending(x => x.Count)
+                    .Take(3);
+            }
+            @foreach (var contributor in topContributors)
+            {
+                <div class="top-contributor">
+                    <div class="top-contributor-icon">
+                        <i class="bi bi-star"></i>
+                    </div>
+                    <div class="top-contributor-info">
+                        <h6>@contributor.User?.FullName</h6>
+                        <p>@contributor.Count tin nhắn</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Actions -->
+        <div class="group-info-card">
+            <h5><i class="bi bi-gear"></i>Thao tác</h5>
+            <div class="group-actions">
+                <button class="group-action-btn primary" onclick="editGroup(@Model.GroupId)">
+                    <i class="bi bi-pencil"></i>
+                    Chỉnh sửa nhóm
+                </button>
+                @if (Model.IsOpen)
+                {
+                    <button class="group-action-btn warning" onclick="closeGroup(@Model.GroupId, '@Model.Name')">
+                        <i class="bi bi-lock"></i>
+                        Đóng nhóm
+                    </button>
+                }
+                else
+                {
+                    <button class="group-action-btn success" onclick="openGroup(@Model.GroupId, '@Model.Name')">
+                        <i class="bi bi-unlock"></i>
+                        Mở nhóm
+                    </button>
+                }
+                <button class="group-action-btn danger" onclick="deleteGroup(@Model.GroupId, '@Model.Name')">
+                    <i class="bi bi-trash"></i>
+                    Xóa nhóm
+                </button>
+                <a href="/Admin/Groups" class="group-action-btn secondary">
+                    <i class="bi bi-arrow-left"></i>
+                    Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function makeAdmin(userId, userName) {
+        if (confirm(`Bạn có chắc muốn thăng ${userName} làm quản trị viên?`)) {
+            // Implement make admin functionality
+            alert('Chức năng thăng admin sẽ được triển khai sau');
+        }
+    }
+
+    function removeMember(userId, userName) {
+        if (confirm(`Bạn có chắc muốn xóa ${userName} khỏi nhóm?`)) {
+            // Implement remove member functionality
+            alert('Chức năng xóa thành viên sẽ được triển khai sau');
+        }
+    }
+
+    function editGroup(groupId) {
+        // Implement edit group functionality
+        alert('Chức năng chỉnh sửa nhóm sẽ được triển khai sau');
+    }
+
+    function closeGroup(groupId, groupName) {
+        if (confirm(`Bạn có chắc muốn đóng nhóm "${groupName}"?`)) {
+            // Implement close group functionality
+            alert('Chức năng đóng nhóm sẽ được triển khai sau');
+        }
+    }
+
+    function openGroup(groupId, groupName) {
+        if (confirm(`Bạn có chắc muốn mở nhóm "${groupName}"?`)) {
+            // Implement open group functionality
+            alert('Chức năng mở nhóm sẽ được triển khai sau');
+        }
+    }
+
+    function deleteGroup(groupId, groupName) {
+        if (confirm(`Bạn có chắc muốn xóa nhóm "${groupName}"? Hành động này không thể hoàn tác!`)) {
+            // Implement delete group functionality
+            alert('Chức năng xóa nhóm sẽ được triển khai sau');
+        }
+    }
+</script> 
