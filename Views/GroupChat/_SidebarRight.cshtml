@@ -147,7 +147,7 @@
             {
                 foreach (var member in Model.Members)
                 {
-                    <div class="member-item d-flex align-items-center mb-3">
+                    <div class="member-item d-flex align-items-center mb-3 position-relative group-member-item" data-user-id="@member.UserId">
                         <img src="@(member.AvatarUrl ?? "/images/default-avatar.jpeg")"
                              class="rounded-circle me-3" width="40" height="40" alt="Ảnh đại diện @member.FullName">
                         <div class="member-info flex-fill">
@@ -156,6 +156,10 @@
                                 @if (member.UserId == Model.CreatorId)
                                 {
                                     <span class="text-primary fw-bold">Chủ nhóm</span>
+                                }
+                                else if (member.IsBanned && member.BanUntil != null)
+                                {
+                                    <span class="badge bg-danger">Bị ban đến @member.BanUntil?.ToString("HH:mm dd/MM")</span>
                                 }
                                 else
                                 {
@@ -166,6 +170,37 @@
                         <span class="badge @(member.IsOnline ? "bg-success" : "bg-secondary")" aria-label="@(member.IsOnline ? "Đang online" : "Đang offline")">
                             @(member.IsOnline ? "Online" : "Offline")
                         </span>
+                        @if (member.UserId != Model.CreatorId) // Không cho kick/ban chủ nhóm
+                        {
+                            <div class="dropdown d-inline-block ms-2">
+                                <a href="#" id="memberActionsDropdown-@member.UserId" data-bs-toggle="dropdown" aria-expanded="false" title="Tùy chọn thành viên" class="text-dark text-decoration-none" style="font-size: 1.3rem; vertical-align: middle;">
+                                    <i class="bi bi-three-dots-vertical" style="color: white"></i>
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="memberActionsDropdown-@member.UserId">
+                                    <li>
+                                        <button class="dropdown-item btn-kick-member" data-user-id="@member.UserId" type="button">
+                                            <i class="bi bi-person-dash me-1 text-danger"></i> Kick thành viên
+                                        </button>
+                                    </li>
+                                    @if (!member.IsBanned)
+                                    {
+                                        <li>
+                                            <button class="dropdown-item btn-ban-member" data-user-id="@member.UserId" data-user-name="@member.FullName" type="button">
+                                                <i class="bi bi-person-x me-1 text-warning"></i> Ban thành viên
+                                            </button>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li>
+                                            <button class="dropdown-item btn-unban-member" data-user-id="@member.UserId" type="button">
+                                                <i class="bi bi-person-check me-1 text-success"></i> Gỡ ban thành viên
+                                            </button>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
                     </div>
                 }
             }
@@ -178,3 +213,36 @@
 </div>
 <!-- Thêm container riêng cho sidebar media, nằm ngoài chat-info-panel -->
 <div id="sidebar-media-container" class="d-none"></div>
+
+<!-- Modal chọn thời gian ban thành viên -->
+<div class="modal fade" id="banMemberModal" tabindex="-1" aria-labelledby="banMemberModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="banMemberModalLabel">Ban thành viên</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="banMemberForm">
+          <input type="hidden" id="banUserId" name="userId" />
+          <div class="mb-3">
+            <label for="banUserName" class="form-label">Thành viên</label>
+            <input type="text" class="form-control" id="banUserName" name="userName" readonly />
+          </div>
+          <div class="mb-3">
+            <label for="banHours" class="form-label">Thời gian ban (giờ)</label>
+            <input type="number" class="form-control" id="banHours" name="banHours" min="1" max="168" value="1" required />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-warning" id="confirmBanBtn">Ban thành viên</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+    <!-- Đã chuyển toàn bộ JS xử lý kick/ban/unban sang file group-sidebar.js. Hãy đảm bảo file này được load trong layout hoặc trang chính. -->
+}

@@ -501,7 +501,7 @@
         padding: 30px;
         max-width: 350px;
     }
-} 
+}
 
 /* ===== VOICE NOTIFICATION ===== */
 .voice-notification {
@@ -562,7 +562,7 @@
         max-width: none;
         transform: translateY(-100%);
     }
-    
+
     .voice-notification.show {
         transform: translateY(0);
     }

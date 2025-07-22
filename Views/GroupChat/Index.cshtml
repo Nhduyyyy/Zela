@@ -19,7 +19,7 @@
         <ul class="friend-items" id="group-list">
             @foreach (var group in Model)
             {
-                <li class="friend-item" data-id="@group.GroupId" data-type="group">
+                <li class="friend-item" data-id="@group.GroupId" data-type="group" data-banned="@group.IsCurrentUserBanned.ToString().ToLower()" data-banuntil="@(group.BanUntil?.ToString("yyyy-MM-ddTHH:mm:ss") ?? "")">
                     <img class="friend-avatar" src="@group.AvatarUrl" alt="Group Avatar"/>
                     <div class="friend-info">
                         <div class="friend-name">@group.Name</div>
@@ -216,6 +216,24 @@
             // Update currentGroupId when group is selected
             $(document).on('click', '.friend-item[data-type="group"]', function () {
                 indexCurrentGroupId = Number($(this).data('id'));
+                const isBanned = $(this).data('banned') === true || $(this).data('banned') === 'true';
+                const banUntil = $(this).data('banuntil');
+                if (isBanned) {
+                    $('.chat-input-bar').css('pointer-events', 'none').css('opacity', 0.5);
+                    $('.chat-actions').css('pointer-events', 'none').css('opacity', 0.5);
+                    if ($('#ban-message').length === 0) {
+                        let msg = `<div style=\"display: flex; align-items: center; justify-content: center; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 8px; padding: 10px 16px; margin-top: 10px; font-weight: 500; font-size: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);\">`;
+                        msg += `<i class=\"bi bi-exclamation-triangle-fill\" style=\"font-size: 1.5rem; margin-right: 10px; color: #ffc107;\"></i>`;
+                        msg += `<span>Bạn đã bị cấm chat`;
+                        if (banUntil) msg += ` đến <b>${new Date(banUntil).toLocaleString()}</b>`;
+                        msg += `</span></div>`;
+                        $('.chat-input-bar').append(`<div id=\"ban-message\">${msg}</div>`);
+                    }
+                } else {
+                    $('.chat-input-bar').css('pointer-events', '').css('opacity', 1);
+                    $('.chat-actions').css('pointer-events', '').css('opacity', 1);
+                    $('#ban-message').remove();
+                }
                 console.log('Index: Group selected:', indexCurrentGroupId);
             });
 
@@ -335,5 +353,26 @@
             clearIndexFilePreview();
             console.log('Index: Files cleared');
         };
+
+        // Group search logic
+        $(document).ready(function () {
+            $('#searchGroupBtn').on('click', function () {
+                filterGroups();
+            });
+            $('#searchGroupInput').on('input', function () {
+                filterGroups();
+            });
+            function filterGroups() {
+                var keyword = $('#searchGroupInput').val().toLowerCase();
+                $('#group-list .friend-item').each(function () {
+                    var groupName = $(this).find('.friend-name').text().toLowerCase();
+                    if (groupName.includes(keyword)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }
+        });
     </script>
 } 

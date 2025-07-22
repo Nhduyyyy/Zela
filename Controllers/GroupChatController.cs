@@ -81,6 +81,12 @@ namespace Zela.Controllers
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
             var (success, message, groupVm) = await _chatService.CreateGroupWithAvatarAndFriendsAsync(userId, name, description, avatar, password, friendIds);
             
+            // Nếu là request AJAX/fetch thì trả về JSON
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest" || Request.Headers["Accept"].ToString().Contains("application/json"))
+            {
+                return Json(new { success, message, group = groupVm });
+            }
+            // Ngược lại, redirect như cũ
             if (!success)
             {
                 TempData["ErrorMessage"] = message;
@@ -186,7 +192,8 @@ namespace Zela.Controllers
         public async Task<IActionResult> EditGroup(EditGroupViewModel model, IFormFile? avatarFile)
         {
             var (success, message) = await _chatService.EditGroupAsync(model, avatarFile);
-            
+            // Cập nhật loại phòng nếu có thay đổi
+            await _chatService.UpdateGroupRoomTypeAsync(model.GroupId, model.RoomType);
             if (success)
             {
                 TempData["SuccessMessage"] = message;
@@ -195,7 +202,6 @@ namespace Zela.Controllers
             {
                 TempData["ErrorMessage"] = message;
             }
-            
             return RedirectToAction("Index", new { groupId = model.GroupId });
         }
 
@@ -294,6 +300,17 @@ namespace Zela.Controllers
         public async Task<IActionResult> Join(int groupId)
         {
             int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var group = await _chatService.GetGroupDetailsAsync(groupId);
+            if (group == null)
+            {
+                TempData["ErrorMessage"] = "Nhóm không tồn tại.";
+                return RedirectToAction("Index", new { groupId });
+            }
+            if (group.RoomType == Zela.Enum.RoomType.Private)
+            {
+                TempData["ErrorMessage"] = "Phòng này là riêng tư, không thể tham gia bằng link.";
+                return RedirectToAction("Index", new { groupId });
+            }
             var (success, message) = await _chatService.JoinGroupAsync(groupId, userId);
             
             if (!success && message.Contains("đăng nhập"))
@@ -322,6 +339,49 @@ namespace Zela.Controllers
             using var stream = audio.OpenReadStream();
             var text = await _voiceToTextService.ConvertVoiceToTextAsync(stream, language);
             return Json(new { text });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> KickMember(int groupId, int userId)
+        {
+            int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var group = await _chatService.GetGroupDetailsAsync(groupId);
+            var currentMember = group?.Members?.FirstOrDefault(m => m.UserId == currentUserId);
+            if (group == null || currentMember == null || (group.CreatorId != currentUserId && !currentMember.IsModerator))
+                return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này." });
+            var result = await _chatService.KickMemberAsync(groupId, userId);
+            if (result)
+                return Json(new { success = true, message = "Đã kick thành viên khỏi nhóm." });
+            return Json(new { success = false, message = "Không thể kick thành viên." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> BanMember(int groupId, int userId, int banHours)
+        {
+            int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var group = await _chatService.GetGroupDetailsAsync(groupId);
+            var currentMember = group?.Members?.FirstOrDefault(m => m.UserId == currentUserId);
+            if (group == null || currentMember == null || (group.CreatorId != currentUserId && !currentMember.IsModerator))
+                return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này." });
+            var banUntil = DateTime.Now.AddHours(banHours);
+            var result = await _chatService.BanMemberAsync(groupId, userId, banUntil);
+            if (result)
+                return Json(new { success = true, message = $"Đã ban thành viên trong {banHours} giờ." });
+            return Json(new { success = false, message = "Không thể ban thành viên." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> UnbanMember(int groupId, int userId)
+        {
+            int currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
+            var group = await _chatService.GetGroupDetailsAsync(groupId);
+            var currentMember = group?.Members?.FirstOrDefault(m => m.UserId == currentUserId);
+            if (group == null || currentMember == null || (group.CreatorId != currentUserId && !currentMember.IsModerator))
+                return Json(new { success = false, message = "Bạn không có quyền thực hiện thao tác này." });
+            var result = await _chatService.UnbanMemberAsync(groupId, userId);
+            if (result)
+                return Json(new { success = true, message = "Đã gỡ ban thành viên." });
+            return Json(new { success = false, message = "Không thể gỡ ban thành viên." });
         }
     }
 } 

@@ -86,6 +86,32 @@ $(document).ready(function() {
         $('#groups-tab').removeClass('show active');
         $('#friends-tab').addClass('show active');
     }
+
+    // Sidebar search logic
+    $('#searchBox').on('input', function() {
+        const keyword = $(this).val().toLowerCase();
+        if (currentPath.includes('/GroupChat')) {
+            // Chỉ lọc nhóm trong tab nhóm
+            $('#group-list .friend-item').each(function() {
+                const groupName = $(this).find('.friend-name').text().toLowerCase();
+                if (groupName.includes(keyword)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        } else {
+            // Chỉ lọc bạn bè trong tab bạn bè
+            $('#friend-list .friend-item').each(function() {
+                const friendName = $(this).find('.friend-name').text().toLowerCase();
+                if (friendName.includes(keyword)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+    });
 });
 </script>
 

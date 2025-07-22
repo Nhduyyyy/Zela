@@ -285,6 +285,18 @@ public class ChatService : IChatService
     // Group chat methods
     public async Task<GroupMessageViewModel> SendGroupMessageAsync(int senderId, int groupId, string content, List<IFormFile>? files = null, long? replyToMessageId = null)
     {
+        // Kiểm tra trạng thái ban
+        var member = await _dbContext.GroupMembers.FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == senderId);
+        if (member != null && member.IsBanned)
+        {
+            if (member.BanUntil.HasValue && member.BanUntil > DateTime.Now)
+                throw new Exception($"Bạn đã bị ban khỏi nhóm đến {member.BanUntil.Value:HH:mm dd/MM/yyyy}, không thể gửi tin nhắn.");
+            // Nếu đã hết hạn ban thì tự động gỡ ban
+            member.IsBanned = false;
+            member.BanUntil = null;
+            await _dbContext.SaveChangesAsync();
+        }
+        
         var sender = await _dbContext.Users.FindAsync(senderId);
         var group = await _dbContext.ChatGroups.FindAsync(groupId);
 
@@ -541,7 +553,11 @@ public class ChatService : IChatService
             MemberCount = gm.ChatGroup.Members?.Count ?? 0,
             AvatarUrl = gm.ChatGroup.AvatarUrl ?? "/images/default-group-avatar.png",
             LastMessage = gm.ChatGroup.Messages?.FirstOrDefault()?.Content ?? "Chưa có tin nhắn nào",
-            LastTime = gm.ChatGroup.Messages?.FirstOrDefault()?.SentAt.ToString("HH:mm") ?? ""
+            LastTime = gm.ChatGroup.Messages?.FirstOrDefault()?.SentAt.ToString("HH:mm") ?? "",
+            // Trạng thái ban
+            IsCurrentUserBanned = gm.IsBanned && gm.BanUntil != null && gm.BanUntil > DateTime.Now,
+            BanUntil = gm.BanUntil,
+            RoomType = gm.ChatGroup.RoomType
         }).ToList();
     }
 
@@ -915,7 +931,10 @@ public class ChatService : IChatService
             Email = m.User?.Email ?? "",
             AvatarUrl = m.User?.AvatarUrl ?? "/images/default-avatar.jpeg",
             IsOnline = m.User != null && m.User.LastLoginAt > DateTime.Now.AddMinutes(-3),
-            LastLoginAt = m.User?.LastLoginAt
+            LastLoginAt = m.User?.LastLoginAt,
+            IsModerator = m.IsModerator,
+            IsBanned = m.IsBanned,
+            BanUntil = m.BanUntil
         }).ToList() ?? new List<UserViewModel>();
         var (images, videos, files) = await GetGroupMediaAsync(groupId, mediaLimit);
         return new GroupViewModel
@@ -931,7 +950,8 @@ public class ChatService : IChatService
             Members = members,
             Images = images,
             Videos = videos,
-            Files = files
+            Files = files,
+            RoomType = group.RoomType
         };
     }
 
@@ -1200,6 +1220,19 @@ public class ChatService : IChatService
             if (senderId == 0)
                 return (false, "Không tìm thấy thông tin người dùng", null);
 
+            // Kiểm tra trạng thái ban
+            var member = await _dbContext.GroupMembers.FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == senderId);
+            if (member != null && member.IsBanned && member.BanUntil.HasValue && member.BanUntil > DateTime.Now)
+            {
+                return (false, $"Bạn đã bị ban khỏi nhóm đến {member.BanUntil.Value:HH:mm dd/MM/yyyy}, không thể gửi tin nhắn.", null);
+            }
+            if (member != null && member.IsBanned && member.BanUntil.HasValue && member.BanUntil <= DateTime.Now)
+            {
+                member.IsBanned = false;
+                member.BanUntil = null;
+                await _dbContext.SaveChangesAsync();
+            }
+
             // Validate input
             if (string.IsNullOrWhiteSpace(content) && (files == null || files.Count == 0))
                 return (false, "Vui lòng nhập nội dung tin nhắn hoặc chọn file", null);
@@ -1210,7 +1243,7 @@ public class ChatService : IChatService
         catch (Exception ex)
         {
             Console.WriteLine($"Error sending group message: {ex.Message}");
-            return (false, "Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại.", null);
+            return (false, ex.Message, null);
         }
     }
 
@@ -1232,5 +1265,44 @@ public class ChatService : IChatService
         }
         
         return messages;
+    }
+    
+    
+    public async Task<bool> KickMemberAsync(int groupId, int userId)
+    {
+        var member = await _dbContext.GroupMembers.FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userId);
+        if (member == null) return false;
+        _dbContext.GroupMembers.Remove(member);
+        await _dbContext.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> BanMemberAsync(int groupId, int userId, DateTime banUntil)
+    {
+        var member = await _dbContext.GroupMembers.FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userId);
+        if (member == null) return false;
+        member.IsBanned = true;
+        member.BanUntil = banUntil;
+        await _dbContext.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> UnbanMemberAsync(int groupId, int userId)
+    {
+        var member = await _dbContext.GroupMembers.FirstOrDefaultAsync(m => m.GroupId == groupId && m.UserId == userId);
+        if (member == null) return false;
+        member.IsBanned = false;
+        member.BanUntil = null;
+        await _dbContext.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task UpdateGroupRoomTypeAsync(int groupId, RoomType roomType)
+    {
+        var group = await _dbContext.ChatGroups.FindAsync(groupId);
+        if (group == null)
+            throw new Exception("Group not found");
+        group.RoomType = roomType;
+        await _dbContext.SaveChangesAsync();
     }
 }

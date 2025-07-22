@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.Collections.Generic;
+using Zela.Enum;
 
 namespace Zela.ViewModels;
 
@@ -29,4 +30,11 @@ public class GroupViewModel
     public List<MediaViewModel> Images { get; set; } = new List<MediaViewModel>();
     public List<MediaViewModel> Videos { get; set; } = new List<MediaViewModel>();
     public List<MediaViewModel> Files { get; set; } = new List<MediaViewModel>();
+
+    // Trạng thái bị ban của user hiện tại trong group
+    public bool IsCurrentUserBanned { get; set; }
+    public DateTime? BanUntil { get; set; }
+
+    // Loại phòng: Công cộng hoặc Riêng tư
+    public RoomType RoomType { get; set; }
 }
