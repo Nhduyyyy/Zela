@@ -14,7 +14,11 @@
     "Google": {
       "ClientId": "869228240475-lvt9jbd8fkrhjdt6tp6ktq305g218urv.apps.googleusercontent.com",
       "ClientSecret": "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"
-    }
+    },
+        "Facebook": {
+          "AppId": "1647959242568460",
+          "AppSecret": "a92cf82c6cc834ddda945f412d426da5"
+        }
   },
   "Cloudinary": {
     "CloudName": "da7a0c23y",
