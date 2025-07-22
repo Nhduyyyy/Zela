@@ -1,0 +1,735 @@
+/* =================================
+   ZELA ADMIN - PAYMENTS MANAGEMENT
+   Styling hiện đại cho trang quản lý Payments
+   ================================= */
+
+/* CSS Variables for Payment Details */
+:root {
+    --primary-red: #92140C;
+    --primary-dark: #7A0F09;
+    --primary-light: #B84A42;
+    --secondary-color: #667eea;
+    --accent-peach: #FFE4D6;
+    --soft-cream: #FFF8F0;
+    --text-primary: #2C2C2C;
+    --text-secondary: #6B7280;
+    --border-color: #E5E7EB;
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+    --border-radius: 12px;
+    --border-radius-lg: 16px;
+    --spacing-xs: 0.5rem;
+    --spacing-sm: 0.75rem;
+    --spacing-md: 1rem;
+    --spacing-lg: 1.5rem;
+    --spacing-xl: 2rem;
+}
+
+/* =================================
+   PAYMENTS PAGE LAYOUT
+   ================================= */
+
+.payments-container {
+    background: var(--dashboard-bg);
+    min-height: calc(100vh - 80px);
+    padding: var(--spacing-xl);
+}
+
+/* =================================
+   PAGE HEADER
+   ================================= */
+
+.payments-header {
+    background: #fff;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 32px rgba(30,30,36,0.10), 0 1.5px 6px rgba(146,20,12,0.08);
+    border: 1.5px solid #f3e7db;
+}
+
+.payments-header h1 {
+    color: var(--text-primary);
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.payments-header h1 i {
+    color: var(--primary-red);
+    font-size: 1.8rem;
+}
+
+.payments-header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.payments-badge {
+    display: inline-block;
+    padding: 0.4rem 1rem;
+    background: var(--badge-primary-bg);
+    color: #fff;
+    border-radius: 999px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+/* =================================
+   STATISTICS GRID
+   ================================= */
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 6px 32px rgba(30,30,36,0.10), 0 1.5px 6px rgba(146,20,12,0.08);
+    border: 1.5px solid #f3e7db;
+    text-align: center;
+    transition: transform 0.2s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 40px rgba(146,20,12,0.12);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    font-size: 1.5rem;
+    color: #fff;
+}
+
+.stat-card:nth-child(1) .stat-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.stat-card:nth-child(2) .stat-icon {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+}
+
+.stat-card:nth-child(3) .stat-icon {
+    background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+}
+
+.stat-card:nth-child(4) .stat-icon {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+/* =================================
+   SEARCH AND FILTERS
+   ================================= */
+
+.search-filters {
+    background: #fff;
+    border-radius: 20px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 6px 32px rgba(30,30,36,0.10), 0 1.5px 6px rgba(146,20,12,0.08);
+    border: 1.5px solid #f3e7db;
+}
+
+.search-filters .form-label {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.search-filters .form-control,
+.search-filters .form-select {
+    border: 1.5px solid #f3e7db;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    background: var(--soft-cream);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
+
+.search-filters .form-control:focus,
+.search-filters .form-select:focus {
+    outline: none;
+    border-color: var(--primary-red);
+    box-shadow: 0 0 0 3px rgba(146,20,12,0.1);
+}
+
+.filter-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: flex-end;
+}
+
+.btn-filter {
+    background: var(--btn-primary-bg);
+    color: #fff;
+    border: none;
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 8px rgba(146,20,12,0.10);
+}
+
+.btn-filter:hover {
+    background: var(--btn-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 16px rgba(146,20,12,0.16);
+}
+
+.btn-reset {
+    background: var(--btn-secondary-bg);
+    color: var(--primary-dark);
+    border: 1.5px solid #f3e7db;
+    padding: 0.8rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.btn-reset:hover {
+    background: var(--accent-peach);
+    color: var(--primary-dark);
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+/* =================================
+   PAYMENTS TABLE
+   ================================= */
+
+.payments-table {
+    background: #fff;
+    border-radius: 20px;
+    box-shadow: 0 6px 32px rgba(30,30,36,0.10), 0 1.5px 6px rgba(146,20,12,0.08);
+    border: 1.5px solid #f3e7db;
+    overflow: hidden;
+}
+
+.payments-table .table {
+    margin-bottom: 0;
+}
+
+.payments-table .table th {
+    background: var(--soft-cream);
+    color: var(--text-primary);
+    font-weight: 600;
+    border: none;
+    padding: 1rem;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.payments-table .table td {
+    border: none;
+    padding: 1rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #f3e7db;
+}
+
+.payments-table .table tbody tr:hover {
+    background: rgba(146,20,12,0.02);
+}
+
+.transaction-id code {
+    background: var(--soft-cream);
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    color: var(--primary-red);
+    font-weight: 600;
+}
+
+.user-info .user-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.2rem;
+}
+
+.user-info .user-email {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.amount strong {
+    color: var(--primary-red);
+    font-size: 1.1rem;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.status-success {
+    background: var(--badge-success-bg);
+    color: #fff;
+}
+
+.status-pending {
+    background: var(--badge-warning-bg);
+    color: var(--primary-dark);
+}
+
+.status-failed {
+    background: var(--badge-danger-bg);
+    color: #fff;
+}
+
+.status-refunded {
+    background: var(--badge-info-bg);
+    color: #fff;
+}
+
+.status-default {
+    background: var(--badge-secondary-bg);
+    color: var(--primary-dark);
+}
+
+.date-info div {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.date-info small {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.action-buttons .btn {
+    padding: 0.4rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    transition: all 0.2s ease;
+}
+
+.action-buttons .btn:hover {
+    transform: translateY(-1px);
+}
+
+/* =================================
+   PAGINATION
+   ================================= */
+
+.pagination-wrapper {
+    background: #fff;
+    border-radius: 20px;
+    padding: 1.5rem 2rem;
+    margin-top: 2rem;
+    box-shadow: 0 6px 32px rgba(30,30,36,0.10), 0 1.5px 6px rgba(146,20,12,0.08);
+    border: 1.5px solid #f3e7db;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.pagination-info {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.page-btn {
+    padding: 0.6rem 1rem;
+    border: 1.5px solid #f3e7db;
+    background: #fff;
+    color: var(--text-primary);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+}
+
+.page-btn:hover {
+    background: var(--accent-peach);
+    color: var(--primary-dark);
+    border-color: var(--accent-peach);
+    transform: translateY(-2px);
+    text-decoration: none;
+}
+
+.page-btn.active {
+    background: var(--btn-primary-bg);
+    color: #fff;
+    border-color: var(--btn-primary-bg);
+}
+
+.page-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* =================================
+   MODAL STYLES
+   ================================= */
+
+.modal-content {
+    border-radius: 16px;
+    border: 1.5px solid #f3e7db;
+    box-shadow: 0 12px 48px rgba(146,20,12,0.13);
+}
+
+.modal-header {
+    background: var(--soft-cream);
+    border-bottom: 1px solid #f3e7db;
+    border-radius: 16px 16px 0 0;
+}
+
+.modal-title {
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.modal-footer {
+    background: var(--soft-cream);
+    border-top: 1px solid #f3e7db;
+    border-radius: 0 0 16px 16px;
+}
+
+/* =================================
+   RESPONSIVE DESIGN
+   ================================= */
+
+@media (max-width: 900px) {
+    .payments-container {
+        padding: 1.5rem;
+    }
+    
+    .payments-header {
+        padding: 1.5rem;
+    }
+    
+    .payments-header h1 {
+        font-size: 1.8rem;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+    
+    .search-filters {
+        padding: 1.2rem;
+    }
+    
+    .filter-actions {
+        flex-direction: column;
+        gap: 0.8rem;
+    }
+    
+    .payments-table .table th,
+    .payments-table .table td {
+        padding: 0.8rem;
+        font-size: 0.85rem;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .payments-container {
+        padding: 1rem;
+    }
+    
+    .payments-header {
+        padding: 1.2rem;
+    }
+    
+    .payments-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+    
+    .search-filters {
+        padding: 1rem;
+    }
+    
+    .pagination-wrapper {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+        padding: 1.2rem;
+    }
+    
+    .payments-table {
+        border-radius: 12px;
+    }
+    
+    .payments-table .table th,
+    .payments-table .table td {
+        padding: 0.6rem;
+        font-size: 0.8rem;
+    }
+    
+    .transaction-id code {
+        font-size: 0.7rem;
+        padding: 0.2rem 0.4rem;
+    }
+    
+    .status-badge {
+        font-size: 0.7rem;
+        padding: 0.3rem 0.6rem;
+    }
+}
+
+/* =================================
+   PAYMENT DETAILS PAGE
+   ================================= */
+
+.payment-details-header {
+    background: var(--white);
+    padding: var(--spacing-lg);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-sm);
+    margin-bottom: var(--spacing-lg);
+}
+
+.payment-status-badge .badge {
+    font-size: 1rem;
+    padding: 0.5rem 1rem;
+}
+
+.payment-details-card {
+    border: none;
+    box-shadow: var(--shadow-md);
+    border-radius: var(--border-radius-lg);
+}
+
+.payment-details-card .card-header {
+    background: var(--primary-gradient);
+    color: var(--white);
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    border: none;
+}
+
+.detail-item {
+    margin-bottom: var(--spacing-md);
+    padding: var(--spacing-sm);
+    border-radius: var(--border-radius);
+    background: var(--light-bg);
+}
+
+.detail-label {
+    font-weight: 600;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    display: block;
+}
+
+.detail-value {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.amount-value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary-red);
+}
+
+.payos-response {
+    background: var(--dark-bg);
+    color: var(--light-text);
+    padding: var(--spacing-md);
+    border-radius: var(--border-radius);
+    font-family: 'Courier New', monospace;
+    font-size: 0.85rem;
+    max-height: 300px;
+    overflow-y: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.user-info-card {
+    border: none;
+    box-shadow: var(--shadow-md);
+    border-radius: var(--border-radius-lg);
+}
+
+.user-info-card .card-header {
+    background: var(--secondary-gradient);
+    color: var(--white);
+    border-radius: var(--border-radius-lg) var(--border-radius-lg) 0 0;
+    border: none;
+}
+
+.user-avatar {
+    text-align: center;
+}
+
+.user-avatar img {
+    border: 3px solid var(--primary-color);
+    box-shadow: var(--shadow-sm);
+}
+
+.user-details {
+    text-align: center;
+}
+
+.user-name {
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+.user-email,
+.user-phone {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+}
+
+.user-role .badge {
+    font-size: 0.8rem;
+}
+
+.user-actions {
+    text-align: center;
+}
+
+/* Payment Details Responsive */
+@media (max-width: 768px) {
+    .payment-details-header {
+        padding: var(--spacing-md);
+    }
+
+    .payment-details-header h1 {
+        font-size: 1.3rem;
+    }
+
+    .detail-item {
+        margin-bottom: var(--spacing-sm);
+        padding: var(--spacing-xs);
+    }
+
+    .detail-label,
+    .detail-value {
+        font-size: 0.9rem;
+    }
+
+    .amount-value {
+        font-size: 1.1rem;
+    }
+
+    .payos-response {
+        font-size: 0.75rem;
+        max-height: 200px;
+    }
+} 
+
+@media (max-width: 900px) {
+    .payment-details-header,
+    .payment-details-card,
+    .user-info-card {
+        margin-bottom: var(--spacing-md);
+    }
+    .row > .col-lg-8,
+    .row > .col-lg-4 {
+        max-width: 100%;
+        flex: 0 0 100%;
+    }
+}
+
+/* =================================
+   HIDE SIDEBAR FOR PAYMENT DETAILS
+   ================================= */
+
+/* Ẩn sidebar khi ở trang PaymentDetails */
+body:has(.payment-details-header) .sidebar,
+body:has(.payment-details-header) .admin-sidebar {
+    display: none !important;
+}
+
+/* Mở rộng content area khi không có sidebar */
+body:has(.payment-details-header) .admin-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+}
+
+/* Fallback cho browser không hỗ trợ :has() */
+.payment-details-page .sidebar,
+.payment-details-page .admin-sidebar {
+    display: none !important;
+}
+
+.payment-details-page .admin-content {
+    margin-left: 0 !important;
+    width: 100% !important;
+} 

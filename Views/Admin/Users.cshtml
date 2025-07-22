@@ -4,270 +4,157 @@
     ViewData["Title"] = "Quản lý người dùng";
 }
 
-@section Styles {
-    <style>
-        .admin-user-card {
-            background: var(--admin-bg-secondary);
-            border-radius: var(--admin-radius-lg);
-            padding: var(--admin-spacing-lg);
-            margin-bottom: var(--admin-spacing-md);
-            border: 1px solid var(--admin-border-light);
-            box-shadow: var(--admin-shadow-sm);
-            transition: var(--admin-transition);
-        }
-        
-        .admin-user-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--admin-shadow-md);
-        }
-        
-        .admin-user-header {
-            display: flex;
-            align-items: center;
-            gap: var(--admin-spacing-md);
-            margin-bottom: var(--admin-spacing-md);
-        }
-        
-        .admin-user-avatar-lg {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid var(--admin-primary);
-        }
-        
-        .admin-user-info h5 {
-            margin: 0;
-            color: var(--admin-text-primary);
-            font-weight: 600;
-        }
-        
-        .admin-user-info p {
-            margin: 0;
-            color: var(--admin-text-secondary);
-            font-size: 0.9rem;
-        }
-        
-        .admin-user-stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-            gap: var(--admin-spacing-md);
-            padding: var(--admin-spacing-md);
-            background: var(--admin-bg-primary);
-            border-radius: var(--admin-radius-md);
-            margin-bottom: var(--admin-spacing-md);
-        }
-        
-        .admin-user-stat {
-            text-align: center;
-        }
-        
-        .admin-user-stat-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--admin-primary);
-            display: block;
-        }
-        
-        .admin-user-stat-label {
-            font-size: 0.75rem;
-            color: var(--admin-text-secondary);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .admin-search-box {
-            background: var(--admin-bg-secondary);
-            border: 2px solid var(--admin-border);
-            border-radius: var(--admin-radius-lg);
-            padding: var(--admin-spacing-md) var(--admin-spacing-lg);
-            font-size: 1rem;
-            transition: var(--admin-transition);
-            width: 100%;
-            max-width: 400px;
-        }
-        
-        .admin-search-box:focus {
-            outline: none;
-            border-color: var(--admin-primary);
-            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
-        }
-        
-        .admin-filter-tabs {
-            display: flex;
-            gap: var(--admin-spacing-sm);
-            margin-bottom: var(--admin-spacing-xl);
-            flex-wrap: wrap;
-        }
-        
-        .admin-filter-tab {
-            padding: var(--admin-spacing-sm) var(--admin-spacing-lg);
-            border: 2px solid var(--admin-border);
-            background: var(--admin-bg-secondary);
-            color: var(--admin-text-secondary);
-            border-radius: var(--admin-radius-md);
-            text-decoration: none;
-            font-weight: 500;
-            transition: var(--admin-transition);
-            cursor: pointer;
-        }
-        
-        .admin-filter-tab:hover,
-        .admin-filter-tab.active {
-            background: var(--admin-primary);
-            border-color: var(--admin-primary);
-            color: var(--admin-text-white);
-        }
-        
-        .admin-bulk-actions {
-            background: var(--admin-bg-secondary);
-            border-radius: var(--admin-radius-lg);
-            padding: var(--admin-spacing-lg);
-            margin-bottom: var(--admin-spacing-xl);
-            border: 1px solid var(--admin-border-light);
-            display: none;
-        }
-        
-        .admin-bulk-actions.show {
-            display: block;
-        }
-    </style>
-}
-
 <!-- Page Header -->
-<div class="admin-d-flex admin-align-center admin-justify-between admin-mb-xl">
-    <div>
-        <h1 class="admin-page-title admin-mb-sm">Quản lý người dùng</h1>
-        <p class="admin-page-subtitle">Tổng cộng có <strong>@Model.Count()</strong> người dùng trong hệ thống</p>
+<div class="users-header">
+    <h1>Quản lý người dùng</h1>
+    <p>Quản lý và giám sát hệ thống Zela</p>
+</div>
+
+<!-- Search and Filters -->
+<div class="search-filter-bar">
+    <div class="search-input">
+        <i class="bi bi-search"></i>
+        <input type="text" id="searchInput" placeholder="Tìm kiếm theo tên hoặc email...">
     </div>
-    <div class="admin-d-flex admin-gap-md">
-        <button class="admin-btn admin-btn-primary">
+    
+    <div class="filter-group">
+        <select class="filter-select" id="roleFilter">
+            <option value="">Tất cả vai trò</option>
+            <option value="admin">Admin</option>
+            <option value="user">User</option>
+        </select>
+        <select class="filter-select" id="statusFilter">
+            <option value="">Tất cả trạng thái</option>
+            <option value="active">Hoạt động</option>
+            <option value="locked">Đã khóa</option>
+        </select>
+    </div>
+    
+    <div class="action-buttons">
+        <button class="btn-add-user">
             <i class="bi bi-person-plus"></i>
             Thêm người dùng
         </button>
-        <button class="admin-btn admin-btn-secondary">
+        <button class="btn-export">
             <i class="bi bi-download"></i>
             Xuất Excel
         </button>
     </div>
 </div>
 
-<!-- Search and Filters -->
-<div class="admin-d-flex admin-align-center admin-justify-between admin-mb-lg flex-wrap" style="gap: 1rem;">
-    <div class="admin-d-flex admin-align-center admin-gap-md">
-        <div class="position-relative">
-            <i class="bi bi-search position-absolute" style="left: 1rem; top: 50%; transform: translateY(-50%); color: var(--admin-text-secondary);"></i>
-            <input type="text" id="searchInput" class="admin-search-box" placeholder="Tìm kiếm theo tên hoặc email..." style="padding-left: 3rem;">
-        </div>
-    </div>
-    
-    <div class="admin-filter-tabs">
-        <span class="admin-filter-tab active" data-filter="all">Tất cả</span>
-        <span class="admin-filter-tab" data-filter="admin">Admin</span>
-        <span class="admin-filter-tab" data-filter="user">User</span>
-        <span class="admin-filter-tab" data-filter="premium">Premium</span>
-        <span class="admin-filter-tab" data-filter="recent">Mới nhất</span>
-    </div>
-</div>
-
 <!-- Users Grid -->
-<div class="row" id="usersContainer">
+<div class="users-grid" id="usersContainer">
     @foreach (var user in Model)
     {
-        <div class="col-md-6 col-lg-4 user-card" 
+        <div class="user-card" 
              data-role="@(user.Roles.Any(r => r.RoleName == "Admin") ? "admin" : "user")"
              data-premium="@(user.IsPremium ? "true" : "false")"
              data-search="@user.FullName?.ToLower() @user.Email.ToLower()">
-            <div class="admin-user-card admin-animate-fade-in">
-                <!-- User Header -->
-                <div class="admin-user-header">
-                    <img src="@(user.AvatarUrl ?? "/images/default-avatar.jpeg")" 
-                         alt="@user.FullName" 
-                         class="admin-user-avatar-lg">
-                    <div class="admin-user-info flex-grow-1">
-                        <h5>@(string.IsNullOrEmpty(user.FullName) ? "Chưa đặt tên" : user.FullName)</h5>
-                        <p>@user.Email</p>
-                        <div class="admin-d-flex admin-gap-sm admin-align-center">
-                            @if (user.Roles.Any(r => r.RoleName == "Admin"))
-                            {
-                                <span class="admin-role-badge admin">
-                                    <i class="bi bi-shield-check me-1"></i>
-                                    Admin
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="admin-role-badge user">
-                                    <i class="bi bi-person me-1"></i>
-                                    User
-                                </span>
-                            }
-                            
-                            @if (user.IsPremium)
-                            {
-                                <span class="badge bg-warning text-dark">
-                                    <i class="bi bi-star-fill"></i>
-                                    Premium
-                                </span>
-                            }
-                        </div>
-                    </div>
+            
+            <!-- User Avatar -->
+            <img src="@(user.AvatarUrl ?? "/images/default-avatar.jpeg")" 
+                 alt="@user.FullName" 
+                 class="user-avatar">
+            
+            <!-- User Info -->
+            <div class="user-info">
+                <div class="user-name">@(string.IsNullOrEmpty(user.FullName) ? "Chưa đặt tên" : user.FullName)</div>
+                <div class="user-email">@user.Email</div>
+                <div class="user-role-badge @(user.Roles.Any(r => r.RoleName == "Admin") ? "admin" : "user")">
+                    @if (user.Roles.Any(r => r.RoleName == "Admin"))
+                    {
+                        <i class="bi bi-shield-check"></i>
+                        <span>Admin</span>
+                    }
+                    else
+                    {
+                        <i class="bi bi-person"></i>
+                        <span>User</span>
+                    }
                 </div>
+                
+                @if (user.IsPremium)
+                {
+                    <div class="user-role-badge premium">
+                        <i class="bi bi-star-fill"></i>
+                        <span>Premium</span>
+                    </div>
+                }
+            </div>
 
-                <!-- User Stats -->
-                <div class="admin-user-stats">
-                    <div class="admin-user-stat">
-                        <span class="admin-user-stat-value">@user.UserId</span>
-                        <span class="admin-user-stat-label">ID</span>
-                    </div>
-                    <div class="admin-user-stat">
-                        <span class="admin-user-stat-value">@user.CreatedAt.ToString("dd/MM")</span>
-                        <span class="admin-user-stat-label">Tham gia</span>
-                    </div>
-                    <div class="admin-user-stat">
-                        <span class="admin-user-stat-value">@user.LastLoginAt.ToString("dd/MM")</span>
-                        <span class="admin-user-stat-label">Đăng nhập</span>
-                    </div>
+            <!-- User Meta -->
+            <div class="user-meta">
+                <div class="user-meta-item">
+                    <span class="user-meta-label">ID</span>
+                    <span class="user-meta-value">@user.UserId</span>
                 </div>
+                <div class="user-meta-item">
+                    <span class="user-meta-label">Tham gia</span>
+                    <span class="user-meta-value">@user.CreatedAt.ToString("dd/MM")</span>
+                </div>
+                <div class="user-meta-item">
+                    <span class="user-meta-label">Đăng nhập</span>
+                    <span class="user-meta-value">@user.LastLoginAt.ToString("dd/MM")</span>
+                </div>
+            </div>
 
-                <!-- Actions -->
-                <div class="admin-d-flex admin-justify-between admin-align-center">
-                    <div class="admin-d-flex admin-gap-sm">
-                        <button class="admin-btn admin-btn-sm admin-btn-secondary">
-                            <i class="bi bi-eye"></i>
-                            Xem
+            <!-- User Actions -->
+            <div class="user-actions">
+                <button class="user-action-btn secondary" onclick="viewUserDetails(@user.UserId)">
+                    <i class="bi bi-eye"></i>
+                    Chi tiết
+                </button>
+                <button class="user-action-btn secondary" onclick="editUser(@user.UserId)">
+                    <i class="bi bi-pencil"></i>
+                    Sửa
+                </button>
+                <button class="user-action-btn secondary" onclick="sendNotification(@user.UserId, '@user.FullName')">
+                    <i class="bi bi-bell"></i>
+                    Thông báo
+                </button>
+                
+                @if (!user.Roles.Any(r => r.RoleName == "Locked"))
+                {
+                    <button class="user-action-btn secondary" onclick="lockUser(@user.UserId, '@user.FullName')">
+                        <i class="bi bi-lock"></i>
+                        Khóa
+                    </button>
+                }
+                else
+                {
+                    <button class="user-action-btn secondary" onclick="unlockUser(@user.UserId, '@user.FullName')">
+                        <i class="bi bi-unlock"></i>
+                        Mở khóa
+                    </button>
+                }
+                
+                @if (!user.Roles.Any(r => r.RoleName == "Admin"))
+                {
+                    <form asp-action="Promote" method="post" class="d-inline">
+                        <input type="hidden" name="userId" value="@user.UserId" />
+                        <button type="submit" class="user-action-btn" 
+                                onclick="return confirm('Bạn có chắc muốn cấp quyền Admin cho người dùng này?')">
+                            <i class="bi bi-arrow-up-circle"></i>
+                            Set Admin
                         </button>
-                        <button class="admin-btn admin-btn-sm admin-btn-primary">
-                            <i class="bi bi-pencil"></i>
-                            Sửa
+                    </form>
+                }
+                else
+                {
+                    <form asp-action="Demote" method="post" class="d-inline">
+                        <input type="hidden" name="userId" value="@user.UserId" />
+                        <button type="submit" class="user-action-btn secondary" 
+                                onclick="return confirm('Bạn có chắc muốn gỡ quyền Admin của người dùng này?')">
+                            <i class="bi bi-arrow-down-circle"></i>
+                            Remove Admin
                         </button>
-                    </div>
-                    
-                    <div>
-                        @if (!user.Roles.Any(r => r.RoleName == "Admin"))
-                        {
-                            <form asp-action="Promote" method="post" class="d-inline">
-                                <input type="hidden" name="userId" value="@user.UserId" />
-                                <button type="submit" class="admin-btn admin-btn-sm admin-btn-warning" 
-                                        onclick="return confirm('Bạn có chắc muốn cấp quyền Admin cho người dùng này?')">
-                                    <i class="bi bi-arrow-up-circle"></i>
-                                    Set Admin
-                                </button>
-                            </form>
-                        }
-                        else
-                        {
-                            <form asp-action="Demote" method="post" class="d-inline">
-                                <input type="hidden" name="userId" value="@user.UserId" />
-                                <button type="submit" class="admin-btn admin-btn-sm admin-btn-secondary" 
-                                        onclick="return confirm('Bạn có chắc muốn gỡ quyền Admin của người dùng này?')">
-                                    <i class="bi bi-arrow-down-circle"></i>
-                                    Remove Admin
-                                </button>
-                            </form>
-                        }
-                    </div>
-                </div>
+                    </form>
+                }
+                
+                <button class="user-action-btn danger" onclick="deleteUser(@user.UserId, '@user.FullName')">
+                    <i class="bi bi-trash"></i>
+                    Xóa
+                </button>
             </div>
         </div>
     }
@@ -275,102 +162,239 @@
 
 <!-- Empty State -->
 <div id="emptyState" style="display: none;" class="text-center py-5">
-    <i class="bi bi-search" style="font-size: 3rem; color: var(--admin-text-light);"></i>
-    <h4 class="mt-3 admin-text-secondary">Không tìm thấy người dùng nào</h4>
-    <p class="admin-text-light">Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc</p>
+    <i class="bi bi-search" style="font-size: 3rem; color: var(--text-secondary);"></i>
+    <h4 class="mt-3" style="color: var(--text-secondary);">Không tìm thấy người dùng nào</h4>
+    <p style="color: var(--text-secondary);">Thử thay đổi từ khóa tìm kiếm hoặc bộ lọc</p>
+</div>
+
+<!-- Modals -->
+<!-- Send Notification Modal -->
+<div class="modal-overlay" id="notificationModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Gửi thông báo</h5>
+            <button type="button" class="modal-close" onclick="closeModal('notificationModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="notificationForm">
+                <input type="hidden" id="notificationUserId" />
+                <div class="form-group">
+                    <label class="form-label">Người nhận:</label>
+                    <span id="notificationUserName" style="font-weight: 600; color: var(--text-primary);"></span>
+                </div>
+                <div class="form-group">
+                    <label for="notificationTitle" class="form-label">Tiêu đề:</label>
+                    <input type="text" class="form-control" id="notificationTitle" required>
+                </div>
+                <div class="form-group">
+                    <label for="notificationContent" class="form-label">Nội dung:</label>
+                    <textarea class="form-control" id="notificationContent" rows="4" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="notificationType" class="form-label">Loại:</label>
+                    <select class="form-select" id="notificationType">
+                        <option value="Info">Thông tin</option>
+                        <option value="Warning">Cảnh báo</option>
+                        <option value="Success">Thành công</option>
+                        <option value="Error">Lỗi</option>
+                    </select>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeModal('notificationModal')">Hủy</button>
+            <button type="button" class="btn-save" onclick="submitNotification()">Gửi</button>
+        </div>
+    </div>
+</div>
+
+<!-- Lock User Modal -->
+<div class="modal-overlay" id="lockModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Khóa tài khoản</h5>
+            <button type="button" class="modal-close" onclick="closeModal('lockModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="lockForm">
+                <input type="hidden" id="lockUserId" />
+                <div class="form-group">
+                    <label class="form-label">Người dùng:</label>
+                    <span id="lockUserName" style="font-weight: 600; color: var(--text-primary);"></span>
+                </div>
+                <div class="form-group">
+                    <label for="lockReason" class="form-label">Lý do khóa:</label>
+                    <textarea class="form-control" id="lockReason" rows="3" placeholder="Nhập lý do khóa tài khoản..."></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeModal('lockModal')">Hủy</button>
+            <button type="button" class="btn-save" onclick="submitLock()">Khóa tài khoản</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete User Modal -->
+<div class="modal-overlay" id="deleteModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Xóa người dùng</h5>
+            <button type="button" class="modal-close" onclick="closeModal('deleteModal')">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="deleteForm">
+                <input type="hidden" id="deleteUserId" />
+                <div class="form-group">
+                    <label class="form-label">Người dùng:</label>
+                    <span id="deleteUserName" style="font-weight: 600; color: var(--text-primary);"></span>
+                </div>
+                <div style="background: #fff3cd; border: 1px solid #ffeaa7; border-radius: 12px; padding: 1rem; margin-bottom: 1rem;">
+                    <i class="bi bi-exclamation-triangle" style="color: #856404;"></i>
+                    <strong style="color: #856404;">Cảnh báo:</strong> 
+                    <span style="color: #856404;">Hành động này sẽ xóa người dùng khỏi hệ thống. Dữ liệu sẽ không thể khôi phục.</span>
+                </div>
+                <div class="form-group">
+                    <label for="deleteReason" class="form-label">Lý do xóa:</label>
+                    <textarea class="form-control" id="deleteReason" rows="3" placeholder="Nhập lý do xóa người dùng..." required></textarea>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeModal('deleteModal')">Hủy</button>
+            <button type="button" class="btn-save danger" onclick="submitDelete()">Xóa người dùng</button>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
     <script>
         // Search functionality
-        const searchInput = document.getElementById('searchInput');
-        const userCards = document.querySelectorAll('.user-card');
-        const filterTabs = document.querySelectorAll('.admin-filter-tab');
-        const emptyState = document.getElementById('emptyState');
-        
-        let currentFilter = 'all';
-        
-        // Search function
-        function performSearch() {
-            const searchTerm = searchInput.value.toLowerCase();
-            let visibleCount = 0;
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const userCards = document.querySelectorAll('.user-card');
             
             userCards.forEach(card => {
                 const searchData = card.getAttribute('data-search');
-                const role = card.getAttribute('data-role');
-                const isPremium = card.getAttribute('data-premium') === 'true';
-                
-                // Check search match
-                const matchesSearch = searchTerm === '' || searchData.includes(searchTerm);
-                
-                // Check filter match
-                let matchesFilter = true;
-                switch(currentFilter) {
-                    case 'admin':
-                        matchesFilter = role === 'admin';
-                        break;
-                    case 'user':
-                        matchesFilter = role === 'user';
-                        break;
-                    case 'premium':
-                        matchesFilter = isPremium;
-                        break;
-                    case 'recent':
-                        // For demo, show first 3 users as "recent"
-                        matchesFilter = Array.from(userCards).indexOf(card) < 3;
-                        break;
-                }
-                
-                if (matchesSearch && matchesFilter) {
+                if (searchData.includes(searchTerm)) {
                     card.style.display = 'block';
-                    visibleCount++;
                 } else {
                     card.style.display = 'none';
                 }
             });
             
-            // Show/hide empty state
-            emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
+            updateEmptyState();
+        });
+
+        // Filter functionality
+        document.getElementById('roleFilter').addEventListener('change', filterUsers);
+        document.getElementById('statusFilter').addEventListener('change', filterUsers);
+
+        function filterUsers() {
+            const roleFilter = document.getElementById('roleFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const userCards = document.querySelectorAll('.user-card');
+            
+            userCards.forEach(card => {
+                const userRole = card.getAttribute('data-role');
+                const isPremium = card.getAttribute('data-premium') === 'true';
+                
+                let showCard = true;
+                
+                if (roleFilter && userRole !== roleFilter) {
+                    showCard = false;
+                }
+                
+                if (statusFilter === 'premium' && !isPremium) {
+                    showCard = false;
+                }
+                
+                card.style.display = showCard ? 'block' : 'none';
+            });
+            
+            updateEmptyState();
         }
-        
-        // Search event listener
-        searchInput.addEventListener('input', performSearch);
-        
-        // Filter tabs
-        filterTabs.forEach(tab => {
-            tab.addEventListener('click', () => {
-                // Update active tab
-                filterTabs.forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                
-                // Update current filter
-                currentFilter = tab.getAttribute('data-filter');
-                
-                // Perform search with new filter
-                performSearch();
+
+        function updateEmptyState() {
+            const visibleCards = document.querySelectorAll('.user-card[style*="display: block"], .user-card:not([style*="display: none"])');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (visibleCards.length === 0) {
+                emptyState.style.display = 'block';
+            } else {
+                emptyState.style.display = 'none';
+            }
+        }
+
+        // Modal functions
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // User action functions
+        function viewUserDetails(userId) {
+            window.location.href = `/Admin/UserDetails/${userId}`;
+        }
+
+        function editUser(userId) {
+            // Implement edit user functionality
+            alert('Chức năng sửa người dùng sẽ được triển khai sau');
+        }
+
+        function sendNotification(userId, userName) {
+            document.getElementById('notificationUserId').value = userId;
+            document.getElementById('notificationUserName').textContent = userName;
+            openModal('notificationModal');
+        }
+
+        function lockUser(userId, userName) {
+            document.getElementById('lockUserId').value = userId;
+            document.getElementById('lockUserName').textContent = userName;
+            openModal('lockModal');
+        }
+
+        function unlockUser(userId, userName) {
+            if (confirm(`Bạn có chắc muốn mở khóa tài khoản của ${userName}?`)) {
+                // Implement unlock functionality
+                alert('Chức năng mở khóa sẽ được triển khai sau');
+            }
+        }
+
+        function deleteUser(userId, userName) {
+            document.getElementById('deleteUserId').value = userId;
+            document.getElementById('deleteUserName').textContent = userName;
+            openModal('deleteModal');
+        }
+
+        function submitNotification() {
+            // Implement notification submission
+            alert('Chức năng gửi thông báo sẽ được triển khai sau');
+            closeModal('notificationModal');
+        }
+
+        function submitLock() {
+            // Implement lock submission
+            alert('Chức năng khóa tài khoản sẽ được triển khai sau');
+            closeModal('lockModal');
+        }
+
+        function submitDelete() {
+            // Implement delete submission
+            alert('Chức năng xóa người dùng sẽ được triển khai sau');
+            closeModal('deleteModal');
+        }
+
+        // Close modals when clicking outside
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('show');
+                }
             });
         });
-        
-        // Animate cards on load
-        document.addEventListener('DOMContentLoaded', function() {
-            userCards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.style.opacity = '0';
-                    card.style.transform = 'translateY(20px)';
-                    card.style.transition = 'all 0.3s ease-out';
-                    
-                    setTimeout(() => {
-                        card.style.opacity = '1';
-                        card.style.transform = 'translateY(0)';
-                    }, 50);
-                }, index * 100);
-            });
-        });
-        
-        // Auto-refresh every 30 seconds
-        setInterval(() => {
-            console.log('Checking for new users...');
-            // In a real app, you'd make an AJAX call here
-        }, 30000);
     </script>
 } 

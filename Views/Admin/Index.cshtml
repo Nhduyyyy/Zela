@@ -6,191 +6,115 @@
 }
 
 @section Styles {
-    <style>
-        .admin-welcome-card {
-            background: linear-gradient(135deg, var(--admin-primary) 0%, var(--admin-primary-dark) 100%);
-            color: white;
-            border-radius: var(--admin-radius-xl);
-            padding: var(--admin-spacing-2xl);
-            margin-bottom: var(--admin-spacing-2xl);
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .admin-welcome-card::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            right: -50%;
-            width: 200%;
-            height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: float 6s ease-in-out infinite;
-        }
-        
-        @@keyframes float {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(180deg); }
-        }
-        
-        .admin-quick-actions {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: var(--admin-spacing-lg);
-            margin-top: var(--admin-spacing-2xl);
-        }
-        
-        .admin-quick-action {
-            background: var(--admin-bg-secondary);
-            border-radius: var(--admin-radius-lg);
-            padding: var(--admin-spacing-lg);
-            text-align: center;
-            text-decoration: none;
-            color: var(--admin-text-primary);
-            transition: var(--admin-transition);
-            border: 1px solid var(--admin-border-light);
-            box-shadow: var(--admin-shadow-sm);
-        }
-        
-        .admin-quick-action:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--admin-shadow-lg);
-            color: var(--admin-text-primary);
-        }
-        
-        .admin-quick-action i {
-            font-size: 2rem;
-            margin-bottom: var(--admin-spacing-sm);
-            color: var(--admin-primary);
-        }
-        
-        .admin-system-status {
-            background: var(--admin-bg-secondary);
-            border-radius: var(--admin-radius-xl);
-            padding: var(--admin-spacing-xl);
-            box-shadow: var(--admin-shadow-md);
-            border: 1px solid var(--admin-border-light);
-        }
-        
-        .admin-status-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: var(--admin-spacing-md) 0;
-            border-bottom: 1px solid var(--admin-border-light);
-        }
-        
-        .admin-status-item:last-child {
-            border-bottom: none;
-        }
-        
-        .admin-status-indicator {
-            width: 12px;
-            height: 12px;
-            border-radius: 50%;
-            margin-right: var(--admin-spacing-sm);
-        }
-        
-        .admin-status-indicator.online {
-            background: var(--admin-success);
-            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2);
-        }
-        
-        .admin-status-indicator.warning {
-            background: var(--admin-warning);
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
-        }
-    </style>
+    <!-- Dashboard styles are loaded from dashboard.css -->
 }
 
 <!-- Welcome Card -->
-<div class="admin-welcome-card admin-animate-fade-in">
-    <div class="row align-items-center">
-        <div class="col-md-8">
-            <h2 class="mb-3">Chào mừng trở lại, @(Context.Session.GetString("FullName") ?? "Admin")! 👋</h2>
-            <p class="mb-0 opacity-90">Hôm nay là @DateTime.Now.ToString("dddd, dd/MM/yyyy"). Đây là tổng quan về hệ thống Zela của bạn.</p>
-        </div>
-        <div class="col-md-4 text-end">
-            <i class="bi bi-graph-up-arrow" style="font-size: 4rem; opacity: 0.3;"></i>
+<div class="welcome-card">
+    <div class="content">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2>Chào mừng trở lại, @(Context.Session.GetString("FullName") ?? "Admin")! 👋</h2>
+                <p>Hôm nay là @DateTime.Now.ToString("dddd, dd/MM/yyyy"). Đây là tổng quan về hệ thống Zela của bạn.</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <i class="bi bi-graph-up-arrow" style="font-size: 4rem; opacity: 0.3;"></i>
+            </div>
         </div>
     </div>
 </div>
 
 <!-- Statistics Grid -->
-<div class="admin-stats-grid admin-animate-slide-in">
+<div class="stats-grid">
     <!-- Users Card -->
-    <div class="admin-stat-card primary">
-        <div class="admin-stat-header">
-            <div class="admin-stat-icon">
-                <i class="bi bi-people-fill"></i>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-people-fill"></i>
         </div>
-        <div class="admin-stat-value">@ViewBag.UserCount</div>
-        <div class="admin-stat-label">Tổng số người dùng</div>
-        <div class="admin-stat-change positive">
+        <div class="stat-number">@ViewBag.UserCount</div>
+        <div class="stat-label">Tổng số người dùng</div>
+        <div class="stat-change positive">
             <i class="bi bi-arrow-up"></i>
-            <span>+12% so với tháng trước</span>
+            <span>@ViewBag.UserNewToday người mới hôm nay</span>
+        </div>
+        <div class="stat-change">
+            <span>Online: <b>@ViewBag.UserOnline</b></span>
         </div>
     </div>
-
+    <!-- New Users Card -->
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-person-plus-fill"></i>
+        </div>
+        <div class="stat-number">@ViewBag.UserNewWeek</div>
+        <div class="stat-label">User mới tuần này</div>
+        <div class="stat-change">
+            <span>Tháng: <b>@ViewBag.UserNewMonth</b></span>
+        </div>
+    </div>
     <!-- Groups Card -->
-    <div class="admin-stat-card success">
-        <div class="admin-stat-header">
-            <div class="admin-stat-icon">
-                <i class="bi bi-chat-dots-fill"></i>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-chat-dots-fill"></i>
         </div>
-        <div class="admin-stat-value">@ViewBag.GroupCount</div>
-        <div class="admin-stat-label">Nhóm chat hoạt động</div>
-        <div class="admin-stat-change positive">
-            <i class="bi bi-arrow-up"></i>
-            <span>+8% so với tuần trước</span>
-        </div>
+        <div class="stat-number">@ViewBag.GroupCount</div>
+        <div class="stat-label">Nhóm chat hoạt động</div>
     </div>
-
     <!-- Video Rooms Card -->
-    <div class="admin-stat-card warning">
-        <div class="admin-stat-header">
-            <div class="admin-stat-icon">
-                <i class="bi bi-camera-video-fill"></i>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-camera-video-fill"></i>
         </div>
-        <div class="admin-stat-value">@ViewBag.RoomCount</div>
-        <div class="admin-stat-label">Phòng họp trực tuyến</div>
-        <div class="admin-stat-change positive">
-            <i class="bi bi-arrow-up"></i>
-            <span>+25% so với hôm qua</span>
-        </div>
+        <div class="stat-number">@ViewBag.RoomCount</div>
+        <div class="stat-label">Phòng họp trực tuyến</div>
     </div>
-
     <!-- Messages Card -->
-    <div class="admin-stat-card info">
-        <div class="admin-stat-header">
-            <div class="admin-stat-icon">
-                <i class="bi bi-chat-text-fill"></i>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-chat-text-fill"></i>
         </div>
-        <div class="admin-stat-value">@ViewBag.MessageCount</div>
-        <div class="admin-stat-label">Tin nhắn đã gửi</div>
-        <div class="admin-stat-change positive">
-            <i class="bi bi-arrow-up"></i>
-            <span>+156 tin nhắn hôm nay</span>
+        <div class="stat-number">@ViewBag.MessageCount</div>
+        <div class="stat-label">Tin nhắn đã gửi</div>
+    </div>
+    <!-- Stickers Card -->
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-emoji-smile-fill"></i>
+        </div>
+        <div class="stat-number">@ViewBag.StickerCount</div>
+        <div class="stat-label">Sticker có sẵn</div>
+    </div>
+    <!-- File Card -->
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-file-earmark-arrow-up"></i>
+        </div>
+        <div class="stat-number">@ViewBag.FileCount</div>
+        <div class="stat-label">File đã upload</div>
+        <div class="stat-change">
+            <span>Dung lượng: <b>@((ViewBag.FileSize/1024/1024).ToString("N2")) MB</b></span>
         </div>
     </div>
-
-    <!-- Stickers Card -->
-    <div class="admin-stat-card secondary">
-        <div class="admin-stat-header">
-            <div class="admin-stat-icon">
-                <i class="bi bi-emoji-smile-fill"></i>
-            </div>
+    <!-- Revenue Card -->
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-cash-coin"></i>
         </div>
-        <div class="admin-stat-value">@ViewBag.StickerCount</div>
-        <div class="admin-stat-label">Sticker có sẵn</div>
-        <div class="admin-stat-change">
-            <i class="bi bi-dash"></i>
-            <span>Không thay đổi</span>
+        <div class="stat-number">@ViewBag.TotalRevenue.ToString("N0") ₫</div>
+        <div class="stat-label">Tổng doanh thu</div>
+        <div class="stat-change">
+            <span>Hôm nay: <b>@ViewBag.RevenueToday.ToString("N0") ₫</b></span>
+            <span>Tuần: <b>@ViewBag.RevenueWeek.ToString("N0") ₫</b></span>
+            <span>Tháng: <b>@ViewBag.RevenueMonth.ToString("N0") ₫</b></span>
         </div>
+    </div>
+    <!-- Report Card -->
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-flag-fill"></i>
+        </div>
+        <div class="stat-number">@ViewBag.ReportCount</div>
+        <div class="stat-label">Báo cáo vi phạm</div>
     </div>
 </div>
 
@@ -198,117 +122,157 @@
 <div class="row mt-4">
     <!-- System Status -->
     <div class="col-md-6 mb-4">
-        <div class="admin-system-status">
+        <div class="recent-activity">
             <h4 class="admin-mb-lg">
                 <i class="bi bi-server text-primary me-2"></i>
                 Trạng thái hệ thống
             </h4>
-            
-            <div class="admin-status-item">
-                <div class="admin-d-flex admin-align-center">
-                    <div class="admin-status-indicator online"></div>
-                    <span>Database Server</span>
+            @foreach (var s in (IEnumerable<dynamic>)ViewBag.SystemStatus)
+            {
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="bi bi-server"></i>
+                    </div>
+                    <div class="activity-content">
+                        <strong>@s.Name</strong>
+                        <span>@s.Status</span>
+                    </div>
+                    <div class="activity-time">@s.Level</div>
                 </div>
-                <span class="admin-text-success fw-bold">Online</span>
-            </div>
-            
-            <div class="admin-status-item">
-                <div class="admin-d-flex admin-align-center">
-                    <div class="admin-status-indicator online"></div>
-                    <span>SignalR Hub</span>
-                </div>
-                <span class="admin-text-success fw-bold">Hoạt động</span>
-            </div>
-            
-            <div class="admin-status-item">
-                <div class="admin-d-flex admin-align-center">
-                    <div class="admin-status-indicator online"></div>
-                    <span>File Upload Service</span>
-                </div>
-                <span class="admin-text-success fw-bold">Bình thường</span>
-            </div>
-            
-            <div class="admin-status-item">
-                <div class="admin-d-flex admin-align-center">
-                    <div class="admin-status-indicator warning"></div>
-                    <span>Email Service</span>
-                </div>
-                <span class="admin-text-warning fw-bold">Chậm</span>
-            </div>
+            }
         </div>
     </div>
-
     <!-- Recent Activity -->
     <div class="col-md-6 mb-4">
-        <div class="admin-system-status">
+        <div class="recent-activity">
             <h4 class="admin-mb-lg">
                 <i class="bi bi-clock-history text-info me-2"></i>
                 Hoạt động gần đây
             </h4>
-            
-            <div class="admin-status-item">
-                <div>
-                    <div class="fw-semibold">Người dùng mới đăng ký</div>
-                    <small class="admin-text-secondary">user@example.com</small>
+            @if (ViewBag.RecentActivity != null)
+            {
+                foreach (var act in (IEnumerable<dynamic>)ViewBag.RecentActivity)
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="@act.Icon"></i>
+                        </div>
+                        <div class="activity-content">
+                            <strong>@act.Title</strong>
+                            <span>@act.Description</span>
+                        </div>
+                        <div class="activity-time">@act.CreatedAt.ToString("dd/MM HH:mm")</div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="activity-item">
+                    <div class="activity-icon">
+                        <i class="bi bi-info-circle"></i>
+                    </div>
+                    <div class="activity-content">
+                        <span>Không có hoạt động gần đây.</span>
+                    </div>
                 </div>
-                <small class="admin-text-secondary">5 phút trước</small>
-            </div>
-            
-            <div class="admin-status-item">
-                <div>
-                    <div class="fw-semibold">Tạo phòng họp mới</div>
-                    <small class="admin-text-secondary">Meeting Room #123</small>
-                </div>
-                <small class="admin-text-secondary">15 phút trước</small>
-            </div>
-            
-            <div class="admin-status-item">
-                <div>
-                    <div class="fw-semibold">Nhóm chat mới</div>
-                    <small class="admin-text-secondary">Team Development</small>
-                </div>
-                <small class="admin-text-secondary">1 giờ trước</small>
-            </div>
-            
-            <div class="admin-status-item">
-                <div>
-                    <div class="fw-semibold">Cập nhật hệ thống</div>
-                    <small class="admin-text-secondary">Version 2.0.0</small>
-                </div>
-                <small class="admin-text-secondary">2 giờ trước</small>
-            </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- Quick Reports & Top Lists -->
+<div class="row mt-4">
+    <div class="col-md-4 mb-4">
+        <div class="recent-activity">
+            <h3><i class="bi bi-person-lines-fill"></i> Top User hoạt động</h3>
+            <ul class="list-unstyled mb-0">
+                @if (ViewBag.TopUsers != null)
+                {
+                    @foreach (var u in (IEnumerable<Zela.Models.User>)ViewBag.TopUsers)
+                    {
+                        <li class="mb-2"><b>@u.FullName</b> - @u.Email <span class="text-muted">(@u.LastLoginAt.ToString("dd/MM/yyyy"))</span></li>
+                    }
+                }
+                else
+                {
+                    <li class="mb-2 text-muted">Chưa có dữ liệu user</li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="recent-activity">
+            <h3><i class="bi bi-people"></i> Top Nhóm sôi động</h3>
+            <ul class="list-unstyled mb-0">
+                @if (ViewBag.TopGroups != null)
+                {
+                    @foreach (var g in (IEnumerable<Zela.Models.ChatGroup>)ViewBag.TopGroups)
+                    {
+                        <li class="mb-2"><b>@g.Name</b> - @(g.Members?.Count ?? 0) thành viên</li>
+                    }
+                }
+                else
+                {
+                    <li class="mb-2 text-muted">Chưa có dữ liệu nhóm</li>
+                }
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="recent-activity">
+            <h3><i class="bi bi-clipboard-data"></i> Top Quiz nhiều lượt làm</h3>
+            <ul class="list-unstyled mb-0">
+                @if (ViewBag.TopQuiz != null)
+                {
+                    @foreach (var q in (IEnumerable<Zela.Models.Quiz>)ViewBag.TopQuiz)
+                    {
+                        <li class="mb-2"><b>@q.Title</b> - @(q.Attempts?.Count ?? 0) lượt làm</li>
+                    }
+                }
+                else
+                {
+                    <li class="mb-2 text-muted">Chưa có dữ liệu quiz</li>
+                }
+            </ul>
         </div>
     </div>
 </div>
 
 <!-- Quick Actions -->
-<div class="admin-quick-actions">
-    <a asp-action="Users" class="admin-quick-action">
+<div class="quick-actions">
+    <a asp-action="Users" class="quick-action-btn">
         <i class="bi bi-people-fill"></i>
-        <h5>Quản lý Users</h5>
-        <p class="admin-text-secondary mb-0">Xem và quản lý người dùng</p>
+        <span>Quản lý Users</span>
     </a>
-    
-    <a href="#" class="admin-quick-action">
+    <a asp-action="Groups" class="quick-action-btn">
         <i class="bi bi-chat-dots-fill"></i>
-        <h5>Chat Groups</h5>
-        <p class="admin-text-secondary mb-0">Quản lý nhóm chat</p>
+        <span>Chat Groups</span>
     </a>
-    
-    <a href="#" class="admin-quick-action">
+    <a href="#" class="quick-action-btn">
         <i class="bi bi-bar-chart-fill"></i>
-        <h5>Báo cáo</h5>
-        <p class="admin-text-secondary mb-0">Xem thống kê chi tiết</p>
+        <span>Báo cáo</span>
     </a>
-    
-    <a href="#" class="admin-quick-action">
+    <a href="#" class="quick-action-btn">
         <i class="bi bi-gear-fill"></i>
-        <h5>Cài đặt</h5>
-        <p class="admin-text-secondary mb-0">Cấu hình hệ thống</p>
+        <span>Cài đặt</span>
     </a>
 </div>
 
+<!-- Charts Section (placeholder) -->
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="chart-card">
+            <h3><i class="bi bi-graph-up"></i> Thống kê biểu đồ</h3>
+            <div class="chart-container">
+                <canvas id="dashboardChart" height="80"></canvas>
+                <div class="text-muted small mt-2">(Biểu đồ sẽ được cập nhật ở các bước tiếp theo)</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
         // Real-time clock
         function updateClock() {
@@ -316,11 +280,10 @@
             const timeString = now.toLocaleTimeString('vi-VN');
             document.title = `Dashboard - ${timeString} - Zela Admin`;
         }
-        
         setInterval(updateClock, 1000);
         updateClock();
 
-        // Animate numbers
+        // Animate numbers (counter)
         function animateValue(element, start, end, duration) {
             let startTimestamp = null;
             const step = (timestamp) => {
@@ -333,17 +296,93 @@
             };
             window.requestAnimationFrame(step);
         }
-
-        // Animate stat values on page load
         document.addEventListener('DOMContentLoaded', function() {
-            const statValues = document.querySelectorAll('.admin-stat-value');
+            const statValues = document.querySelectorAll('.stat-number');
             statValues.forEach(element => {
-                const finalValue = parseInt(element.textContent);
+                const finalValue = parseInt(element.textContent.replace(/[^0-9]/g, ''));
                 element.textContent = '0';
                 setTimeout(() => {
-                    animateValue(element, 0, finalValue, 2000);
-                }, 500);
+                    animateValue(element, 0, finalValue, 1500);
+                }, 300);
             });
+        });
+
+        // Chart.js - Dashboard chart
+        let dashboardChart;
+        async function loadDashboardChart(range = 'month') {
+            const ctx = document.getElementById('dashboardChart').getContext('2d');
+            const res = await fetch(`/Admin/GetDashboardChartData?range=${range}`);
+            const data = await res.json();
+            if (dashboardChart) dashboardChart.destroy();
+            dashboardChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [
+                        {
+                            label: 'User mới',
+                            data: data.userSeries,
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37,99,235,0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Nhóm mới',
+                            data: data.groupSeries,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16,185,129,0.1)',
+                            tension: 0.3,
+                            fill: true
+                        },
+                        {
+                            label: 'Doanh thu',
+                            data: data.revenueSeries,
+                            borderColor: '#f59e42',
+                            backgroundColor: 'rgba(245,158,66,0.1)',
+                            tension: 0.3,
+                            fill: true,
+                            yAxisID: 'y1'
+                        },
+                        {
+                            label: 'Tin nhắn',
+                            data: data.messageSeries,
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99,102,241,0.1)',
+                            tension: 0.3,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    interaction: { mode: 'index', intersect: false },
+                    stacked: false,
+                    plugins: {
+                        legend: { display: true },
+                        tooltip: { enabled: true }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: { display: true, text: 'Số lượng' }
+                        },
+                        y1: {
+                            beginAtZero: true,
+                            position: 'right',
+                            title: { display: true, text: 'Doanh thu (₫)' },
+                            grid: { drawOnChartArea: false }
+                        }
+                    },
+                    animation: {
+                        duration: 1200,
+                        easing: 'easeOutQuart'
+                    }
+                }
+            });
+        }
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDashboardChart('month');
         });
     </script>
 } 

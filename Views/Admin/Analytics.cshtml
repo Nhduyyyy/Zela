@@ -1,0 +1,329 @@
+@{
+    ViewData["Title"] = "Analytics";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/analytics.css" />
+}
+
+<!-- Page Header -->
+<div class="analytics-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="bi bi-graph-up"></i> Analytics Dashboard</h1>
+            <p>Thống kê chi tiết và phân tích dữ liệu hệ thống</p>
+        </div>
+        <div class="analytics-controls">
+            <select id="timeRange" class="form-select form-select-sm">
+                <option value="week">7 ngày qua</option>
+                <option value="month" selected>30 ngày qua</option>
+                <option value="quarter">3 tháng qua</option>
+                <option value="year">1 năm qua</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="metrics-grid">
+    <!-- Users Metrics -->
+    <div class="metric-card">
+        <div class="metric-icon">
+            <i class="bi bi-people-fill"></i>
+        </div>
+        <div class="metric-content">
+            <div class="metric-number">@ViewBag.TotalUsers.ToString("N0")</div>
+            <div class="metric-label">Tổng người dùng</div>
+            <div class="metric-change positive">
+                <i class="bi bi-arrow-up"></i>
+                <span>@ViewBag.NewUsersToday mới hôm nay</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon">
+            <i class="bi bi-person-check-fill"></i>
+        </div>
+        <div class="metric-content">
+            <div class="metric-number">@ViewBag.ActiveUsers.ToString("N0")</div>
+            <div class="metric-label">Người dùng hoạt động</div>
+            <div class="metric-change">
+                <span>Tuần này</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon">
+            <i class="bi bi-star-fill"></i>
+        </div>
+        <div class="metric-content">
+            <div class="metric-number">@ViewBag.PremiumUsers.ToString("N0")</div>
+            <div class="metric-label">Người dùng Premium</div>
+            <div class="metric-change">
+                <span>@Math.Round((double)ViewBag.PremiumUsers / ViewBag.TotalUsers * 100, 1)% tổng số</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Revenue Metrics -->
+    <div class="metric-card">
+        <div class="metric-icon">
+            <i class="bi bi-currency-dollar"></i>
+        </div>
+        <div class="metric-content">
+            <div class="metric-number">@ViewBag.TotalRevenue.ToString("N0") VNĐ</div>
+            <div class="metric-label">Tổng doanh thu</div>
+            <div class="metric-change positive">
+                <i class="bi bi-arrow-up"></i>
+                <span>@ViewBag.RevenueToday.ToString("N0") hôm nay</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon">
+            <i class="bi bi-credit-card-fill"></i>
+        </div>
+        <div class="metric-content">
+            <div class="metric-number">@ViewBag.SuccessfulTransactions.ToString("N0")</div>
+            <div class="metric-label">Giao dịch thành công</div>
+            <div class="metric-change">
+                <span>@Math.Round((double)ViewBag.SuccessfulTransactions / ViewBag.TotalTransactions * 100, 1)% tỷ lệ thành công</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Content Metrics -->
+    <div class="metric-card">
+        <div class="metric-icon">
+            <i class="bi bi-chat-dots-fill"></i>
+        </div>
+        <div class="metric-content">
+            <div class="metric-number">@ViewBag.TotalMessages.ToString("N0")</div>
+            <div class="metric-label">Tin nhắn</div>
+            <div class="metric-change">
+                <span>@ViewBag.TotalGroups nhóm chat</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon">
+            <i class="bi bi-camera-video-fill"></i>
+        </div>
+        <div class="metric-content">
+            <div class="metric-number">@ViewBag.TotalMeetings.ToString("N0")</div>
+            <div class="metric-label">Cuộc họp</div>
+            <div class="metric-change">
+                <span>@ViewBag.TotalRecordings bản ghi</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon">
+            <i class="bi bi-file-earmark-fill"></i>
+        </div>
+        <div class="metric-content">
+            <div class="metric-number">@ViewBag.TotalFiles.ToString("N0")</div>
+            <div class="metric-label">Tệp tin</div>
+            <div class="metric-change">
+                <span>@((ViewBag.TotalStorage / (1024.0 * 1024.0 * 1024.0)).ToString("F2")) GB</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="metric-card">
+        <div class="metric-icon">
+            <i class="bi bi-question-circle-fill"></i>
+        </div>
+        <div class="metric-content">
+            <div class="metric-number">@ViewBag.TotalQuizzes.ToString("N0")</div>
+            <div class="metric-label">Bài kiểm tra</div>
+            <div class="metric-change">
+                <span>Hoạt động</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="charts-section">
+    <div class="row">
+        <!-- User Growth Chart -->
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5><i class="bi bi-graph-up-arrow"></i> Tăng trưởng người dùng</h5>
+                    <div class="chart-controls">
+                        <button class="btn btn-sm btn-outline-primary" onclick="updateChart('userGrowth', 'week')">Tuần</button>
+                        <button class="btn btn-sm btn-outline-primary active" onclick="updateChart('userGrowth', 'month')">Tháng</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="updateChart('userGrowth', 'year')">Năm</button>
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <canvas id="userGrowthChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Revenue Chart -->
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5><i class="bi bi-currency-dollar"></i> Doanh thu</h5>
+                    <div class="chart-controls">
+                        <button class="btn btn-sm btn-outline-primary" onclick="updateChart('revenue', 'week')">Tuần</button>
+                        <button class="btn btn-sm btn-outline-primary active" onclick="updateChart('revenue', 'month')">Tháng</button>
+                        <button class="btn btn-sm btn-outline-primary" onclick="updateChart('revenue', 'year')">Năm</button>
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <canvas id="revenueChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Chart -->
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5><i class="bi bi-activity"></i> Hoạt động hệ thống</h5>
+                    <div class="chart-controls">
+                        <button class="btn btn-sm btn-outline-primary" onclick="updateChart('activity', 'week')">Tuần</button>
+                        <button class="btn btn-sm btn-outline-primary active" onclick="updateChart('activity', 'month')">Tháng</button>
+                    </div>
+                </div>
+                <div class="chart-body">
+                    <canvas id="activityChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Content Distribution -->
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <div class="chart-header">
+                    <h5><i class="bi bi-pie-chart-fill"></i> Phân bố nội dung</h5>
+                </div>
+                <div class="chart-body">
+                    <canvas id="contentChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Analytics -->
+<div class="detailed-analytics">
+    <div class="row">
+        <!-- Recent Activity -->
+        <div class="col-lg-8">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="bi bi-clock-history"></i> Hoạt động gần đây</h5>
+                </div>
+                <div class="card-body">
+                    <div class="activity-list">
+                        @if (ViewBag.RecentActivity != null && ViewBag.RecentActivity.Count > 0)
+                        {
+                            foreach (var activity in ViewBag.RecentActivity)
+                            {
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="bi @(activity.EventType switch {
+                                            "AdminAction" => "bi-shield-check",
+                                            "UserAction" => "bi-person",
+                                            "SystemEvent" => "bi-gear",
+                                            "Error" => "bi-exclamation-triangle",
+                                            _ => "bi-info-circle"
+                                        })"></i>
+                                    </div>
+                                    <div class="activity-content">
+                                        <div class="activity-title">@activity.EventType</div>
+                                        <div class="activity-description">@activity.Metadata</div>
+                                        <div class="activity-time">@activity.OccurredAt.ToString("dd/MM/yyyy HH:mm")</div>
+                                    </div>
+                                    <div class="activity-user">
+                                        @if (activity.User != null)
+                                        {
+                                            <span class="badge bg-primary">@activity.User.FullName</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-inbox" style="font-size: 2rem;"></i>
+                                <p>Chưa có hoạt động nào</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Users -->
+        <div class="col-lg-4">
+            <div class="analytics-card">
+                <div class="card-header">
+                    <h5><i class="bi bi-trophy-fill"></i> Top người dùng hoạt động</h5>
+                </div>
+                <div class="card-body">
+                    <div class="top-users-list">
+                        @if (ViewBag.TopUsers != null && ViewBag.TopUsers.Count > 0)
+                        {
+                            int rank = 1;
+                            foreach (var user in ViewBag.TopUsers)
+                            {
+                                <div class="top-user-item">
+                                    <div class="user-rank">@rank</div>
+                                    <div class="user-avatar">
+                                        <img src="@(string.IsNullOrEmpty(user.User.AvatarUrl) ? "/images/default-avatar.jpeg" : user.User.AvatarUrl)" 
+                                             alt="Avatar" class="rounded-circle" width="40" height="40">
+                                    </div>
+                                    <div class="user-info">
+                                        <div class="user-name">@user.User.FullName</div>
+                                        <div class="user-activity">@user.ActivityCount hoạt động</div>
+                                    </div>
+                                    <div class="user-badge">
+                                        @if (rank == 1)
+                                        {
+                                            <i class="bi bi-trophy-fill text-warning"></i>
+                                        }
+                                        else if (rank == 2)
+                                        {
+                                            <i class="bi bi-trophy-fill text-secondary"></i>
+                                        }
+                                        else if (rank == 3)
+                                        {
+                                            <i class="bi bi-trophy-fill text-danger"></i>
+                                        }
+                                    </div>
+                                </div>
+                                rank++;
+                            }
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-people" style="font-size: 2rem;"></i>
+                                <p>Chưa có dữ liệu</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="~/js/admin/analytics.js"></script>
+} 

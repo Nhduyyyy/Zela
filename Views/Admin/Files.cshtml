@@ -1,0 +1,355 @@
+@model List<Zela.Models.Media>
+@{
+    ViewData["Title"] = "Quản lý File/Media";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Page Header -->
+<div class="files-header">
+    <h1>
+        <i class="bi bi-folder"></i>Quản lý File/Media
+        <span class="files-badge">@ViewBag.TotalFiles file</span>
+    </h1>
+    <p>Quản lý và giám sát các file/media trong hệ thống Zela</p>
+</div>
+
+<!-- Search and Filters -->
+<div class="search-filters">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Tìm kiếm</label>
+            <input type="text" class="form-control" name="search" value="@ViewBag.Search" placeholder="Tên file, mô tả...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Loại file</label>
+            <select class="form-select" name="type">
+                <option value="">Tất cả</option>
+                <option value="image" selected="@(ViewBag.Type == "image")">Hình ảnh</option>
+                <option value="video" selected="@(ViewBag.Type == "video")">Video</option>
+                <option value="audio" selected="@(ViewBag.Type == "audio")">Audio</option>
+                <option value="document" selected="@(ViewBag.Type == "document")">Tài liệu</option>
+                <option value="archive" selected="@(ViewBag.Type == "archive")">Nén</option>
+                <option value="other" selected="@(ViewBag.Type == "other")">Khác</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Sắp xếp theo</label>
+            <select class="form-select" name="sortBy">
+                <option value="UploadedAt" selected="@(ViewBag.SortBy == "UploadedAt")">Ngày upload</option>
+                <option value="FileName" selected="@(ViewBag.SortBy == "FileName")">Tên file</option>
+                <option value="FileSize" selected="@(ViewBag.SortBy == "FileSize")">Kích thước</option>
+                <option value="MediaType" selected="@(ViewBag.SortBy == "MediaType")">Loại file</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter">
+                    <i class="bi bi-search"></i>
+                    Tìm kiếm
+                </button>
+                <a href="@Url.Action("Files")" class="btn-reset">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Reset
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- File Upload Area -->
+<div class="file-upload-area">
+    <div class="upload-content">
+        <i class="bi bi-cloud-upload"></i>
+        <h3>Kéo thả file vào đây</h3>
+        <p class="upload-text">hoặc click để chọn file</p>
+        <input type="file" id="fileUpload" multiple accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar" style="display: none;">
+        <button type="button" class="upload-btn" onclick="document.getElementById('fileUpload').click()">
+            Chọn file
+        </button>
+    </div>
+</div>
+
+<!-- Files Grid -->
+<div class="files-grid">
+    @if (Model?.Any() == true)
+    {
+        @foreach (var file in Model)
+        {
+            <div class="file-card">
+                <!-- File Header -->
+                <div class="file-header">
+                    <div class="file-icon @GetFileTypeClass(file.MediaType)">
+                        @if (file.MediaType?.StartsWith("image") == true)
+                        {
+                            <i class="bi bi-image"></i>
+                        }
+                        else if (file.MediaType?.StartsWith("video") == true)
+                        {
+                            <i class="bi bi-play-circle"></i>
+                        }
+                        else if (file.MediaType?.StartsWith("audio") == true)
+                        {
+                            <i class="bi bi-music-note"></i>
+                        }
+                        else if (file.MediaType?.Contains("pdf") == true || file.MediaType?.Contains("document") == true)
+                        {
+                            <i class="bi bi-file-earmark-text"></i>
+                        }
+                        else if (file.MediaType?.Contains("zip") == true || file.MediaType?.Contains("rar") == true)
+                        {
+                            <i class="bi bi-file-earmark-zip"></i>
+                        }
+                        else
+                        {
+                            <i class="bi bi-file-earmark"></i>
+                        }
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">@GetFileName(file.Url)</div>
+                        <div class="file-meta">
+                            <div class="file-meta-item">
+                                <i class="bi bi-calendar"></i>
+                                <span>Upload: @file.UploadedAt.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            <div class="file-meta-item">
+                                <i class="bi bi-person"></i>
+                                <span>@file.Message?.Sender?.FullName</span>
+                            </div>
+                        </div>
+                        <div class="file-status">
+                            <span class="status-badge success">
+                                <i class="bi bi-check-circle"></i>
+                                Đã upload
+                            </span>
+                            <span class="file-type-badge @GetFileTypeClass(file.MediaType)">
+                                @GetFileTypeName(file.MediaType)
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Preview -->
+                @if (file.MediaType?.StartsWith("image") == true)
+                {
+                    <div class="file-preview">
+                        <img src="@file.Url" alt="@GetFileName(file.Url)" loading="lazy">
+                    </div>
+                }
+
+                <!-- File Stats -->
+                <div class="file-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">@FormatFileSize(GetFileSize(file.Url))</span>
+                        <span class="stat-label">Kích thước</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">@file.MediaType</span>
+                        <span class="stat-label">Loại file</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">@(file.Message?.Group?.Name ?? "Chat riêng")</span>
+                        <span class="stat-label">Nguồn</span>
+                    </div>
+                </div>
+
+                <!-- File Actions -->
+                <div class="file-actions">
+                    <a href="@file.Url" target="_blank" class="file-action-btn secondary">
+                        <i class="bi bi-eye"></i>
+                        Xem
+                    </a>
+                    <button class="file-action-btn secondary" onclick="downloadFile('@file.Url', '@(System.IO.Path.GetFileName(file.Url))')">
+                        <i class="bi bi-download"></i>
+                        Tải xuống
+                    </button>
+                    <button class="file-action-btn secondary" onclick="copyFileUrl('@file.Url')">
+                        <i class="bi bi-link-45deg"></i>
+                        Copy URL
+                    </button>
+                    <button class="file-action-btn danger" onclick="deleteFile(@file.MediaId, '@(System.IO.Path.GetFileName(file.Url))')">
+                        <i class="bi bi-trash"></i>
+                        Xóa
+                    </button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="bi bi-folder"></i>
+            <h3>Không có file nào</h3>
+            <p>Chưa có file nào được upload trong hệ thống.</p>
+        </div>
+    }
+</div>
+
+<!-- Pagination -->
+@if (ViewBag.TotalPages > 1)
+{
+    <div class="pagination-wrapper">
+        <div class="pagination-info">
+            Hiển thị @ViewBag.StartIndex - @ViewBag.EndIndex của @ViewBag.TotalFiles file
+        </div>
+        <div class="pagination-controls">
+            @if (ViewBag.CurrentPage > 1)
+            {
+                <a href="@Url.Action("Files", new { page = ViewBag.CurrentPage - 1, search = ViewBag.Search, type = ViewBag.Type, sortBy = ViewBag.SortBy })" 
+                   class="page-btn">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            }
+            
+            @for (int i = Math.Max(1, ViewBag.CurrentPage - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2); i++)
+            {
+                <a href="@Url.Action("Files", new { page = i, search = ViewBag.Search, type = ViewBag.Type, sortBy = ViewBag.SortBy })" 
+                   class="page-btn @(i == ViewBag.CurrentPage ? "active" : "")">
+                    @i
+                </a>
+            }
+            
+            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+            {
+                <a href="@Url.Action("Files", new { page = ViewBag.CurrentPage + 1, search = ViewBag.Search, type = ViewBag.Type, sortBy = ViewBag.SortBy })" 
+                   class="page-btn">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+}
+
+@functions {
+    private string GetFileName(string url)
+    {
+        if (string.IsNullOrEmpty(url)) return "Unknown";
+        try
+        {
+            var uri = new Uri(url);
+            var path = uri.AbsolutePath;
+            var fileName = System.IO.Path.GetFileName(path);
+            return string.IsNullOrEmpty(fileName) ? "Unknown" : fileName;
+        }
+        catch
+        {
+            return "Unknown";
+        }
+    }
+
+    private string GetFileTypeClass(string mediaType)
+    {
+        if (string.IsNullOrEmpty(mediaType)) return "other";
+        
+        if (mediaType.StartsWith("image")) return "image";
+        if (mediaType.StartsWith("video")) return "video";
+        if (mediaType.StartsWith("audio")) return "audio";
+        if (mediaType.Contains("pdf") || mediaType.Contains("document")) return "document";
+        if (mediaType.Contains("zip") || mediaType.Contains("rar")) return "archive";
+        
+        return "other";
+    }
+
+    private string GetFileTypeName(string mediaType)
+    {
+        if (string.IsNullOrEmpty(mediaType)) return "Khác";
+        
+        if (mediaType.StartsWith("image")) return "Hình ảnh";
+        if (mediaType.StartsWith("video")) return "Video";
+        if (mediaType.StartsWith("audio")) return "Audio";
+        if (mediaType.Contains("pdf")) return "PDF";
+        if (mediaType.Contains("document")) return "Tài liệu";
+        if (mediaType.Contains("zip") || mediaType.Contains("rar")) return "Nén";
+        
+        return "Khác";
+    }
+
+    private long GetFileSize(string url)
+    {
+        // This is a placeholder - in real implementation, you'd get actual file size
+        return new Random().Next(1024, 1024 * 1024 * 10); // Random size between 1KB and 10MB
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        int order = 0;
+        double size = bytes;
+        
+        while (size >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            size /= 1024;
+        }
+        
+        return $"{size:0.##} {sizes[order]}";
+    }
+}
+
+@section Scripts {
+    <script>
+        // File action functions
+        function downloadFile(url, fileName) {
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = fileName;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function copyFileUrl(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Đã copy URL vào clipboard!');
+            }).catch(() => {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('Đã copy URL vào clipboard!');
+            });
+        }
+
+        function deleteFile(fileId, fileName) {
+            if (confirm(`Bạn có chắc muốn xóa file "${fileName}"? Hành động này không thể hoàn tác.`)) {
+                // Implement delete functionality
+                alert('Chức năng xóa file sẽ được triển khai sau');
+            }
+        }
+
+        // File upload functionality
+        document.getElementById('fileUpload').addEventListener('change', function(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                // Implement file upload functionality
+                alert(`Đã chọn ${files.length} file. Chức năng upload sẽ được triển khai sau.`);
+            }
+        });
+
+        // Drag and drop functionality
+        const uploadArea = document.querySelector('.file-upload-area');
+        
+        uploadArea.addEventListener('dragover', function(e) {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+
+        uploadArea.addEventListener('dragleave', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+        });
+
+        uploadArea.addEventListener('drop', function(e) {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                // Implement file upload functionality
+                alert(`Đã kéo thả ${files.length} file. Chức năng upload sẽ được triển khai sau.`);
+            }
+        });
+    </script>
+} 

@@ -1,0 +1,276 @@
+<!-- Delete File Modal -->
+<div class="modal fade" id="deleteFileModal" tabindex="-1" aria-labelledby="deleteFileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteFileModalLabel">
+                    <i class="bi bi-trash me-2"></i>Xóa File
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Hành động này không thể hoàn tác! File sẽ bị xóa vĩnh viễn khỏi hệ thống.
+                </div>
+                <form id="deleteFileForm">
+                    <div class="mb-3">
+                        <label for="deleteFileReason" class="form-label">Lý do xóa file:</label>
+                        <textarea class="form-control" id="deleteFileReason" name="reason" rows="3" 
+                                  placeholder="Nhập lý do xóa file..." required></textarea>
+                    </div>
+                    <input type="hidden" id="deleteFileId" name="fileId">
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="confirmDeleteFile()">
+                    <i class="bi bi-trash me-1"></i>Xóa File
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cleanup Files Modal -->
+<div class="modal fade" id="cleanupFilesModal" tabindex="-1" aria-labelledby="cleanupFilesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="cleanupFilesModalLabel">
+                    <i class="bi bi-trash3 me-2"></i>Dọn dẹp File rác
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    Chức năng này sẽ tìm và xóa các file trong database mà không còn tồn tại trong hệ thống file.
+                </div>
+                <p>Bạn có chắc chắn muốn dọn dẹp các file rác không?</p>
+                <div class="cleanup-stats" id="cleanupStats" style="display: none;">
+                    <div class="row text-center">
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-number text-warning" id="foundFiles">0</div>
+                                <div class="stat-label">File rác tìm thấy</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="stat-item">
+                                <div class="stat-number text-success" id="cleanedFiles">0</div>
+                                <div class="stat-label">Đã dọn dẹp</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="cleanup-progress" id="cleanupProgress" style="display: none;">
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" style="width: 0%" id="progressBar"></div>
+                    </div>
+                    <small class="text-muted mt-2" id="progressText">Đang quét file...</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" onclick="startCleanup()" id="cleanupBtn">
+                    <i class="bi bi-trash3 me-1"></i>Bắt đầu dọn dẹp
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.cleanup-stats .stat-item {
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+.cleanup-stats .stat-number {
+    font-size: 24px;
+    font-weight: 700;
+}
+
+.cleanup-stats .stat-label {
+    font-size: 12px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
+.cleanup-progress {
+    margin-top: 16px;
+}
+</style>
+
+<script>
+// Global variables for file operations
+let currentFileId = null;
+let currentFileName = null;
+
+// Delete file functions
+function showDeleteFileModal(fileId, fileName) {
+    currentFileId = fileId;
+    currentFileName = fileName;
+    document.getElementById('deleteFileId').value = fileId;
+    document.getElementById('deleteFileReason').value = '';
+    
+    // Update modal title with file name
+    document.getElementById('deleteFileModalLabel').innerHTML = 
+        `<i class="bi bi-trash me-2"></i>Xóa File: ${fileName}`;
+    
+    const modal = new bootstrap.Modal(document.getElementById('deleteFileModal'));
+    modal.show();
+}
+
+function confirmDeleteFile() {
+    const reason = document.getElementById('deleteFileReason').value.trim();
+    if (!reason) {
+        alert('Vui lòng nhập lý do xóa file');
+        return;
+    }
+
+    const btn = event.target;
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Đang xóa...';
+
+    fetch('/Admin/DeleteFile', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+        },
+        body: JSON.stringify({ 
+            fileId: currentFileId, 
+            reason: reason 
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Close modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteFileModal'));
+            modal.hide();
+            
+            // Show success message
+            showAlert('success', 'Đã xóa file thành công!');
+            
+            // Reload page or remove file card
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        } else {
+            showAlert('danger', 'Lỗi: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'Có lỗi xảy ra khi xóa file');
+    })
+    .finally(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    });
+}
+
+// Cleanup files functions
+function showCleanupModal() {
+    // Reset modal state
+    document.getElementById('cleanupStats').style.display = 'none';
+    document.getElementById('cleanupProgress').style.display = 'none';
+    document.getElementById('cleanupBtn').disabled = false;
+    document.getElementById('cleanupBtn').innerHTML = '<i class="bi bi-trash3 me-1"></i>Bắt đầu dọn dẹp';
+    
+    const modal = new bootstrap.Modal(document.getElementById('cleanupFilesModal'));
+    modal.show();
+}
+
+function startCleanup() {
+    const btn = document.getElementById('cleanupBtn');
+    const progressDiv = document.getElementById('cleanupProgress');
+    const statsDiv = document.getElementById('cleanupStats');
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="spinner-border spinner-border-sm me-1"></i>Đang dọn dẹp...';
+    progressDiv.style.display = 'block';
+    
+    fetch('/Admin/CleanupUnusedFiles', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Update progress to 100%
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressText').textContent = 'Hoàn thành!';
+            
+            // Show stats
+            document.getElementById('foundFiles').textContent = data.deletedCount;
+            document.getElementById('cleanedFiles').textContent = data.deletedCount;
+            statsDiv.style.display = 'block';
+            
+            // Update button
+            btn.innerHTML = '<i class="bi bi-check-circle me-1"></i>Hoàn thành';
+            btn.className = 'btn btn-success';
+            
+            showAlert('success', `Đã dọn dẹp thành công! Xóa ${data.deletedCount} file rác.`);
+            
+            // Auto close after 3 seconds
+            setTimeout(() => {
+                const modal = bootstrap.Modal.getInstance(document.getElementById('cleanupFilesModal'));
+                modal.hide();
+                location.reload();
+            }, 3000);
+        } else {
+            showAlert('danger', 'Lỗi: ' + data.message);
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-trash3 me-1"></i>Thử lại';
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('danger', 'Có lỗi xảy ra khi dọn dẹp file');
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-trash3 me-1"></i>Thử lại';
+    });
+}
+
+// Utility function to show alerts
+function showAlert(type, message) {
+    // Remove existing alerts
+    const existingAlerts = document.querySelectorAll('.alert-floating');
+    existingAlerts.forEach(alert => alert.remove());
+    
+    // Create new alert
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-floating`;
+    alertDiv.innerHTML = `
+        <i class="bi bi-${type === 'success' ? 'check-circle' : 'exclamation-triangle'} me-2"></i>
+        ${message}
+        <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+    `;
+    
+    // Add styles
+    alertDiv.style.position = 'fixed';
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '9999';
+    alertDiv.style.minWidth = '300px';
+    
+    document.body.appendChild(alertDiv);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (alertDiv.parentElement) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+</script> 

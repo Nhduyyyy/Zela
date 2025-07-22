@@ -1,0 +1,189 @@
+/* =================================
+   ZELA ADMIN - UNIFIED VARIABLES
+   Bộ màu thống nhất cho toàn bộ admin panel
+   ================================= */
+
+:root {
+    /* =================================
+       PRIMARY COLOR PALETTE
+       ================================= */
+    --primary-dark: #1e1e24;        /* Dark charcoal - Text chính */
+    --primary-red: #92140c;         /* Deep red - Accent chính */
+    --primary-cream: #fff8f0;       /* Cream white - Background chính */
+    --accent-peach: #ffcf99;        /* Warm peach - Highlight */
+    --accent-navy: #111d4a;         /* Navy blue - Secondary accent */
+    
+    /* =================================
+       EXTENDED COLOR PALETTE
+       ================================= */
+    --soft-cream: #faf7f2;          /* Soft cream - Light background */
+    --warm-beige: #f5f1ec;          /* Warm beige - Card background */
+    --coral-red: #d32f2f;           /* Coral red - Danger/Error */
+    --midnight-blue: #0d1421;       /* Midnight blue - Dark elements */
+    --steel-gray: #2a2d34;          /* Steel gray - Borders */
+    --sage-green: #9CAF88;          /* Sage green - Success */
+    --sunset-orange: #ffa726;       /* Sunset orange - Warning */
+    
+    /* =================================
+       GRADIENT COMBINATIONS
+       ================================= */
+    --gradient-primary: linear-gradient(135deg, var(--accent-navy) 0%, var(--primary-dark) 100%);
+    --gradient-accent: linear-gradient(135deg, var(--primary-red) 0%, var(--coral-red) 100%);
+    --gradient-warm: linear-gradient(135deg, var(--accent-peach) 0%, var(--sunset-orange) 100%);
+    --gradient-success: linear-gradient(135deg, var(--sage-green) 0%, #7cb342 100%);
+    --gradient-warning: linear-gradient(135deg, var(--sunset-orange) 0%, #ff9800 100%);
+    --gradient-danger: linear-gradient(135deg, var(--primary-red) 0%, var(--coral-red) 100%);
+    --gradient-light: linear-gradient(135deg, var(--soft-cream) 0%, var(--warm-beige) 100%);
+    
+    /* =================================
+       SIDEBAR VARIABLES
+       ================================= */
+    --sidebar-width: 280px;
+    --sidebar-collapsed-width: 70px;
+    --sidebar-bg: var(--gradient-primary);
+    --sidebar-header-bg: rgba(146, 20, 12, 0.1);
+    --sidebar-nav-hover: rgba(255, 207, 153, 0.15);
+    --sidebar-nav-active: var(--gradient-accent);
+    --sidebar-text: var(--primary-cream);
+    --sidebar-text-secondary: rgba(255, 248, 240, 0.7);
+    --sidebar-border: rgba(255, 207, 153, 0.2);
+    --sidebar-shadow: 0 0 30px rgba(17, 29, 74, 0.3);
+    --nav-item-shadow: 0 2px 10px rgba(146, 20, 12, 0.2);
+    
+    /* =================================
+       DASHBOARD VARIABLES
+       ================================= */
+    --dashboard-bg: var(--gradient-light);
+    --card-bg: rgba(255, 255, 255, 0.95);
+    --card-shadow: 0 4px 20px rgba(17, 29, 74, 0.1);
+    --card-hover-shadow: 0 8px 32px rgba(17, 29, 74, 0.15);
+    --card-border: rgba(255, 207, 153, 0.2);
+    
+    /* =================================
+       TEXT COLORS
+       ================================= */
+    --text-primary: var(--primary-dark);
+    --text-secondary: rgba(30, 30, 36, 0.7);
+    --text-muted: #9ca3af;
+    --text-white: var(--primary-cream);
+    --text-accent: var(--primary-red);
+    --text-success: var(--sage-green);
+    --text-warning: var(--sunset-orange);
+    --text-danger: var(--coral-red);
+    
+    /* =================================
+       BUTTON COLORS
+       ================================= */
+    --btn-primary-bg: var(--gradient-accent);
+    --btn-primary-hover: var(--gradient-danger);
+    --btn-success-bg: var(--gradient-success);
+    --btn-warning-bg: var(--gradient-warning);
+    --btn-danger-bg: var(--gradient-danger);
+    --btn-secondary-bg: rgba(255, 207, 153, 0.1);
+    --btn-secondary-border: var(--card-border);
+    
+    /* =================================
+       FORM ELEMENTS
+       ================================= */
+    --input-bg: var(--card-bg);
+    --input-border: var(--card-border);
+    --input-focus-border: var(--accent-peach);
+    --input-focus-shadow: 0 0 0 3px rgba(255, 207, 153, 0.1);
+    
+    /* =================================
+       TABLE COLORS
+       ================================= */
+    --table-header-bg: var(--gradient-primary);
+    --table-header-text: var(--text-white);
+    --table-row-hover: rgba(255, 207, 153, 0.05);
+    --table-border: var(--card-border);
+    
+    /* =================================
+       MODAL COLORS
+       ================================= */
+    --modal-bg: var(--card-bg);
+    --modal-header-bg: var(--gradient-primary);
+    --modal-header-text: var(--text-white);
+    --modal-border: var(--card-border);
+    --modal-shadow: 0 10px 40px rgba(17, 29, 74, 0.2);
+    
+    /* =================================
+       BADGE COLORS
+       ================================= */
+    --badge-primary-bg: var(--gradient-accent);
+    --badge-success-bg: var(--gradient-success);
+    --badge-warning-bg: var(--gradient-warning);
+    --badge-danger-bg: var(--gradient-danger);
+    --badge-secondary-bg: var(--btn-secondary-bg);
+    
+    /* =================================
+       ALERT COLORS
+       ================================= */
+    --alert-success-bg: rgba(156, 175, 136, 0.1);
+    --alert-success-border: var(--sage-green);
+    --alert-warning-bg: rgba(255, 167, 38, 0.1);
+    --alert-warning-border: var(--sunset-orange);
+    --alert-danger-bg: rgba(211, 47, 47, 0.1);
+    --alert-danger-border: var(--coral-red);
+    --alert-info-bg: rgba(255, 207, 153, 0.1);
+    --alert-info-border: var(--accent-peach);
+    
+    /* =================================
+       SPACING SYSTEM
+       ================================= */
+    --spacing-xs: 0.25rem;    /* 4px */
+    --spacing-sm: 0.5rem;     /* 8px */
+    --spacing-md: 1rem;       /* 16px */
+    --spacing-lg: 1.5rem;     /* 24px */
+    --spacing-xl: 2rem;       /* 32px */
+    --spacing-2xl: 3rem;      /* 48px */
+    --spacing-3xl: 4rem;      /* 64px */
+    
+    /* =================================
+       BORDER RADIUS
+       ================================= */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+    --radius-full: 9999px;
+    
+    /* =================================
+       TRANSITIONS
+       ================================= */
+    --transition-fast: 0.15s ease;
+    --transition-normal: 0.3s ease;
+    --transition-slow: 0.5s ease;
+    --transition-bounce: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    
+    /* =================================
+       Z-INDEX SCALE
+       ================================= */
+    --z-dropdown: 1000;
+    --z-sticky: 1020;
+    --z-fixed: 1030;
+    --z-modal-backdrop: 1040;
+    --z-modal: 1050;
+    --z-popover: 1060;
+    --z-tooltip: 1070;
+    --z-toast: 1080;
+}
+
+/* =================================
+   DARK MODE VARIABLES
+   ================================= */
+[data-theme="dark"] {
+    --dashboard-bg: linear-gradient(135deg, #0a0a0f 0%, var(--primary-dark) 100%);
+    --card-bg: rgba(30, 30, 36, 0.9);
+    --text-primary: var(--primary-cream);
+    --text-secondary: rgba(255, 248, 240, 0.7);
+    --text-muted: rgba(255, 248, 240, 0.5);
+    --sidebar-bg: linear-gradient(135deg, #0a0a0f 0%, var(--primary-dark) 100%);
+    --sidebar-header-bg: rgba(146, 20, 12, 0.2);
+    --sidebar-nav-hover: rgba(255, 207, 153, 0.1);
+    --sidebar-border: rgba(255, 207, 153, 0.15);
+    --input-bg: rgba(30, 30, 36, 0.8);
+    --table-row-hover: rgba(255, 207, 153, 0.05);
+    --card-border: rgba(255, 207, 153, 0.1);
+} 

@@ -1,0 +1,276 @@
+@model List<Zela.Models.Quiz>
+
+@{
+    ViewData["Title"] = "Quản lý Quiz";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Page Header -->
+<div class="quizzes-header">
+    <h1>
+        <i class="bi bi-clipboard-data"></i>Quản lý Quiz
+        <span class="quizzes-badge">@ViewBag.TotalQuizzes quiz</span>
+    </h1>
+    <p>Quản lý và giám sát các bài quiz trong hệ thống Zela</p>
+</div>
+
+<!-- Search and Filters -->
+<div class="search-filters">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Tìm kiếm</label>
+            <input type="text" class="form-control" name="search" value="@ViewBag.Search" placeholder="Tên quiz, mô tả...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Sắp xếp theo</label>
+            <select class="form-select" name="sortBy">
+                <option value="CreatedAt" selected="@(ViewBag.SortBy == "CreatedAt")">Ngày tạo</option>
+                <option value="Title" selected="@(ViewBag.SortBy == "Title")">Tên quiz</option>
+                <option value="AttemptCount" selected="@(ViewBag.SortBy == "AttemptCount")">Số lần làm</option>
+                <option value="AverageScore" selected="@(ViewBag.SortBy == "AverageScore")">Điểm trung bình</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Trạng thái</label>
+            <select class="form-select" name="status">
+                <option value="">Tất cả</option>
+                <option value="Active" selected="@(ViewBag.Status == "Active")">Hoạt động</option>
+                <option value="Inactive" selected="@(ViewBag.Status == "Inactive")">Không hoạt động</option>
+                <option value="Draft" selected="@(ViewBag.Status == "Draft")">Bản nháp</option>
+            </select>
+        </div>
+        <div class="col-md-2 col-sm-12">
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter">
+                    <i class="bi bi-search"></i>
+                    Tìm kiếm
+                </button>
+                <a href="@Url.Action("Quizzes")" class="btn-reset">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Reset
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Quizzes Grid -->
+<div class="quizzes-grid">
+    @if (Model.Any())
+    {
+        @foreach (var quiz in Model)
+        {
+            <div class="quiz-card">
+                <!-- Quiz Header -->
+                <div class="quiz-header">
+                    <div class="quiz-icon">
+                        <i class="bi bi-clipboard-data"></i>
+                    </div>
+                    <div class="quiz-info">
+                        <div class="quiz-name">@quiz.Title</div>
+                        <div class="quiz-description">@quiz.Description</div>
+                        <div class="quiz-meta">
+                            <div class="quiz-meta-item">
+                                <i class="bi bi-calendar"></i>
+                                <span>Tạo: @quiz.CreatedAt.ToString("dd/MM/yyyy")</span>
+                            </div>
+                            <div class="quiz-meta-item">
+                                <i class="bi bi-person"></i>
+                                <span>@quiz.Creator?.FullName</span>
+                            </div>
+                        </div>
+                        <div class="quiz-status">
+                            @if (quiz.IsHomework && quiz.StartTime <= DateTime.Now && quiz.EndTime >= DateTime.Now)
+                            {
+                                <span class="status-badge active">
+                                    <i class="bi bi-check-circle"></i>
+                                    Đang mở
+                                </span>
+                            }
+                            else if (quiz.IsHomework)
+                            {
+                                <span class="status-badge inactive">
+                                    <i class="bi bi-x-circle"></i>
+                                    Đã đóng
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="status-badge draft">
+                                    <i class="bi bi-pencil"></i>
+                                    Quiz thường
+                                </span>
+                            }
+                            <span class="quiz-type-badge @(quiz.IsHomework ? "homework" : "quiz")">
+                                @(quiz.IsHomework ? "Bài tập" : "Quiz")
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Progress -->
+                <div class="quiz-progress">
+                    <div class="progress-info">
+                        <span class="progress-label">Tiến độ hoàn thành</span>
+                        <span class="progress-value">@(quiz.Attempts?.Count ?? 0) / ∞</span>
+                    </div>
+                    <div class="progress-bar">
+                        @{
+                            var progressPercentage = 0; // No max attempts limit
+                        }
+                        <div class="progress-fill" style="width: @progressPercentage%"></div>
+                    </div>
+                </div>
+
+                <!-- Quiz Stats -->
+                <div class="quiz-stats">
+                    <div class="stat-item">
+                        <span class="stat-value">@(quiz.Questions?.Count ?? 0)</span>
+                        <span class="stat-label">Câu hỏi</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">@(quiz.Attempts?.Count ?? 0)</span>
+                        <span class="stat-label">Lần làm</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">
+                            @{
+                                var avgScore = quiz.Attempts?.Any() == true 
+                                    ? quiz.Attempts.Average(a => a.Score).ToString("F1")
+                                    : "0.0";
+                            }
+                            @avgScore
+                        </span>
+                        <span class="stat-label">Điểm TB</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-value">@(quiz.TimeLimit > 0 ? $"{quiz.TimeLimit} phút" : "Không giới hạn")</span>
+                        <span class="stat-label">Thời gian</span>
+                    </div>
+                </div>
+
+                <!-- Quiz Actions -->
+                <div class="quiz-actions">
+                    <a asp-action="QuizDetails" asp-route-id="@quiz.QuizId" class="quiz-action-btn secondary">
+                        <i class="bi bi-eye"></i>
+                        Chi tiết
+                    </a>
+                    <button class="quiz-action-btn secondary" onclick="editQuiz(@quiz.QuizId)">
+                        <i class="bi bi-pencil"></i>
+                        Sửa
+                    </button>
+                    <button class="quiz-action-btn secondary" onclick="manageQuestions(@quiz.QuizId)">
+                        <i class="bi bi-list-check"></i>
+                        Câu hỏi
+                    </button>
+                    <button class="quiz-action-btn secondary" onclick="viewAttempts(@quiz.QuizId)">
+                        <i class="bi bi-bar-chart"></i>
+                        Kết quả
+                    </button>
+                    @if (quiz.IsHomework && quiz.StartTime <= DateTime.Now && quiz.EndTime >= DateTime.Now)
+                    {
+                        <button class="quiz-action-btn danger" onclick="closeHomework(@quiz.QuizId, '@quiz.Title')">
+                            <i class="bi bi-pause-circle"></i>
+                            Đóng bài tập
+                        </button>
+                    }
+                    else if (quiz.IsHomework)
+                    {
+                        <button class="quiz-action-btn success" onclick="openHomework(@quiz.QuizId, '@quiz.Title')">
+                            <i class="bi bi-play-circle"></i>
+                            Mở bài tập
+                        </button>
+                    }
+                    <button class="quiz-action-btn danger" onclick="deleteQuiz(@quiz.QuizId, '@quiz.Title')">
+                        <i class="bi bi-trash"></i>
+                        Xóa
+                    </button>
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="empty-state">
+            <i class="bi bi-clipboard-data"></i>
+            <h3>Không có quiz nào</h3>
+            <p>Chưa có quiz nào được tạo trong hệ thống.</p>
+        </div>
+    }
+</div>
+
+<!-- Pagination -->
+@if (ViewBag.TotalPages > 1)
+{
+    <div class="pagination-wrapper">
+        <div class="pagination-info">
+            Hiển thị @ViewBag.StartIndex - @ViewBag.EndIndex của @ViewBag.TotalQuizzes quiz
+        </div>
+        <div class="pagination-controls">
+            @if (ViewBag.CurrentPage > 1)
+            {
+                <a href="@Url.Action("Quizzes", new { page = ViewBag.CurrentPage - 1, search = ViewBag.Search, sortBy = ViewBag.SortBy, status = ViewBag.Status })" 
+                   class="page-btn">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            }
+            
+            @for (int i = Math.Max(1, ViewBag.CurrentPage - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.CurrentPage + 2); i++)
+            {
+                <a href="@Url.Action("Quizzes", new { page = i, search = ViewBag.Search, sortBy = ViewBag.SortBy, status = ViewBag.Status })" 
+                   class="page-btn @(i == ViewBag.CurrentPage ? "active" : "")">
+                    @i
+                </a>
+            }
+            
+            @if (ViewBag.CurrentPage < ViewBag.TotalPages)
+            {
+                <a href="@Url.Action("Quizzes", new { page = ViewBag.CurrentPage + 1, search = ViewBag.Search, sortBy = ViewBag.SortBy, status = ViewBag.Status })" 
+                   class="page-btn">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Quiz action functions
+        function editQuiz(quizId) {
+            // Implement edit quiz functionality
+            alert('Chức năng sửa quiz sẽ được triển khai sau');
+        }
+
+        function manageQuestions(quizId) {
+            // Implement manage questions functionality
+            alert('Chức năng quản lý câu hỏi sẽ được triển khai sau');
+        }
+
+        function viewAttempts(quizId) {
+            // Implement view attempts functionality
+            alert('Chức năng xem kết quả sẽ được triển khai sau');
+        }
+
+        function closeHomework(quizId, quizTitle) {
+            if (confirm(`Bạn có chắc muốn đóng bài tập "${quizTitle}"?`)) {
+                // Implement close homework functionality
+                alert('Chức năng đóng bài tập sẽ được triển khai sau');
+            }
+        }
+
+        function openHomework(quizId, quizTitle) {
+            if (confirm(`Bạn có chắc muốn mở bài tập "${quizTitle}"?`)) {
+                // Implement open homework functionality
+                alert('Chức năng mở bài tập sẽ được triển khai sau');
+            }
+        }
+
+        function deleteQuiz(quizId, quizTitle) {
+            if (confirm(`Bạn có chắc muốn xóa quiz "${quizTitle}"? Hành động này không thể hoàn tác.`)) {
+                // Implement delete functionality
+                alert('Chức năng xóa quiz sẽ được triển khai sau');
+            }
+        }
+    </script>
+} 

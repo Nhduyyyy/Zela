@@ -1,0 +1,316 @@
+@model IEnumerable<Zela.Models.PaymentTransaction>
+
+@{
+    ViewData["Title"] = "Quản lý Thanh toán";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/admin/payments.css" />
+}
+
+<!-- Page Header -->
+<div class="payments-header">
+    <div class="d-flex justify-content-between align-items-center">
+        <div>
+            <h1><i class="bi bi-credit-card-fill"></i> Quản lý Thanh toán</h1>
+            <p>Quản lý tất cả giao dịch thanh toán trong hệ thống</p>
+        </div>
+        <div class="payments-badge">
+            <span>@ViewBag.TotalPayments giao dịch</span>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-cash-stack"></i>
+        </div>
+        <div class="stat-number">@ViewBag.TotalRevenue.ToString("N0") VNĐ</div>
+        <div class="stat-label">Tổng doanh thu</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
+        <div class="stat-number">@ViewBag.TotalSuccessful</div>
+        <div class="stat-label">Giao dịch thành công</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-clock-fill"></i>
+        </div>
+        <div class="stat-number">@ViewBag.TotalPending</div>
+        <div class="stat-label">Đang chờ xử lý</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="bi bi-x-circle-fill"></i>
+        </div>
+        <div class="stat-number">@ViewBag.TotalFailed</div>
+        <div class="stat-label">Giao dịch thất bại</div>
+    </div>
+</div>
+
+<!-- Search and Filters -->
+<div class="search-filters">
+    <form method="get" class="row g-3">
+        <div class="col-md-4">
+            <label class="form-label">Tìm kiếm</label>
+            <input type="text" class="form-control" name="search" value="@ViewBag.Search" placeholder="Tên, email hoặc mã giao dịch...">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Trạng thái</label>
+            <select class="form-select" name="status">
+                <option value="">Tất cả</option>
+                <option value="Success" selected="@(ViewBag.Status == "Success")">Thành công</option>
+                <option value="Pending" selected="@(ViewBag.Status == "Pending")">Đang chờ</option>
+                <option value="Failed" selected="@(ViewBag.Status == "Failed")">Thất bại</option>
+                <option value="Refunded" selected="@(ViewBag.Status == "Refunded")">Đã hoàn tiền</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label">Sắp xếp theo</label>
+            <select class="form-select" name="sortBy">
+                <option value="CreatedAt" selected="@(ViewBag.SortBy == "CreatedAt")">Ngày tạo</option>
+                <option value="Amount" selected="@(ViewBag.SortBy == "Amount")">Số tiền</option>
+                <option value="Status" selected="@(ViewBag.SortBy == "Status")">Trạng thái</option>
+                <option value="User" selected="@(ViewBag.SortBy == "User")">Người dùng</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">Thứ tự</label>
+            <select class="form-select" name="sortOrder">
+                <option value="desc" selected="@(ViewBag.SortOrder == "desc")">Giảm dần</option>
+                <option value="asc" selected="@(ViewBag.SortOrder == "asc")">Tăng dần</option>
+            </select>
+        </div>
+        <div class="col-12">
+            <div class="filter-actions">
+                <button type="submit" class="btn-filter">
+                    <i class="bi bi-search"></i>
+                    Tìm kiếm
+                </button>
+                <a href="@Url.Action("Payments")" class="btn-reset">
+                    <i class="bi bi-arrow-clockwise"></i>
+                    Làm mới
+                </a>
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Payments Table -->
+<div class="payments-table">
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Mã GD</th>
+                    <th>Người dùng</th>
+                    <th>Số tiền</th>
+                    <th>Trạng thái</th>
+                    <th>Ngày tạo</th>
+                    <th>Hành động</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    @foreach (var payment in Model)
+                    {
+                        <tr>
+                            <td>
+                                <div class="transaction-id">
+                                    <code>@payment.PayOSTransactionId</code>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="user-info">
+                                    <div class="user-name">@payment.User?.FullName</div>
+                                    <div class="user-email">@payment.User?.Email</div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="amount">
+                                    <strong>@payment.Amount.ToString("N0") VNĐ</strong>
+                                </div>
+                            </td>
+                            <td>
+                                @{
+                                    var statusClass = payment.Status switch
+                                    {
+                                        "Success" => "status-success",
+                                        "Pending" => "status-pending",
+                                        "Failed" => "status-failed",
+                                        "Refunded" => "status-refunded",
+                                        _ => "status-default"
+                                    };
+                                }
+                                <span class="status-badge @statusClass">
+                                    @payment.Status
+                                </span>
+                            </td>
+                            <td>
+                                <div class="date-info">
+                                    <div>@payment.CreatedAt.ToString("dd/MM/yyyy")</div>
+                                    <small>@payment.CreatedAt.ToString("HH:mm")</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="btn btn-sm btn-outline-primary" onclick="viewPaymentDetails(@payment.TransactionId)" title="Xem chi tiết">
+                                        <i class="bi bi-eye"></i>
+                                    </button>
+                                    @if (payment.Status == "Success")
+                                    {
+                                        <button class="btn btn-sm btn-outline-warning" onclick="refundPayment(@payment.TransactionId)" title="Hoàn tiền">
+                                            <i class="bi bi-arrow-return-left"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                }
+                else
+                {
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size: 2rem; opacity: 0.5;"></i>
+                            <div class="mt-2">Chưa có giao dịch nào</div>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Pagination -->
+@if (ViewBag.TotalPages > 1)
+{
+    <div class="pagination-wrapper">
+        <div class="pagination-info">
+            Hiển thị @(((ViewBag.Page - 1) * ViewBag.PageSize) + 1) - @Math.Min(ViewBag.Page * ViewBag.PageSize, ViewBag.TotalPayments) 
+            trong tổng số @ViewBag.TotalPayments giao dịch
+        </div>
+        <div class="pagination-controls">
+            @if (ViewBag.Page > 1)
+            {
+                <a href="@Url.Action("Payments", new { page = ViewBag.Page - 1, search = ViewBag.Search, status = ViewBag.Status, sortBy = ViewBag.SortBy, sortOrder = ViewBag.SortOrder })" class="page-btn">
+                    <i class="bi bi-chevron-left"></i>
+                </a>
+            }
+            
+            @for (int i = Math.Max(1, ViewBag.Page - 2); i <= Math.Min(ViewBag.TotalPages, ViewBag.Page + 2); i++)
+            {
+                <a href="@Url.Action("Payments", new { page = i, search = ViewBag.Search, status = ViewBag.Status, sortBy = ViewBag.SortBy, sortOrder = ViewBag.SortOrder })" 
+                   class="page-btn @(i == ViewBag.Page ? "active" : "")">
+                    @i
+                </a>
+            }
+            
+            @if (ViewBag.Page < ViewBag.TotalPages)
+            {
+                <a href="@Url.Action("Payments", new { page = ViewBag.Page + 1, search = ViewBag.Search, status = ViewBag.Status, sortBy = ViewBag.SortBy, sortOrder = ViewBag.SortOrder })" class="page-btn">
+                    <i class="bi bi-chevron-right"></i>
+                </a>
+            }
+        </div>
+    </div>
+}
+
+<!-- Payment Details Modal -->
+<div class="modal fade" id="paymentDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl" style="max-width: 95%;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Chi tiết giao dịch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-0" id="paymentDetailsContent">
+                <!-- Content will be loaded here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Refund Payment Modal -->
+<div class="modal fade" id="refundModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Hoàn tiền giao dịch</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Bạn có chắc chắn muốn hoàn tiền cho giao dịch này?</p>
+                <div class="mb-3">
+                    <label class="form-label">Lý do hoàn tiền</label>
+                    <textarea class="form-control" id="refundReason" rows="3" placeholder="Nhập lý do hoàn tiền..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" onclick="confirmRefund()">Hoàn tiền</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentPaymentId = null;
+        
+        function viewPaymentDetails(paymentId) {
+            // Load payment details via AJAX
+            fetch(`/Admin/PaymentDetails/${paymentId}`)
+                .then(response => response.text())
+                .then(html => {
+                    document.getElementById('paymentDetailsContent').innerHTML = html;
+                    new bootstrap.Modal(document.getElementById('paymentDetailsModal')).show();
+                })
+                .catch(error => {
+                    console.error('Error loading payment details:', error);
+                    alert('Không thể tải thông tin giao dịch');
+                });
+        }
+        
+        function refundPayment(paymentId) {
+            currentPaymentId = paymentId;
+            new bootstrap.Modal(document.getElementById('refundModal')).show();
+        }
+        
+        function confirmRefund() {
+            const reason = document.getElementById('refundReason').value;
+            
+            fetch('/Admin/RefundPayment', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                },
+                body: `paymentId=${currentPaymentId}&reason=${encodeURIComponent(reason)}`
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Đã hoàn tiền thành công');
+                    location.reload();
+                } else {
+                    alert('Lỗi: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error refunding payment:', error);
+                alert('Có lỗi xảy ra khi hoàn tiền');
+            })
+            .finally(() => {
+                bootstrap.Modal.getInstance(document.getElementById('refundModal')).hide();
+                document.getElementById('refundReason').value = '';
+            });
+        }
+    </script>
+} 

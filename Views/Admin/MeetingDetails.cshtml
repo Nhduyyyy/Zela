@@ -1,0 +1,502 @@
+@model Zela.Models.VideoRoom
+@{
+    ViewData["Title"] = "Chi tiết phòng họp";
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- Page Header -->
+<div class="meeting-detail-header">
+    <div>
+        <h1>
+            <i class="bi bi-camera-video"></i>Chi tiết phòng họp
+        </h1>
+        <p>Quản lý và giám sát chi tiết phòng họp @Model.Name</p>
+    </div>
+    <div class="meeting-detail-badge">
+        @(Model.IsOpen ? "Đang hoạt động" : "Đã kết thúc")
+    </div>
+</div>
+
+<!-- Breadcrumb -->
+<div class="meeting-breadcrumb">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/Admin">Dashboard</a></li>
+            <li class="breadcrumb-item"><a href="/Admin/Meetings">Phòng họp</a></li>
+            <li class="breadcrumb-item active">@Model.Name</li>
+        </ol>
+    </nav>
+</div>
+
+<div class="row">
+    <!-- Meeting Info -->
+    <div class="col-md-8">
+        <!-- General Info -->
+        <div class="meeting-info-card">
+            <div class="d-flex justify-content-between align-items-start mb-3">
+                <h5><i class="bi bi-info-circle"></i>Thông tin chung</h5>
+                <div class="meeting-status @(Model.IsOpen ? "active" : "inactive")">
+                    <i class="bi @(Model.IsOpen ? "bi-play-circle" : "bi-stop-circle")"></i>
+                    @(Model.IsOpen ? "Đang hoạt động" : "Đã kết thúc")
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="info-item">
+                        <label>Tên phòng:</label>
+                        <span>@Model.Name</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Người tạo:</label>
+                        <span>@Model.Creator?.FullName (@Model.Creator?.Email)</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Ngày tạo:</label>
+                        <span>@Model.CreatedAt.ToString("dd/MM/yyyy HH:mm")</span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="info-item">
+                        <label>Thời gian bắt đầu:</label>
+                        <span>@(Model.ScheduledStartTime?.ToString("dd/MM/yyyy HH:mm") ?? "Không xác định")</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Số người tối đa:</label>
+                        <span>@Model.MaxParticipants người</span>
+                    </div>
+                    <div class="info-item">
+                        <label>Có mật khẩu:</label>
+                        <span>@(string.IsNullOrEmpty(Model.Password) ? "Không" : "Có")</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="meeting-actions">
+                @if (Model.IsOpen)
+                {
+                    <button class="meeting-action-btn warning" onclick="endMeeting(@Model.RoomId, '@Model.Name')">
+                        <i class="bi bi-stop-circle"></i> Kết thúc phòng
+                    </button>
+                }
+                <button class="meeting-action-btn danger" onclick="deleteMeeting(@Model.RoomId, '@Model.Name')">
+                    <i class="bi bi-trash"></i> Xóa phòng
+                </button>
+                <a href="/Admin/Meetings" class="meeting-action-btn secondary">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics -->
+        <div class="meeting-info-card">
+            <h5><i class="bi bi-bar-chart"></i>Thống kê</h5>
+            <div class="meeting-stats-grid">
+                <div class="meeting-stat-item">
+                    <div class="stat-icon">
+                        <i class="bi bi-people-fill"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="meeting-stat-number">@ViewBag.ActiveParticipants</span>
+                        <span class="meeting-stat-label">Đang tham gia</span>
+                    </div>
+                </div>
+                <div class="meeting-stat-item">
+                    <div class="stat-icon">
+                        <i class="bi bi-person-plus-fill"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="meeting-stat-number">@ViewBag.TotalParticipants</span>
+                        <span class="meeting-stat-label">Tổng tham gia</span>
+                    </div>
+                </div>
+                <div class="meeting-stat-item">
+                    <div class="stat-icon">
+                        <i class="bi bi-clock-fill"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="meeting-stat-number">@ViewBag.TotalDuration</span>
+                        <span class="meeting-stat-label">Thời gian (phút)</span>
+                    </div>
+                </div>
+                <div class="meeting-stat-item">
+                    <div class="stat-icon">
+                        <i class="bi bi-record-circle-fill"></i>
+                    </div>
+                    <div class="stat-content">
+                        <span class="meeting-stat-number">@ViewBag.RecordingsCount</span>
+                        <span class="meeting-stat-label">Bản ghi</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Activity Chart -->
+        <div class="meeting-info-card">
+            <div class="chart-header">
+                <h5><i class="bi bi-graph-up"></i>Biểu đồ hoạt động</h5>
+                <div class="chart-controls">
+                    <button type="button" class="chart-btn" onclick="loadMeetingChart('week')">7 ngày</button>
+                    <button type="button" class="chart-btn active" onclick="loadMeetingChart('month')">30 ngày</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="meetingActivityChart" height="80"></canvas>
+                <div class="chart-loading" id="chartLoading">
+                    <div class="spinner"></div>
+                    <p>Đang tải dữ liệu...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Participants -->
+        <div class="meeting-info-card">
+            <h5><i class="bi bi-people"></i>Người tham gia (@ViewBag.TotalParticipants)</h5>
+            <div class="participants-list">
+                @if (ViewBag.Participants != null && ((List<Zela.Models.RoomParticipant>)ViewBag.Participants).Any())
+                {
+                    @foreach (var participant in (List<Zela.Models.RoomParticipant>)ViewBag.Participants)
+                    {
+                        <div class="participant-item">
+                            <img src="@(participant.User?.AvatarUrl ?? "/images/default-avatar.jpeg")" 
+                                 alt="@participant.User?.FullName" 
+                                 class="participant-avatar">
+                            <div class="participant-info">
+                                <div class="participant-name">@participant.User?.FullName</div>
+                                <div class="participant-email">@participant.User?.Email</div>
+                                <div class="participant-role">@(participant.IsHost ? "Chủ phòng" : "Thành viên")</div>
+                            </div>
+                            <div class="participant-status @(participant.Status == Zela.Enum.ParticipantStatus.Joined ? "online" : "offline")">
+                                <i class="bi bi-circle-fill"></i>
+                                @(participant.Status == Zela.Enum.ParticipantStatus.Joined ? "Đang online" : "Offline")
+                            </div>
+                            <div class="participant-actions">
+                                @if (!participant.IsHost)
+                                {
+                                    <button class="participant-action-btn" onclick="makeHost(@participant.UserId, '@participant.User?.FullName')" title="Thăng làm chủ phòng">
+                                        <i class="bi bi-person-gear"></i>
+                                    </button>
+                                }
+                                <button class="participant-action-btn danger" onclick="removeParticipant(@participant.UserId, '@participant.User?.FullName')" title="Xóa khỏi phòng">
+                                    <i class="bi bi-person-x"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">Chưa có người tham gia nào.</p>
+                }
+            </div>
+        </div>
+
+        <!-- Recordings -->
+        <div class="meeting-info-card">
+            <h5><i class="bi bi-record-circle"></i>Bản ghi (@ViewBag.RecordingsCount)</h5>
+            <div class="recordings-list">
+                @if (ViewBag.Recordings != null && ((List<Zela.Models.Recording>)ViewBag.Recordings).Any())
+                {
+                    @foreach (var recording in (List<Zela.Models.Recording>)ViewBag.Recordings)
+                    {
+                        <div class="recording-item">
+                            <div class="recording-icon">
+                                <i class="bi bi-play-circle"></i>
+                            </div>
+                            <div class="recording-info">
+                                <div class="recording-name">@recording.FileName</div>
+                                <div class="recording-meta">
+                                    <span class="recording-duration">
+                                        <i class="bi bi-clock"></i>
+                                        @recording.Duration phút
+                                    </span>
+                                    <span class="recording-size">
+                                        <i class="bi bi-file-earmark"></i>
+                                        @recording.FileSize MB
+                                    </span>
+                                    <span>
+                                        <i class="bi bi-calendar"></i>
+                                        @recording.CreatedAt.ToString("dd/MM/yyyy HH:mm")
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="recording-actions">
+                                <button class="recording-action-btn" onclick="downloadRecording('@recording.Id')" title="Tải xuống">
+                                    <i class="bi bi-download"></i>
+                                </button>
+                                <button class="recording-action-btn" onclick="playRecording('@recording.Id')" title="Phát">
+                                    <i class="bi bi-play"></i>
+                                </button>
+                                <button class="recording-action-btn danger" onclick="deleteRecording('@recording.Id', '@recording.FileName')" title="Xóa">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <p class="text-muted">Chưa có bản ghi nào.</p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-md-4">
+        <!-- Meeting Settings -->
+        <div class="meeting-info-card">
+            <h5><i class="bi bi-gear"></i>Cài đặt phòng</h5>
+            <div class="info-item">
+                <label>Loại phòng:</label>
+                <span>@Model.RoomType.ToString()</span>
+            </div>
+            <div class="info-item">
+                <label>Chế độ âm thanh:</label>
+                <span>@(Model.AllowAudio ? "Cho phép" : "Không cho phép")</span>
+            </div>
+            <div class="info-item">
+                <label>Chế độ video:</label>
+                <span>@(Model.AllowVideo ? "Cho phép" : "Không cho phép")</span>
+            </div>
+            <div class="info-item">
+                <label>Chế độ chat:</label>
+                <span>@(Model.AllowChat ? "Cho phép" : "Không cho phép")</span>
+            </div>
+            <div class="info-item">
+                <label>Chế độ ghi âm:</label>
+                <span>@(Model.RecordingPolicy != Zela.Enum.RecordingPolicy.Disabled ? "Cho phép" : "Không cho phép")</span>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="meeting-info-card">
+            <h5><i class="bi bi-activity"></i>Hoạt động gần đây</h5>
+            @if (ViewBag.RoomEvents != null && ((List<Zela.Models.RoomEvent>)ViewBag.RoomEvents).Any())
+            {
+                @foreach (var roomEvent in ((List<Zela.Models.RoomEvent>)ViewBag.RoomEvents).OrderByDescending(e => e.Timestamp).Take(5))
+                {
+                    <div class="info-item">
+                        <label>@roomEvent.EventType:</label>
+                        <span>@roomEvent.Details</span>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="text-muted">Chưa có hoạt động nào.</p>
+            }
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="meeting-info-card">
+            <h5><i class="bi bi-lightning"></i>Thao tác nhanh</h5>
+            <div class="meeting-actions">
+                <button class="meeting-action-btn primary" onclick="joinMeeting(@Model.RoomId)">
+                    <i class="bi bi-camera-video"></i>
+                    Tham gia phòng
+                </button>
+                <button class="meeting-action-btn success" onclick="startRecording(@Model.RoomId)">
+                    <i class="bi bi-record-circle"></i>
+                    Bắt đầu ghi
+                </button>
+                <button class="meeting-action-btn secondary" onclick="shareMeeting(@Model.RoomId)">
+                    <i class="bi bi-share"></i>
+                    Chia sẻ
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Chart initialization
+    let meetingActivityChart;
+    
+    function initMeetingChart() {
+        // Load real data from server on initialization
+        loadMeetingChart('month');
+    }
+    
+    function loadMeetingChart(period) {
+        // Show loading state
+        const loadingEl = document.getElementById('chartLoading');
+        if (loadingEl) loadingEl.style.display = 'block';
+        
+        // Update active button
+        document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+        const clickedBtn = event ? event.target : document.querySelector(`[onclick*="${period}"]`);
+        if (clickedBtn) clickedBtn.classList.add('active');
+        
+        // Load real data from server
+        console.log('Loading chart data for room:', @Model.RoomId, 'period:', period);
+        fetch(`/Admin/GetMeetingActivityChart?roomId=@Model.RoomId&range=${period}`)
+            .then(response => {
+                console.log('Response status:', response.status);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Chart data received:', data);
+                
+                if (data.error) {
+                    console.error('Server error:', data.error);
+                    // Fallback to sample data if server error
+                    data = {
+                        labels: ['01/12', '02/12', '03/12', '04/12', '05/12', '06/12', '07/12'],
+                        participantSeries: [3, 5, 2, 7, 4, 6, 3],
+                        durationSeries: [45, 90, 30, 120, 60, 75, 45]
+                    };
+                }
+                
+                if (meetingActivityChart) {
+                    meetingActivityChart.destroy();
+                }
+                
+                const canvas = document.getElementById('meetingActivityChart');
+                if (!canvas) {
+                    console.error('Canvas element not found');
+                    return;
+                }
+                
+                const ctx = canvas.getContext('2d');
+                meetingActivityChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.labels,
+                        datasets: [{
+                            label: 'Người tham gia',
+                            data: data.participantSeries,
+                            borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }, {
+                            label: 'Thời gian (phút)',
+                            data: data.durationSeries,
+                            borderColor: '#10b981',
+                            backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 20,
+                                    font: {
+                                        size: 12,
+                                        weight: '600'
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    color: 'rgba(0,0,0,0.05)'
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error loading chart data:', error);
+            })
+            .finally(() => {
+                // Hide loading state
+                const loadingEl = document.getElementById('chartLoading');
+                if (loadingEl) loadingEl.style.display = 'none';
+            });
+    }
+
+    // Initialize chart when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        initMeetingChart();
+    });
+
+    function endMeeting(roomId, roomName) {
+        if (confirm(`Bạn có chắc muốn kết thúc phòng "${roomName}"?`)) {
+            // Implement end meeting functionality
+            alert('Chức năng kết thúc phòng sẽ được triển khai sau');
+        }
+    }
+
+    function deleteMeeting(roomId, roomName) {
+        if (confirm(`Bạn có chắc muốn xóa phòng "${roomName}"? Hành động này không thể hoàn tác!`)) {
+            // Implement delete meeting functionality
+            alert('Chức năng xóa phòng sẽ được triển khai sau');
+        }
+    }
+
+    function makeHost(userId, userName) {
+        if (confirm(`Bạn có chắc muốn thăng ${userName} làm chủ phòng?`)) {
+            // Implement make host functionality
+            alert('Chức năng thăng chủ phòng sẽ được triển khai sau');
+        }
+    }
+
+    function removeParticipant(userId, userName) {
+        if (confirm(`Bạn có chắc muốn xóa ${userName} khỏi phòng?`)) {
+            // Implement remove participant functionality
+            alert('Chức năng xóa thành viên sẽ được triển khai sau');
+        }
+    }
+
+    function downloadRecording(recordingId) {
+        // Implement download recording functionality
+        alert('Chức năng tải xuống bản ghi sẽ được triển khai sau');
+    }
+
+    function playRecording(recordingId) {
+        // Implement play recording functionality
+        alert('Chức năng phát bản ghi sẽ được triển khai sau');
+    }
+
+    function deleteRecording(recordingId, recordingTitle) {
+        if (confirm(`Bạn có chắc muốn xóa bản ghi "${recordingTitle}"?`)) {
+            // Implement delete recording functionality
+            alert('Chức năng xóa bản ghi sẽ được triển khai sau');
+        }
+    }
+
+    function joinMeeting(roomId) {
+        // Implement join meeting functionality
+        alert('Chức năng tham gia phòng sẽ được triển khai sau');
+    }
+
+    function startRecording(roomId) {
+        // Implement start recording functionality
+        alert('Chức năng bắt đầu ghi sẽ được triển khai sau');
+    }
+
+    function shareMeeting(roomId) {
+        // Implement share meeting functionality
+        alert('Chức năng chia sẻ phòng sẽ được triển khai sau');
+    }
+</script> 

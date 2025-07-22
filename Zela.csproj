@@ -26,4 +26,20 @@
       <PackageReference Include="PayOS" Version="1.0.9" />
     </ItemGroup>
 
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Views\Admin\GroupDetails.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Groups.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Meetings.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\QuizDetails.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Quizzes.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\UserDetails.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Users.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\_GroupActionModals.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\_MeetingActionModals.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\_QuizActionModals.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\_UserActionModals.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\_ViewStart.cshtml" />
+    </ItemGroup>
+
 </Project>

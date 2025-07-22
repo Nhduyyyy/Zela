@@ -1,0 +1,364 @@
+@model Zela.Models.User
+
+@{
+    ViewData["Title"] = "Chi tiết người dùng - " + Model.FullName;
+    Layout = "~/Views/Shared/_AdminLayout.cshtml";
+}
+
+<!-- User Header -->
+<div class="user-detail-header">
+    <div class="row align-items-center">
+        <div class="col-md-3 text-center">
+            <img src="@(Model.AvatarUrl ?? "/images/default-avatar.jpeg")" 
+                 alt="@Model.FullName" 
+                 class="user-avatar-lg">
+        </div>
+        <div class="col-md-6">
+            <h1>@(string.IsNullOrEmpty(Model.FullName) ? "Chưa đặt tên" : Model.FullName)</h1>
+            <p><i class="bi bi-envelope"></i>@Model.Email</p>
+            <p><i class="bi bi-calendar"></i>Tham gia: @Model.CreatedAt.ToString("dd/MM/yyyy")</p>
+            <p><i class="bi bi-clock"></i>Đăng nhập cuối: @Model.LastLoginAt.ToString("dd/MM/yyyy HH:mm")</p>
+            <div class="user-badges">
+                @foreach (var role in Model.Roles)
+                {
+                    @if (role.RoleName == "Admin")
+                    {
+                        <span class="user-badge admin">
+                            <i class="bi bi-shield-check"></i> Admin
+                        </span>
+                    }
+                    else if (role.RoleName == "Locked")
+                    {
+                        <span class="user-badge locked">
+                            <i class="bi bi-lock"></i> Bị khóa
+                        </span>
+                    }
+                    else if (role.RoleName == "User")
+                    {
+                        <span class="user-badge user">
+                            <i class="bi bi-person"></i> User
+                        </span>
+                    }
+                }
+                @if (Model.IsPremium)
+                {
+                    <span class="user-badge premium">
+                        <i class="bi bi-star-fill"></i> Premium
+                    </span>
+                }
+            </div>
+        </div>
+        <div class="col-md-3 text-end">
+            <div class="user-actions">
+                <button class="user-action-btn" onclick="sendNotification(@Model.UserId, '@Model.FullName')">
+                    <i class="bi bi-bell"></i> Gửi thông báo
+                </button>
+                @if (!Model.Roles.Any(r => r.RoleName == "Locked"))
+                {
+                    <button class="user-action-btn warning" onclick="lockUser(@Model.UserId, '@Model.FullName')">
+                        <i class="bi bi-lock"></i> Khóa tài khoản
+                    </button>
+                }
+                else
+                {
+                    <button class="user-action-btn success" onclick="unlockUser(@Model.UserId, '@Model.FullName')">
+                        <i class="bi bi-unlock"></i> Mở khóa
+                    </button>
+                }
+                <a href="@Url.Action("Users")" class="user-action-btn">
+                    <i class="bi bi-arrow-left"></i> Quay lại
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Statistics -->
+    <div class="col-md-8">
+        <!-- Stats Cards -->
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value">@ViewBag.MessageCount</div>
+                <div class="stat-label">Tin nhắn gửi</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">@ViewBag.GroupCount</div>
+                <div class="stat-label">Nhóm tham gia</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">@ViewBag.QuizAttemptCount</div>
+                <div class="stat-label">Quiz đã làm</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value">@ViewBag.TotalSpent.ToString("N0") ₫</div>
+                <div class="stat-label">Tổng chi tiêu</div>
+            </div>
+        </div>
+
+        <!-- Activity Chart -->
+        <div class="chart-container">
+            <div class="chart-header">
+                <h5 class="chart-title">
+                    <i class="bi bi-graph-up"></i>Biểu đồ hoạt động
+                </h5>
+                <div class="chart-controls">
+                    <button type="button" class="chart-btn" onclick="loadUserChart('week')">7 ngày</button>
+                    <button type="button" class="chart-btn active" onclick="loadUserChart('month')">30 ngày</button>
+                </div>
+            </div>
+            <div class="chart-body">
+                <canvas id="userActivityChart" height="80"></canvas>
+                <div class="chart-loading" id="chartLoading">
+                    <div class="spinner"></div>
+                    <p>Đang tải dữ liệu...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Messages -->
+        <div class="info-card">
+            <h5><i class="bi bi-chat-text"></i>Tin nhắn gần đây</h5>
+            @if (ViewBag.RecentMessages != null && ((List<Zela.Models.Message>)ViewBag.RecentMessages).Any())
+            {
+                @foreach (var message in (List<Zela.Models.Message>)ViewBag.RecentMessages)
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon message">
+                            <i class="bi bi-chat-text"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">@(message.Content.Length > 50 ? message.Content.Substring(0, 50) + "..." : message.Content)</div>
+                            <div class="activity-subtitle">@message.SentAt.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-chat-text"></i>
+                    <p>Chưa có tin nhắn nào.</p>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Sidebar Info -->
+    <div class="col-md-4">
+        <!-- Recent Payments -->
+        <div class="sidebar-card">
+            <h6><i class="bi bi-credit-card"></i>Thanh toán gần đây</h6>
+            @if (ViewBag.RecentPayments != null && ((List<Zela.Models.PaymentTransaction>)ViewBag.RecentPayments).Any())
+            {
+                @foreach (var payment in (List<Zela.Models.PaymentTransaction>)ViewBag.RecentPayments)
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon payment">
+                            <i class="bi bi-credit-card"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">@payment.Amount.ToString("N0") ₫</div>
+                            <div class="activity-subtitle">@payment.CreatedAt.ToString("dd/MM/yyyy")</div>
+                            <span class="activity-badge @(payment.Status == "PAID" ? "success" : "warning")">@payment.Status</span>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-credit-card"></i>
+                    <p>Chưa có giao dịch nào.</p>
+                </div>
+            }
+        </div>
+
+        <!-- Recent Quiz Attempts -->
+        <div class="sidebar-card">
+            <h6><i class="bi bi-clipboard-data"></i>Quiz gần đây</h6>
+            @if (ViewBag.RecentQuizAttempts != null && ((List<Zela.Models.QuizAttempt>)ViewBag.RecentQuizAttempts).Any())
+            {
+                @foreach (var attempt in (List<Zela.Models.QuizAttempt>)ViewBag.RecentQuizAttempts)
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon quiz">
+                            <i class="bi bi-clipboard-data"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">Điểm: @attempt.Score.ToString("N1")</div>
+                            <div class="activity-subtitle">@attempt.StartedAt.ToString("dd/MM/yyyy")</div>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-clipboard-data"></i>
+                    <p>Chưa làm quiz nào.</p>
+                </div>
+            }
+        </div>
+
+        <!-- User Groups -->
+        <div class="sidebar-card">
+            <h6><i class="bi bi-people"></i>Nhóm tham gia</h6>
+            @if (Model.GroupMemberships.Any())
+            {
+                @foreach (var membership in Model.GroupMemberships.Take(5))
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon group">
+                            <i class="bi bi-people"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-title">@membership.ChatGroup.Name</div>
+                            <div class="activity-subtitle">Tham gia: @membership.JoinedAt.ToString("dd/MM/yyyy")</div>
+                            @if (membership.IsModerator)
+                            {
+                                <span class="activity-badge info">Moderator</span>
+                            }
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <i class="bi bi-people"></i>
+                    <p>Chưa tham gia nhóm nào.</p>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Chart initialization
+        let userActivityChart;
+        
+        function initChart() {
+            // Load real data from server on initialization
+            loadUserChart('month');
+        }
+
+        function loadUserChart(period) {
+            // Show loading state
+            const loadingEl = document.getElementById('chartLoading');
+            if (loadingEl) loadingEl.style.display = 'block';
+            
+            // Update active button
+            document.querySelectorAll('.chart-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // Load real data from server
+            fetch(`/Admin/GetUserActivityChart?userId=@Model.UserId&range=${period}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (userActivityChart) {
+                        userActivityChart.destroy();
+                    }
+                    
+                    const ctx = document.getElementById('userActivityChart').getContext('2d');
+                    userActivityChart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: data.labels,
+                            datasets: [{
+                                label: 'Tin nhắn gửi',
+                                data: data.messageSeries,
+                                borderColor: '#2563eb',
+                                backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }, {
+                                label: 'Quiz đã làm',
+                                data: data.quizSeries,
+                                borderColor: '#f59e0b',
+                                backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                                tension: 0.4,
+                                fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                    labels: {
+                                        usePointStyle: true,
+                                        padding: 20,
+                                        font: {
+                                            size: 12,
+                                            weight: '600'
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(0,0,0,0.05)'
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        color: 'rgba(0,0,0,0.05)'
+                                    },
+                                    ticks: {
+                                        font: {
+                                            size: 12
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                })
+                .catch(error => {
+                    console.error('Error loading chart data:', error);
+                })
+                .finally(() => {
+                    // Hide loading state
+                    const loadingEl = document.getElementById('chartLoading');
+                    if (loadingEl) loadingEl.style.display = 'none';
+                });
+        }
+
+        // Initialize chart when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            // Load real data immediately
+            loadUserChart('month');
+        });
+
+        // User action functions
+        function sendNotification(userId, userName) {
+            // Implement notification functionality
+            alert('Chức năng gửi thông báo sẽ được triển khai sau');
+        }
+
+        function lockUser(userId, userName) {
+            if (confirm(`Bạn có chắc muốn khóa tài khoản của ${userName}?`)) {
+                // Implement lock functionality
+                alert('Chức năng khóa tài khoản sẽ được triển khai sau');
+            }
+        }
+
+        function unlockUser(userId, userName) {
+            if (confirm(`Bạn có chắc muốn mở khóa tài khoản của ${userName}?`)) {
+                // Implement unlock functionality
+                alert('Chức năng mở khóa sẽ được triển khai sau');
+            }
+        }
+    </script>
+} 
