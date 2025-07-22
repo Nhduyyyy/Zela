@@ -1,0 +1,47 @@
+@model List<Zela.ViewModels.NotificationViewModel>
+@{
+    ViewData["Title"] = "Tất cả thông báo";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@using Zela.Enum
+
+<link rel="stylesheet" href="~/css/components/notification-page.css" asp-append-version="true" />
+
+<div class="notification-page-container">
+    <h1>@ViewData["Title"]</h1>
+
+    <div class="notification-list-full">
+        @if (Model.Any())
+        {
+            foreach (var notification in Model)
+            {
+                <a href="#" class="notification-item-full @(notification.IsRead ? "" : "unread")">
+                    <div class="notification-icon">
+                        @if (notification.MessageType == MessageType.Image)
+                        {
+                            <i class="fa-solid fa-image"></i>
+                        }
+                        else if (notification.MessageType == MessageType.File)
+                        {
+                            <i class="fa-solid fa-file"></i>
+                        }
+                        else
+                        {
+                            <i class="fa-solid fa-comment"></i>
+                        }
+                    </div>
+                    <div class="notification-content">
+                        <p><strong>@notification.SenderName</strong> đã gửi cho bạn một tin nhắn.</p>
+                        <p class="preview">@notification.Content</p>
+                        <span class="timestamp">@notification.Timestamp.ToString("g")</span>
+                    </div>
+                </a>
+            }
+        }
+        else
+        {
+            <p>Bạn không có thông báo nào.</p>
+        }
+    </div>
+</div> 

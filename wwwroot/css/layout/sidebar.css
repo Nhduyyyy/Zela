@@ -12,16 +12,66 @@
     overflow-y: auto;
 }
 
+/* Độ rộng mặc định khi chỉ hiện icon */
 .zela-sidebar {
-    width: 270px;
-    background: linear-gradient(180deg, #0B1D34 0%, #08192C 100%);
-    color: #FFFFFF;
+    width: 60px;
+    min-width: 60px;
+    transition: width 0.3s ease;
+    overflow: hidden;
+}
+
+/* Khi hover vào TOÀN BỘ sidebar, mở rộng */
+.zela-sidebar:hover {
+    width: 220px;
+    min-width: 220px;
+}
+
+/* Ẩn tất cả nav-label mặc định */
+.zela-sidebar .nav-link .nav-label {
+    display: inline-block;
+    max-width: 0;
+    opacity: 0;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: max-width 0.3s, opacity 0.3s, margin-left 0.3s;
+    margin-left: 0;
+    vertical-align: middle;
+}
+
+/* Khi hover vào SIDEBAR thì hiện TẤT CẢ nav-label */
+.zela-sidebar:hover .nav-link .nav-label {
+    max-width: 160px;
+    opacity: 1;
+    margin-left: 12px;
+}
+
+/* Đảm bảo nav-link có đủ không gian */
+.zela-sidebar .nav-link {
+    padding: 8px 16px;
+    white-space: nowrap;
     display: flex;
-    flex-direction: column;
-    height: 100vh;
-    flex-shrink: 0;
-    position: relative;
-    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    align-items: center;
+    min-height: 48px;
+}
+
+/* Icon luôn căn giữa */
+.zela-sidebar .nav-link i {
+    min-width: 24px;
+    text-align: center;
+    font-size: 1.4rem;
+}
+
+/* Footer */
+.zela-footer {
+    display: flex;
+    justify-content: center;
+    padding: 16px 12px;
+    transition: all 0.3s ease;
+}
+
+.zela-sidebar:hover .zela-footer {
+    justify-content: flex-start;
+    padding-left: 16px;
 }
 
 .zela-logo {
@@ -158,52 +208,6 @@
     height: 2px;
     background: linear-gradient(90deg, #FF5E5B 0%, #00F0B5 50%, #29B6F6 100%);
 }
-/*CSS cho User*/
-/* CSS for User Section in Sidebar */
-.zela-user-section {
-    padding: 10px 5px;
-    display: flex;
-    align-items: center;
-    background-color: #f4f6f9; /* Light background for contrast */
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.user-avatar-container {
-    position: relative;
-    width: 50px;
-    height: 50px;
-    cursor: pointer;
-    margin-right: 10px;
-}
-
-.user-avatar-sidebar {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    border: 2px solid #ddd; /* Subtle border around avatar */
-    object-fit: cover;
-    transition: transform 0.3s ease;
-}
-
-.user-avatar-sidebar:hover {
-    transform: scale(1.1); /* Add a slight hover effect */
-}
-
-.user-status-indicator {
-    position: absolute;
-    bottom: 0;
-    right: 2px;
-    width: 12px;
-    height: 12px;
-    background: #28a745; /* Green online indicator */
-    border-radius: 50%;
-    border: 2px solid #ffffff; /* Border to give indicator visibility */
-}
-
-.user-info {
-    flex: 1; /* Allow user info to take up remaining space */
-}
 
 .user-name {
     font-size: 16px;
@@ -219,23 +223,6 @@
 
 .user-status-text i {
     margin-right: 5px;
-}
-
-.user-actions {
-    margin-left: auto;
-}
-
-.user-menu-btn {
-    padding: 0;
-    background-color: transparent;
-    border: none;
-    font-size: 1.2rem; /* Slightly larger icon size */
-    color: #6c757d;
-    transition: color 0.2s ease;
-}
-
-.user-menu-btn:hover {
-    color: #343a40; /* Slightly darker on hover */
 }
 
 /* Dropdown Styling */
@@ -283,4 +270,254 @@
 
 .logout-btn:hover {
     color: #dc3545; /* Red hover effect */
+}
+
+/* Đảm bảo icon luôn căn giữa */
+.zela-sidebar .nav-link i {
+    font-size: 1.6rem;
+    vertical-align: middle;
+}
+
+/* Tùy chỉnh avatar sidebar nếu cần */
+.zela-user-section{
+    gap :12px;
+}
+
+.zela-user-section .user-avatar-sidebar {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+}
+
+/* Thêm vào CSS trên */
+.zela-sidebar * {
+    transition: all 0.2s ease;
+}
+
+/* Đảm bảo main content không bị giật */
+.zela-main {
+    transition: margin-left 0.2s ease;
+}
+
+/* Khi sidebar mở rộng, user section cũng mở rộng */
+.zela-sidebar:hover .zela-user-section {
+    justify-content: flex-start;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+/* User info - ẩn mặc định */
+.zela-user-section .user-info {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    flex: 1; /* chiếm hết không gian còn lại */
+    min-width: 0; /* cho phép text bị cắt */
+}
+
+/* Khi sidebar mở rộng thì hiện user-info */
+.zela-sidebar:hover .zela-user-section .user-info {
+    display: block;
+    opacity: 1;
+}
+
+/* User name trong user-info */
+.zela-user-section .user-name {
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* User actions (nút 3 chấm) - ẩn mặc định */
+.zela-user-section .user-actions {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+    flex-shrink: 0; /* không cho nút bị co */
+}
+
+/* Khi sidebar mở rộng thì hiện user-actions */
+.zela-sidebar:hover .zela-user-section .user-actions {
+    display: block;
+    opacity: 1;
+}
+
+/* Style cho nút 3 chấm */
+.zela-user-section .user-menu-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.zela-user-section .user-menu-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Đảm bảo dropdown menu hiện đúng vị trí */
+.zela-user-section .dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    z-index: 1000;
+}
+
+/* Khi sidebar thu gọn, chỉ hiện avatar */
+.zela-sidebar:not(:hover) .zela-user-section {
+    justify-content: center;
+}
+
+.zela-sidebar:not(:hover) .user-avatar-container {
+    margin: 0 auto;
+}
+
+/* Khi sidebar mở rộng, căn trái user-section */
+.zela-sidebar:hover .zela-user-section {
+    justify-content: flex-start;
+    padding-left: 16px;
+}
+
+/* Khi sidebar mở rộng, căn trái user-section */
+.zela-sidebar:hover .zela-user-section {
+    justify-content: flex-start;
+    padding-left: 16px;
+    padding-right: 0;
+}
+
+/* Định vị nút 3 chấm khi hover sidebar */
+.zela-user-section .user-actions {
+    /* Ẩn mặc định, chỉ hiện khi hover sidebar */
+    display: none;
+    opacity: 0;
+    transition: opacity 0.3s;
+}
+
+.zela-sidebar:hover .zela-user-section .user-actions {
+    display: block;
+    opacity: 1;
+    position: absolute;
+    right: 4px;   /* Cách mép phải sidebar đúng 4px */
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2;
+}
+
+
+/* 4. Khi hover vào sidebar, show user-details và căn trái toàn bộ section */
+.zela-sidebar:hover .zela-user-section {
+    justify-content: flex-start;
+    padding-left: 16px;
+    padding-right: 8px;
+}
+
+/* Khi hover vào sidebar, show user-details */
+.zela-sidebar:hover .user-details {
+    display: flex;
+}
+
+/* --- ZELA USER SECTION SIDEBAR --- */
+
+/* 1. Cấu trúc flex cho zela-user-section */
+.zela-user-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 100%;
+    padding: 16px 0;
+    min-height: 64px;
+    transition: all 0.3s;
+}
+
+/* 2. Avatar luôn giữ nguyên, căn giữa khi sidebar thu gọn */
+.user-avatar-container {
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: margin 0.3s;
+}
+
+/* 3. user-details: flex hàng ngang, chiếm hết chiều rộng còn lại, ẩn mặc định */
+.user-details {
+    align-items: center;
+    flex: 1;
+    min-width: 0;
+    margin-left: 12px;
+    margin-right: 8px;
+    overflow: hidden;
+}
+
+/* 4. Khi hover vào sidebar, show user-details và căn trái toàn bộ section */
+.zela-sidebar:hover .zela-user-section {
+    justify-content: flex-start;
+    padding-left: 16px;
+    padding-right: 8px;
+}
+.zela-sidebar:hover .user-details {
+    display: flex;
+}
+
+/* 5. user-info (tên user) bên trái, chiếm hết không gian còn lại */
+.user-info {
+    color: #fff;
+    font-size: 15px;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    flex: 1;
+}
+
+/* 6. user-actions (nút 3 chấm) bên phải, không co lại */
+.user-actions {
+    margin-left: 12px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+}
+
+/* 7. Nút 3 chấm style */
+.user-menu-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    padding: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.2rem;
+    transition: background 0.2s;
+}
+.user-menu-btn:hover {
+    background: rgba(255,255,255,0.08);
+}
+
+/* 8. Avatar hình tròn */
+.user-avatar-sidebar {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+/* 9. Trạng thái online */
+.user-status-indicator {
+    position: absolute;
+    bottom: 12px;
+    left: 40px;
+    width: 12px;
+    height: 12px;
+    background: #28a745;
+    border-radius: 50%;
+    border: 2px solid #ffffff;
 }

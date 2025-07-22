@@ -1,0 +1,69 @@
+/* CSS for dedicated notification page */
+.notification-page-container {
+    max-width: 900px;
+    margin: 2rem auto;
+    padding: 1rem 2rem;
+    color: #e0e0e0; /* Light text for dark background */
+}
+
+.notification-page-container h1 {
+    color: #fff;
+    margin-bottom: 2rem;
+}
+
+.notification-list-full {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.notification-item-full {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    padding: 1rem 1.5rem;
+    background-color: #1a202c; /* Dark item background */
+    border: 1px solid #2d3748;  /* Slightly lighter border */
+    border-radius: 8px;
+    text-decoration: none;
+    color: inherit;
+    transition: background-color 0.2s, transform 0.2s;
+}
+
+.notification-item-full:hover {
+    background-color: #2d3748; /* Lighter background on hover */
+    transform: translateY(-2px);
+}
+
+.notification-item-full.unread {
+    background-color: #252f41;
+    border-left: 4px solid #38b2ac; /* Teal highlight for unread */
+}
+
+.notification-icon i {
+    font-size: 1.75rem;
+    color: #63b3ed; /* Light blue icon color */
+    width: 30px;
+    text-align: center;
+}
+
+.notification-content {
+    flex-grow: 1;
+}
+
+.notification-content p {
+    margin: 0;
+}
+
+.notification-content .preview {
+    color: #a0aec0; /* Lighter gray for preview text */
+    font-style: italic;
+    font-size: 0.9rem;
+}
+
+.notification-content .timestamp {
+    font-size: 0.8rem;
+    color: #718096; /* Dimmer gray for timestamp */
+    margin-top: 0.25rem;
+    display: block;
+} 

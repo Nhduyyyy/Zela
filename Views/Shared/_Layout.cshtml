@@ -95,41 +95,58 @@
         <nav class="zela-nav">
             <ul>
                 <li>
-                    <a class="nav-link" asp-controller="Chat" asp-action="Index"><i class="bi bi-chat-dots"></i><span>Chat</span></a>
+                    <a class="nav-link" asp-controller="Chat" asp-action="Index">
+                        <i class="bi bi-chat-dots"></i>
+                        <span class="nav-label">Chat</span>
+                    </a>
                 </li>
                 <li>
                     <a class="nav-link" asp-controller="Friendship" asp-action="Index">
-                        <i
-                            class="bi bi-camera-video"></i><span>Friendship</span></a>
+                        <i class="bi bi-people"></i>
+                        <span class="nav-label">Friendship</span>
+                    </a>
                 </li>
                 <li>
                     <a class="nav-link" asp-controller="Meeting" asp-action="Index">
-                        <i
-                            class="bi bi-camera-video"></i><span>Video Call</span></a>
+                        <i class="bi bi-camera-video"></i>
+                        <span class="nav-label">Video Call</span>
+                    </a>
                 </li>
                 <li>
                     <a class="nav-link" asp-controller="Meeting" asp-action="Recordings">
-                        <i class="bi bi-collection-play"></i><span>Recordings</span></a>
+                        <i class="bi bi-collection-play"></i>
+                        <span class="nav-label">Recordings</span>
+                    </a>
                 </li>
                 <li>
-                    <a class="nav-link" asp-controller="Whiteboard" asp-action="Index"><i class="bi bi-easel"></i><span>Whiteboard</span></a>
+                    <a class="nav-link" asp-controller="Whiteboard" asp-action="Index">
+                        <i class="bi bi-easel"></i>
+                        <span class="nav-label">Whiteboard</span>
+                    </a>
                 </li>
                 <li>
-                    <a class="nav-link" asp-controller="Quiz" asp-action="Index"><i class="bi bi-ui-checks"></i><span>Quiz</span></a>
+                    <a class="nav-link" asp-controller="Quiz" asp-action="Index">
+                        <i class="bi bi-ui-checks"></i>
+                        <span class="nav-label">Quiz</span>
+                    </a>
                 </li>
                 <li>
-                    <a class="nav-link" asp-controller="Calendar" asp-action="Index"><i class="bi bi-calendar-week"></i><span>Calendar</span></a>
+                    <a class="nav-link" asp-controller="AI" asp-action="Index">
+                        <i class="bi bi-stars"></i>
+                        <span class="nav-label">AI Assistant</span>
+                    </a>
                 </li>
                 <li>
-                    <a class="nav-link" asp-controller="AI" asp-action="Index"><i class="bi bi-stars"></i><span>AI Assistant</span></a>
+                    <a class="nav-link" asp-controller="Admin" asp-action="Index">
+                        <i class="bi bi-graph-up"></i>
+                        <span class="nav-label">Analytics</span>
+                    </a>
                 </li>
                 <li>
-                    <a class="nav-link" asp-controller="Admin" asp-action="Index"><i class="bi bi-graph-up"></i><span>Analytics</span></a>
-                </li>
-                <li>
-                    <a class="nav-link" asp-controller="SystemLog" asp-action="Index">
-                        <i
-                            class="bi bi-clipboard-data"></i><span>System Logs</span></a>
+                    <a class="nav-link" asp-controller="Notification" asp-action="Index">
+                        <i class="bi bi-bell"></i>
+                        <span class="nav-label">Thông báo</span>
+                    </a>
                 </li>
             </ul>
         </nav>

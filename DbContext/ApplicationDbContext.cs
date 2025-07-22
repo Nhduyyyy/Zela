@@ -197,10 +197,15 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
             .OnDelete(DeleteBehavior.Cascade);
 
         modelBuilder.Entity<Notification>()
-            .HasOne(n => n.User)
+            .HasOne(n => n.Receiver)
             .WithMany(u => u.Notifications)
-            .HasForeignKey(n => n.UserId)
+            .HasForeignKey(n => n.ReceiverUserId)
             .OnDelete(DeleteBehavior.Cascade);
+        modelBuilder.Entity<Notification>()
+            .HasOne(n => n.Sender)
+            .WithMany()
+            .HasForeignKey(n => n.SenderUserId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         modelBuilder.Entity<AnalyticsEvent>()
             .HasOne(ae => ae.User)
