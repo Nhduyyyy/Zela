@@ -56,10 +56,6 @@ public class AdminController : Controller
         ViewBag.FileCount = await _db.Recordings.CountAsync();
         ViewBag.FileSize = await _db.Recordings.SumAsync(r => (long?)r.FileSize) ?? 0;
 
-        // Số lượng báo cáo vi phạm (AnalyticsEvent, Notification)
-        ViewBag.ReportCount = await _db.AnalyticsEvents.CountAsync(e => e.EventType == "Report");
-        ViewBag.ReportCount += await _db.Notifications.CountAsync(n => n.Type == "Report");
-
         // Recent activity - sử dụng một class chung để tránh lỗi binding
         var recentActivity = new List<object>();
         
@@ -290,41 +286,6 @@ public class AdminController : Controller
         }
 
         return Json(new { success = true, message = "Đã mở khóa tài khoản người dùng" });
-    }
-
-    /// <summary>
-    /// Gửi thông báo cho user
-    /// </summary>
-    [HttpPost]
-    public async Task<IActionResult> SendNotification(int userId, string title, string content, string type = "Info")
-    {
-        var user = await _db.Users.FindAsync(userId);
-        if (user == null)
-        {
-            return Json(new { success = false, message = "Không tìm thấy người dùng" });
-        }
-
-        _db.Notifications.Add(new Notification
-        {
-            UserId = userId,
-            Type = type,
-            Content = $"{title}: {content}",
-            CreatedAt = DateTime.Now,
-            IsRead = false
-        });
-
-        // Ghi log audit
-        _db.AnalyticsEvents.Add(new AnalyticsEvent
-        {
-            UserId = int.Parse(User.FindFirst("UserId")?.Value ?? "0"),
-            EventType = "AdminAction",
-            Metadata = $"Sent notification to {user.Email}: {title}",
-            OccurredAt = DateTime.Now
-        });
-
-        await _db.SaveChangesAsync();
-
-        return Json(new { success = true, message = "Đã gửi thông báo thành công" });
     }
 
     /// <summary>

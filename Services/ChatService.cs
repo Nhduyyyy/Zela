@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Zela.DbContext;
 using Zela.Enum;
 using Zela.ViewModels;
+using Zela.Services.Interface;
 
 namespace Zela.Services;
 
@@ -11,72 +12,103 @@ public class ChatService : IChatService
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly IFileUploadService _fileUploadService;
+    private readonly INotificationService _notificationService;
 
-    public ChatService(ApplicationDbContext dbContext, IFileUploadService fileUploadService)
+    public ChatService(ApplicationDbContext dbContext, IFileUploadService fileUploadService, INotificationService notificationService)
     {
         _dbContext = dbContext;
         _fileUploadService = fileUploadService;
+        _notificationService = notificationService;
     }
 
     public async Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content,
         List<IFormFile>? files = null)
     {
-        var msg = new Message
+        try
         {
-            SenderId = senderId,
-            RecipientId = recipientId,
-            Content = content ?? "",
-            SentAt = DateTime.Now,
-            IsEdited = false,
-            Media = new List<Media>(),
-            MessageStatus = MessageStatus.Sent      // Default MessageStatus value = sent
-        };
-
-        if (files != null && files.Count > 0)
-        {
-            Console.WriteLine($"[ChatService] Uploading {files.Count} file(s)");
-            
-            foreach (var file in files)
+            var msg = new Message
             {
-                if (file != null && file.Length > 0)
+                SenderId = senderId,
+                RecipientId = recipientId,
+                Content = content ?? "",
+                SentAt = DateTime.Now,
+                IsEdited = false,
+                Media = new List<Media>(),
+                MessageStatus = MessageStatus.Sent // Default MessageStatus value = sent
+            };
+
+            MessageType notificationType = MessageType.Text;
+            string notificationContent = "";
+
+            if (files != null && files.Count > 0)
+            {
+                foreach (var file in files)
                 {
-                    Console.WriteLine(
-                        $"[ChatService] Uploading file: {file.FileName}, type: {file.ContentType}, size: {file.Length}");
-                    var url = await _fileUploadService.UploadAsync(file, "chat");
-                    Console.WriteLine($"[ChatService] Uploaded file url: {url}");
-                    msg.Media.Add(new Media
+                    if (file != null && file.Length > 0)
                     {
-                        MediaType = file.ContentType,
-                        Url = url,
-                        FileName = file.FileName,
-                        UploadedAt = DateTime.Now
-                    });
+                        var url = await _fileUploadService.UploadAsync(file, "chat");
+                        msg.Media.Add(new Media
+                        {
+                            MediaType = file.ContentType,
+                            Url = url,
+                            FileName = file.FileName,
+                            UploadedAt = DateTime.Now
+                        });
+                        // Determine notification type and content
+                        if (file.ContentType.StartsWith("image"))
+                        {
+                            notificationType = MessageType.Image;
+                            notificationContent = "[Hình ảnh]";
+                        }
+                        else
+                        {
+                            notificationType = MessageType.File;
+                            notificationContent = file.FileName.Length > 20 ? file.FileName.Substring(0, 20) + "..." : file.FileName;
+                        }
+                    }
                 }
             }
-        }
-
-        _dbContext.Messages.Add(msg);
-        await _dbContext.SaveChangesAsync();
-
-        var sender = await _dbContext.Users.FindAsync(senderId);
-        return new MessageViewModel
-        {
-            MessageId = msg.MessageId,
-            SenderId = senderId,
-            RecipientId = recipientId,
-            SenderName = sender?.FullName ?? "Unknown",
-            AvatarUrl = sender?.AvatarUrl ?? "",
-            Content = msg.Content ?? "",
-            SentAt = msg.SentAt,
-            IsMine = true,
-            IsEdited = false,
-            Media = msg.Media.Select(md => new MediaViewModel
+            else
             {
-                Url = md.Url,
-                MediaType = md.MediaType,
-                FileName = md.FileName
-            }).ToList()
-        };
+                notificationType = MessageType.Text;
+                notificationContent = (content ?? "").Length > 50 ? (content ?? "").Substring(0, 50) + "..." : (content ?? "");
+            }
+
+            _dbContext.Messages.Add(msg);
+            await _dbContext.SaveChangesAsync();
+
+            // Create notification for recipient
+            if (recipientId != senderId)
+            {
+                await _notificationService.CreateNotificationAsync(senderId, recipientId, notificationContent, notificationType);
+            }
+
+            var sender = await _dbContext.Users.FindAsync(senderId);
+            return new MessageViewModel
+            {
+                MessageId = msg.MessageId,
+                SenderId = senderId,
+                RecipientId = recipientId,
+                SenderName = sender?.FullName ?? "Unknown",
+                AvatarUrl = sender?.AvatarUrl ?? "",
+                Content = msg.Content ?? "",
+                SentAt = msg.SentAt,
+                IsMine = true,
+                IsEdited = false,
+                Media = msg.Media.Select(md => new MediaViewModel
+                {
+                    Url = md.Url,
+                    MediaType = md.MediaType,
+                    FileName = md.FileName
+                }).ToList()
+            };
+        }
+        catch (Exception ex)
+        {
+            // Log lỗi chi tiết
+            Console.WriteLine($"Error in SendMessageAsync: {ex.Message}");
+            throw;
+        }
     }
 
     /// <summary>
