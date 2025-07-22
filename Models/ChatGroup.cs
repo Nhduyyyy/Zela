@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Zela.Enum;
 
 namespace Zela.Models;
 
@@ -34,6 +35,9 @@ public class ChatGroup
     public User Creator { get; set; }              // Navigation về User
 
     public string? Password { get; set; }
+    
+    // Loại phòng: Công cộng hoặc Riêng tư
+    public RoomType RoomType { get; set; } = RoomType.Public;
 
     public ICollection<GroupMember> Members { get; set; }
     public ICollection<Message> Messages { get; set; }

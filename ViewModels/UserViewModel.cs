@@ -10,4 +10,6 @@ public class UserViewModel
     public DateTime? LastLoginAt { get; set; }
     public bool IsModerator { get; set; }
     public bool IsHost { get; set; }
+    public bool IsBanned { get; set; }
+    public DateTime? BanUntil { get; set; }
 }

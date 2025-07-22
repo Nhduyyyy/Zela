@@ -17,4 +17,6 @@ public class EditGroupViewModel
     public string? Password { get; set; }
 
     public string? AvatarUrl { get; set; }
-} 
+
+    public Zela.Enum.RoomType RoomType { get; set; }
+}

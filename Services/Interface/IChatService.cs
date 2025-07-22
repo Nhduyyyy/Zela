@@ -1,5 +1,6 @@
 using Zela.Models;
 using Zela.ViewModels;
+using Zela.Enum;
 
 namespace Zela.Services;
 
@@ -70,4 +71,8 @@ public interface IChatService
     
     // Group messages with user context
     Task<List<GroupMessageViewModel>> GetGroupMessagesWithUserContextAsync(int groupId, int userId);
+    Task<bool> KickMemberAsync(int groupId, int userId);
+    Task<bool> BanMemberAsync(int groupId, int userId, DateTime banUntil);
+    Task<bool> UnbanMemberAsync(int groupId, int userId);
+    Task UpdateGroupRoomTypeAsync(int groupId, RoomType roomType);
 }

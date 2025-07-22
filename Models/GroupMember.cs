@@ -12,6 +12,9 @@ public class GroupMember
 
     public bool IsModerator { get; set; }          // BIT
     public DateTime JoinedAt { get; set; }         // DATETIME2
+    
+    public bool IsBanned { get; set; }             // BIT - trạng thái bị ban
+    public DateTime? BanUntil { get; set; }        // DATETIME2 - thời gian ban đến
 
     [ForeignKey(nameof(GroupId))]
     public ChatGroup ChatGroup { get; set; }

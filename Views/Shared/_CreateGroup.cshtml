@@ -133,8 +133,11 @@
     }
 
     // Submit
-    document.getElementById('submitCreateGroup').onclick = function() {
+    document.getElementById('submitCreateGroup').onclick = async function() {
         if (!validateFriendSelection()) return;
+
+        const btn = this;
+        btn.disabled = true; // Disable nút khi bắt đầu gửi request
 
         const form = document.getElementById('createGroupForm');
         const formData = new FormData(form);
@@ -142,17 +145,21 @@
         const friends = Array.from(document.querySelectorAll('.friend-checkbox:checked')).map(cb => Number(cb.value));
         formData.append('friendIds', JSON.stringify(friends));
 
-        // Gửi lên server
-        fetch('/GroupChat/CreateGroup', {
-            method: 'POST',
-            body: formData
-        }).then(async res => {
+        try {
+            const res = await fetch('/GroupChat/CreateGroup', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
             if (res.ok) {
                 const data = await res.json();
                 if (data.success) {
                     location.reload();
                 } else {
                     alert(data.message || 'Tạo nhóm thất bại!');
+                    btn.disabled = false; // Enable lại nếu lỗi
                 }
             } else {
                 let msg = 'Tạo nhóm thất bại!';
@@ -161,7 +168,11 @@
                     msg = err.message || msg;
                 } catch {}
                 alert(msg);
+                btn.disabled = false; // Enable lại nếu lỗi
             }
-        });
+        } catch (e) {
+            alert('Có lỗi xảy ra!');
+            btn.disabled = false; // Enable lại nếu lỗi
+        }
     };
 </script>
