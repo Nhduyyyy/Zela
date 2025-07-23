@@ -3,6 +3,8 @@ using Zela.Services.Interface;
 using Zela.Models;
 using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Zela.DbContext;
 
 namespace Zela.Controllers
 {
@@ -10,11 +12,37 @@ namespace Zela.Controllers
     {
         private readonly IWhiteboardService _whiteboardService;
         private readonly ILogger<WhiteboardController> _logger;
+        private readonly ApplicationDbContext _db;
 
-        public WhiteboardController(IWhiteboardService whiteboardService, ILogger<WhiteboardController> logger)
+        public WhiteboardController(IWhiteboardService whiteboardService, ILogger<WhiteboardController> logger, ApplicationDbContext db)
         {
             _whiteboardService = whiteboardService;
             _logger = logger;
+            _db = db;
+        }
+
+        // ======== PREMIUM CHECK HELPER ========
+        
+        /// <summary>
+        /// Kiểm tra user có Premium không
+        /// </summary>
+        private async Task<bool> IsUserPremiumAsync(int userId)
+        {
+            var user = await _db.Users.FindAsync(userId);
+            return user?.IsPremium ?? false;
+        }
+
+        /// <summary>
+        /// Trả về response lỗi khi user không có Premium
+        /// </summary>
+        private IActionResult PremiumRequiredResponse()
+        {
+            return Json(new { 
+                success = false, 
+                error = "Premium required", 
+                message = "Tính năng này yêu cầu tài khoản Premium. Vui lòng nâng cấp để sử dụng.",
+                redirectUrl = "/Payment/Plans"
+            });
         }
 
         // ======== MVC ACTIONS ========
@@ -27,9 +55,18 @@ namespace Zela.Controllers
             var userId = GetCurrentUserId();
             if (userId == 0) return RedirectToAction("Login", "Account");
 
+            // Kiểm tra Premium cho trang chính
+            var isPremium = await IsUserPremiumAsync(userId);
+            if (!isPremium)
+            {
+                TempData["PremiumMessage"] = "Whiteboard yêu cầu tài khoản Premium. Vui lòng nâng cấp để sử dụng.";
+                return RedirectToAction("Plans", "Payment");
+            }
+
             var templates = await _whiteboardService.GetTemplatesAsync(userId);
             ViewBag.Templates = templates;
             ViewBag.UserId = userId;
+            ViewBag.IsPremium = isPremium;
             
             return View();
         }
@@ -41,6 +78,14 @@ namespace Zela.Controllers
         {
             var userId = GetCurrentUserId();
             if (userId == 0) return RedirectToAction("Login", "Account");
+
+            // Kiểm tra Premium cho editor
+            var isPremium = await IsUserPremiumAsync(userId);
+            if (!isPremium)
+            {
+                TempData["PremiumMessage"] = "Whiteboard Editor yêu cầu tài khoản Premium. Vui lòng nâng cấp để sử dụng.";
+                return RedirectToAction("Plans", "Payment");
+            }
 
             // Nếu có templateId, load template
             if (templateId.HasValue)
@@ -60,6 +105,7 @@ namespace Zela.Controllers
             }
 
             ViewBag.UserId = userId;
+            ViewBag.IsPremium = isPremium;
             return View();
         }
 
@@ -75,6 +121,13 @@ namespace Zela.Controllers
             {
                 var userId = GetCurrentUserId();
                 if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
+
+                // Kiểm tra Premium
+                var isPremium = await IsUserPremiumAsync(userId);
+                if (!isPremium)
+                {
+                    return PremiumRequiredResponse();
+                }
 
                 var sessionId = await _whiteboardService.CreateWhiteboardSessionAsync(request.RoomId);
                 
@@ -113,6 +166,13 @@ namespace Zela.Controllers
                 var userId = GetCurrentUserId();
                 if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
 
+                // Kiểm tra Premium
+                var isPremium = await IsUserPremiumAsync(userId);
+                if (!isPremium)
+                {
+                    return PremiumRequiredResponse();
+                }
+
                 var sessionId = await _whiteboardService.CreateStandaloneSessionAsync(userId);
                 
                 return Json(new { 
@@ -139,6 +199,13 @@ namespace Zela.Controllers
                 var userId = GetCurrentUserId();
                 if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
 
+                // Kiểm tra Premium
+                var isPremium = await IsUserPremiumAsync(userId);
+                if (!isPremium)
+                {
+                    return PremiumRequiredResponse();
+                }
+
                 var success = await _whiteboardService.SaveSessionAsync(sessionId, userId, request.SessionName);
                 
                 return Json(new { 
@@ -163,6 +230,13 @@ namespace Zela.Controllers
             {
                 var userId = GetCurrentUserId();
                 if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
+
+                // Kiểm tra Premium
+                var isPremium = await IsUserPremiumAsync(userId);
+                if (!isPremium)
+                {
+                    return PremiumRequiredResponse();
+                }
 
                 var sessions = await _whiteboardService.GetUserSessionsAsync(userId);
                 
@@ -197,6 +271,13 @@ namespace Zela.Controllers
                 var userId = GetCurrentUserId();
                 if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
 
+                // Kiểm tra Premium
+                var isPremium = await IsUserPremiumAsync(userId);
+                if (!isPremium)
+                {
+                    return PremiumRequiredResponse();
+                }
+
                 if (!Guid.TryParse(request.SessionId, out Guid sessionGuid))
                     return Json(new { success = false, error = "Invalid session ID" });
 
@@ -221,6 +302,13 @@ namespace Zela.Controllers
             {
                 var userId = GetCurrentUserId();
                 if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
+
+                // Kiểm tra Premium
+                var isPremium = await IsUserPremiumAsync(userId);
+                if (!isPremium)
+                {
+                    return PremiumRequiredResponse();
+                }
 
                 var session = await _whiteboardService.GetActiveSessionAsync(roomId);
                 
@@ -250,6 +338,13 @@ namespace Zela.Controllers
                 var userId = GetCurrentUserId();
                 if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
 
+                // Kiểm tra Premium
+                var isPremium = await IsUserPremiumAsync(userId);
+                if (!isPremium)
+                {
+                    return PremiumRequiredResponse();
+                }
+
                 var success = await _whiteboardService.EndSessionAsync(sessionId);
                 
                 return Json(new { 
@@ -271,6 +366,13 @@ namespace Zela.Controllers
             {
                 var userId = GetCurrentUserId();
                 if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
+
+                // Kiểm tra Premium
+                var isPremium = await IsUserPremiumAsync(userId);
+                if (!isPremium)
+                {
+                    return PremiumRequiredResponse();
+                }
 
                 var action = await _whiteboardService.AddDrawActionAsync(
                     sessionId, userId, request.ActionType, request.Payload);

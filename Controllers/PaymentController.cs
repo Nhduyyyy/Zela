@@ -313,14 +313,28 @@ public class PaymentController : Controller
 
     private PremiumPlanInfo? GetPlanInfoByOrderCode(string orderCode)
     {
-        // Extract plan info from order code or determine based on amount
-        // This is a simplified implementation
-        if (orderCode.Contains("ZELA_"))
+        // OLD IMPLEMENTATION ONLY WORKS FOR SPECIAL PREFIX, REPLACED BELOW
+        // This method now tries to locate the corresponding transaction in DB and infer plan by amount.
+        var transaction = _payOSService.GetPaymentTransactionByOrderCodeAsync(orderCode).GetAwaiter().GetResult();
+        if (transaction != null)
         {
-            // Default to monthly plan - in production, you might want to store plan info in the order
-            return new PremiumPlanInfo { Name = "Premium Tháng", Price = 99000, Duration = 30 };
+            return GetPlanInfoByAmount(transaction.Amount);
         }
+        // Fallback: original naive check (kept for backward compatibility)
+        if (orderCode.Contains("ZELA_"))
+            return new PremiumPlanInfo { Name = "Premium Tháng", Price = 99000, Duration = 30 };
         return null;
+    }
+
+    // ---------- NEW UTILITY METHOD ----------
+    private static PremiumPlanInfo? GetPlanInfoByAmount(decimal amount)
+    {
+        return amount switch
+        {
+            99000  => new PremiumPlanInfo { Name = "Premium Tháng", Price = 99000, Duration = 30 },
+            990000 => new PremiumPlanInfo { Name = "Premium Năm",  Price = 990000, Duration = 365 },
+            _      => null
+        };
     }
 
     private int? ExtractUserIdFromOrderCode(string orderCode)
