@@ -119,7 +119,6 @@ public class PaymentController : Controller
     /// Handle PayOS callback
     /// </summary>
     [HttpPost]
-    [AllowAnonymous]
     public async Task<IActionResult> Callback()
     {
         try

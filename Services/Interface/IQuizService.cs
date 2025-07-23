@@ -84,6 +84,10 @@ public interface IQuizService
 
     void SaveQuizRoomHistory(string roomCode, int quizId);
 
+    // Thêm hai method cho comment/attempt
+    QuizAttempt GetQuizAttemptById(Guid attemptId);
+    QuizService.ServiceResult SaveAttemptComment(Guid attemptId, int quizId, string comment);
+
     public enum HomeworkAccessResult
     {
         Ok,

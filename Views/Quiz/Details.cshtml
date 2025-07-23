@@ -25,6 +25,14 @@
     <div class="quiz-header">
         <div class="quiz-header-left">
             <h2 class="quiz-title"><i class="bi bi-clipboard-check"></i> @Model.Title</h2>
+            @if (Model.IsPublic)
+            {
+                <span class="badge bg-success"><i class="bi bi-globe"></i> Public</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary"><i class="bi bi-lock"></i> Private</span>
+            }
         </div>
         <div class="quiz-header-right">
             <a href="@Url.Action("Index", "Quiz")" class="btn btn-outline-primary">Quay lại danh sách</a>
@@ -128,9 +136,12 @@
                     <a href="@Url.Action("Edit", "Quiz", new { id = Model.QuizId })" class="btn btn-outline-secondary">
                         <i class="bi bi-pencil"></i> Chỉnh sửa quiz
                     </a>
-                    <a href="javascript:void(0);" class="btn btn-warning" id="showQuizRealtimeBtn" style="margin-left:1rem;">
-                        <i class="bi bi-lightning-charge"></i> Bắt đầu Quiz thời gian thực
-                    </a>
+                    <form method="post" action="@Url.Action("Delete", "Quiz", new { id = Model.QuizId })" style="display:inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn xóa quiz này?');">
+                            <i class="bi bi-trash"></i> Xóa quiz
+                        </button>
+                    </form>
+                    <!-- Đã ẩn hoàn toàn quiz realtime -->
                 }
                 else
                 {
@@ -139,38 +150,17 @@
                     </a>
                 }
             </div>
-            <div id="quizRealtimePanel" style="display:none; margin-top:2rem;">
-                @await Html.PartialAsync("~/Views/Quiz/_QuizRealtimePartial.cshtml", null, new ViewDataDictionary(ViewData) {
-                    {"QuizId", Model.QuizId},
-                    {"RoomCode", null},
-                    {"QuizTitle", Model.Title},
-                    {"QuizDescription", Model.Description},
-                    {"IsTeacher", isCreator}
-                })
-            </div>
+            <!-- Đã ẩn hoàn toàn quizRealtimePanel -->
         </div>
     </div>
 </div>
+<!-- Thêm nút xem lịch sử làm bài cho mọi user -->
+<div class="mt-4" style="text-align:center;">
+    <a href="@Url.Action("Attempts", "Quiz", new { quizId = Model.QuizId })" class="btn btn-outline-primary">
+        <i class="bi bi-list-ul"></i> Xem lịch sử làm bài
+    </a>
+</div>
 
 @section Scripts {
-    <script>
-        document.getElementById('showQuizRealtimeBtn').onclick = async function() {
-            // Gọi API để lấy roomCode mới nếu chưa có
-            let quizId = @Model.QuizId;
-            let response = await fetch(`/Quiz/QuizRealtime?id=${quizId}`);
-            let html = await response.text();
-            document.getElementById('quizRealtimePanel').innerHTML = html;
-            document.getElementById('quizRealtimePanel').style.display = '';
-            window.scrollTo({ top: document.getElementById('quizRealtimePanel').offsetTop, behavior: 'smooth' });
-            // Lấy roomCode từ partial mới render
-            let match = html.match(/window\.roomCode = '([A-Z0-9]+)'/);
-            if (match) {
-                window.roomCode = match[1];
-            }
-            if (typeof initQuizRealtimePanel === 'function') {
-                initQuizRealtimePanel();
-            }
-            // TODO: Gửi roomCode cho học sinh qua SignalR nếu cần
-        };
-    </script>
+    <!-- Đã ẩn hoàn toàn script quiz realtime -->
 }

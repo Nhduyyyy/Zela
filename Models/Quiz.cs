@@ -29,6 +29,9 @@ public class Quiz
     public DateTime? StartTime { get; set; }
     public DateTime? EndTime { get; set; }
 
+    public bool IsPublic { get; set; } = true; // Quiz công khai hay riêng tư
+    public string? Password { get; set; } // Mật khẩu nếu là private
+
     [ForeignKey(nameof(CreatorId))]
     public virtual User? Creator { get; set; }
     public virtual ICollection<QuizQuestion>? Questions { get; set; }
