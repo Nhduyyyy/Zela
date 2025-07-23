@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Quiz";
     Layout = "~/Views/Shared/_Layout.cshtml";
+    var currentUserId = Context.Session.GetInt32("UserId");
 }
 
 @section Styles {
@@ -25,24 +26,14 @@
         </div>
         
         <div class="quiz-header-right">
-            @if (Context.Session.GetInt32("UserId") != null)
-            {
-                <a href="@Url.Action("Create", "Quiz")" class="btn btn-outline-primary me-2">
-                    <i class="bi bi-plus-circle me-1"></i>
-                    Tạo Quiz
-                </a>
-                <button class="btn btn-outline-success me-2" onclick="showUpgradeModal()">
-                    <i class="bi bi-crown me-1"></i>
-                    Upgrade
-                </button>
-            }
-            else
-            {
-                <a href="@Url.Action("Login", "Account")" class="btn btn-outline-primary me-2">
-                    <i class="bi bi-google me-1"></i>
-                    Đăng nhập để tạo Quiz
-                </a>
-            }
+            <a href="@Url.Action("Create", "Quiz")" class="btn btn-outline-primary me-2">
+                <i class="bi bi-plus-circle me-1"></i>
+                Tạo Quiz
+            </a>
+            <button class="btn btn-outline-success me-2" onclick="showUpgradeModal()">
+                <i class="bi bi-crown me-1"></i>
+                Upgrade
+            </button>
             <div class="quiz-stats">
                 <span class="stat-item">
                     <i class="bi bi-collection me-1"></i>
@@ -53,9 +44,7 @@
     </div>
 
     <div class="quiz-header-actions" style="margin-bottom:1.5rem;">
-        <a href="@Url.Action("JoinQuizRoom", "Quiz")" class="btn btn-primary">
-            <i class="bi bi-box-arrow-in-right"></i> Tham gia phòng Quiz
-        </a>
+        <!-- Ẩn nút Tham gia phòng Quiz (quiz realtime) -->
     </div>
 
     <!-- Quiz Content -->
@@ -99,59 +88,41 @@
                                 <div class="quiz-icon">
                                     <i class="bi bi-ui-checks"></i>
                                 </div>
-                                @if (Context.Session.GetInt32("UserId") != null)
-                                {
-                                    <div class="quiz-actions">
+                                <div class="quiz-status">
+                                    @if (quiz.IsPublic)
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-globe"></i> Public</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary"><i class="bi bi-lock"></i> Private</span>
+                                    }
+                                </div>
+                                <div class="quiz-actions">
+                                    @if (quiz.CreatorId == currentUserId)
+                                    {
                                         <button class="btn-edit" onclick="event.stopPropagation(); editQuiz(@quiz.QuizId)">
                                             <i class="bi bi-pencil"></i>
                                         </button>
                                         <button class="btn-delete" onclick="event.stopPropagation(); deleteQuiz(@quiz.QuizId)">
                                             <i class="bi bi-trash"></i>
                                         </button>
-                                    </div>
-                                }
-                            </div>
-                            <div class="quiz-card-body">
-                                <h4 class="quiz-card-title">@quiz.Title</h4>
-                                <p class="quiz-card-desc">@quiz.Description</p>
-                                <div class="quiz-card-meta">
-                                    <span class="quiz-terms">
-                                        <i class="bi bi-list-check me-1"></i>
-                                        @quiz.TermCount terms
-                                    </span>
-                                    <span class="quiz-author">
-                                        <i class="bi bi-person me-1"></i>
-                                        @quiz.Author
-                                    </span>
+                                    }
                                 </div>
                             </div>
                             <div class="quiz-card-footer">
-                                @if (Context.Session.GetInt32("UserId") != null)
-                                {
-                                    <a href="@Url.Action("Take", "Quiz", new { id = quiz.QuizId })" class="btn btn-primary btn-sm">
-                                        <i class="bi bi-play me-1"></i>
-                                        Bắt đầu
-                                    </a>
-                                    <button class="btn btn-outline-secondary btn-sm" onclick="event.stopPropagation(); viewDetails(@quiz.QuizId)">
-                                        <i class="bi bi-eye me-1"></i>
-                                        Chi tiết
-                                    </button>
-                                    <button class="btn btn-outline-info btn-sm" onclick="event.stopPropagation(); addQuestions(@quiz.QuizId)">
-                                        <i class="bi bi-plus-circle me-1"></i>
-                                        Thêm câu hỏi
-                                    </button>
-                                }
-                                else
-                                {
-                                    <a href="@Url.Action("Login", "Account")" class="btn btn-primary btn-sm">
-                                        <i class="bi bi-google me-1"></i>
-                                        Đăng nhập để làm bài
-                                    </a>
-                                    <button class="btn btn-outline-secondary btn-sm" onclick="event.stopPropagation(); viewDetails(@quiz.QuizId)">
-                                        <i class="bi bi-eye me-1"></i>
-                                        Chi tiết
-                                    </button>
-                                }
+                                <a href="@Url.Action("Take", "Quiz", new { id = quiz.QuizId })" class="btn btn-primary btn-sm">
+                                    <i class="bi bi-play me-1"></i>
+                                    Bắt đầu
+                                </a>
+                                <button class="btn btn-outline-secondary btn-sm" onclick="event.stopPropagation(); viewDetails(@quiz.QuizId)">
+                                    <i class="bi bi-eye me-1"></i>
+                                    Chi tiết
+                                </button>
+                                <button class="btn btn-outline-info btn-sm" onclick="event.stopPropagation(); addQuestions(@quiz.QuizId)">
+                                    <i class="bi bi-plus-circle me-1"></i>
+                                    Thêm câu hỏi
+                                </button>
                             </div>
                         </div>
                     }
@@ -159,22 +130,11 @@
                 else
                 {
                     <div class="quiz-card empty-card">
-                        @if (Context.Session.GetInt32("UserId") != null)
-                        {
-                            <div class="empty-card-content" onclick="location.href='@Url.Action("Create", "Quiz")'">
-                                <i class="bi bi-plus-circle fs-1 text-muted"></i>
-                                <h4 class="mt-3">Tạo Quiz đầu tiên</h4>
-                                <p class="text-muted">Bắt đầu tạo quiz để học tập hiệu quả hơn</p>
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="empty-card-content" onclick="location.href='@Url.Action("Login", "Account")'">
-                                <i class="bi bi-google fs-1 text-muted"></i>
-                                <h4 class="mt-3">Đăng nhập để tạo Quiz</h4>
-                                <p class="text-muted">Bạn cần đăng nhập để tạo và quản lý quiz</p>
-                            </div>
-                        }
+                        <div class="empty-card-content" onclick="location.href='@Url.Action("Create", "Quiz")'">
+                            <i class="bi bi-plus-circle fs-1 text-muted"></i>
+                            <h4 class="mt-3">Tạo Quiz đầu tiên</h4>
+                            <p class="text-muted">Bắt đầu tạo quiz để học tập hiệu quả hơn</p>
+                        </div>
                     </div>
                 }
             </div>

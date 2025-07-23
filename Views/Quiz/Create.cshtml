@@ -103,6 +103,25 @@
                                 </div>
                             </div>
 
+                            <div class="mb-3">
+                                <label class="form-label">Chế độ hiển thị</label>
+                                <select class="form-select" id="isPublic" name="IsPublic" onchange="togglePasswordInput()">
+                                    <option value="true" selected>Công khai (Public)</option>
+                                    <option value="false">Riêng tư (Private, có mật khẩu)</option>
+                                </select>
+                            </div>
+                            <div class="mb-3" id="passwordInput" style="display:none;">
+                                <label class="form-label">Mật khẩu (chỉ nhập nếu là Private)</label>
+                                <input type="password" class="form-control" name="Password" id="Password" value="@Model.Password" />
+                            </div>
+                            <script>
+                                function togglePasswordInput() {
+                                    var isPublic = document.getElementById('isPublic').value === 'true';
+                                    document.getElementById('passwordInput').style.display = isPublic ? 'none' : '';
+                                }
+                                document.addEventListener('DOMContentLoaded', togglePasswordInput);
+                            </script>
+
                             <div class="d-flex justify-content-end gap-2">
                                 <a href="@Url.Action("Index", "Quiz")" class="btn btn-secondary">
                                     <i class="bi bi-x-circle me-1"></i>
@@ -124,16 +143,24 @@
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
-        $(document).ready(function() {
-            $('#createQuizForm').on('submit', function(e) {
-                // Disable submit button to prevent double submission
-                $('#submitBtn').prop('disabled', true);
-            });
-            
-            // Re-enable button if form validation fails
-            $('#createQuizForm').on('invalid', function() {
-                $('#submitBtn').prop('disabled', false);
-            });
+        // XÓA các đoạn disable/enable submitBtn cũ
+        // Chỉ disable nút khi submit thành công (client-side validation pass)
+        document.addEventListener('DOMContentLoaded', function() {
+            var form = document.getElementById('createQuizForm');
+            var btn = document.getElementById('submitBtn');
+            if (form && btn) {
+                form.addEventListener('submit', function(e) {
+                    if (form.checkValidity()) {
+                        btn.disabled = true;
+                    } else {
+                        btn.disabled = false;
+                    }
+                });
+                // Enable lại nút khi người dùng sửa bất kỳ trường nào
+                form.addEventListener('input', function() {
+                    btn.disabled = false;
+                });
+            }
         });
     </script>
 } 

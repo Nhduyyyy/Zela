@@ -33,6 +33,15 @@ class QuizTakeManager {
             this.timeLimit = parseInt(document.getElementById('timeLimit').value) || 0;
             const totalQuestions = parseInt(document.getElementById('totalQuestionsCount').value) || 0;
 
+            // Luôn reset timerInterval và startTime khi load quiz mới
+            if (this.timerInterval) {
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+            }
+            this.startTime = null;
+            // XÓA trạng thái quiz cũ trước khi khôi phục (đảm bảo không còn đáp án cũ)
+            sessionStorage.removeItem('quizState');
+
             // Load questions from server
             const response = await fetch(`/Quiz/GetQuestions/${this.quizId}`);
             if (response.ok) {
@@ -433,8 +442,14 @@ class QuizTakeManager {
 
             if (remaining <= 0) {
                 clearInterval(this.timerInterval);
-                this.showError('Hết thời gian làm bài!');
-                this.submitQuiz();
+                this.timerInterval = null;
+                this.showError('Hết thời gian làm bài! Đang tự động nộp bài...');
+                // Disable toàn bộ input, nút khi hết giờ
+                this.disableQuizUI();
+                // Auto-submit thật sự
+                if (!this.isSubmitting) {
+                    this.submitQuiz();
+                }
                 return;
             }
 
@@ -450,6 +465,18 @@ class QuizTakeManager {
 
         updateTimer();
         this.timerInterval = setInterval(updateTimer, 1000);
+    }
+
+    // Thêm method để disable toàn bộ UI khi hết giờ hoặc đang submit
+    disableQuizUI() {
+        // Disable tất cả input, textarea, select, button trong quiz-take-window
+        const quizWindow = document.querySelector('.quiz-take-window');
+        if (quizWindow) {
+            const elements = quizWindow.querySelectorAll('input, textarea, select, button');
+            elements.forEach(el => {
+                el.disabled = true;
+            });
+        }
     }
 
     bindEvents() {
@@ -573,6 +600,7 @@ class QuizTakeManager {
             // Stop timer
             if (this.timerInterval) {
                 clearInterval(this.timerInterval);
+                this.timerInterval = null;
             }
 
             const endTime = new Date();
@@ -637,6 +665,12 @@ class QuizTakeManager {
                 // Xóa trạng thái đã lưu
                 sessionStorage.removeItem('quizState');
                 
+                // Dừng timer triệt để trước khi chuyển hướng
+                if (this.timerInterval) {
+                    clearInterval(this.timerInterval);
+                    this.timerInterval = null;
+                }
+                
                 // Không hiển thị thông báo để tránh chặn chuyển hướng
                 console.log('Submit successful, redirecting immediately...');
                 console.log('Current URL:', window.location.href);
@@ -657,18 +691,12 @@ class QuizTakeManager {
                     
                     // Chuyển hướng sau 1 giây
                     setTimeout(() => {
-                        console.log('Executing redirect to:', resultUrl);
-                        try {
-                            window.location.href = resultUrl;
-                        } catch (error) {
-                            console.error('Redirect error:', error);
-                            // Fallback: tạo link và click
-                            const link = document.createElement('a');
-                            link.href = resultUrl;
-                            link.style.display = 'none';
-                            document.body.appendChild(link);
-                            link.click();
+                        // Dừng timer triệt để trước khi chuyển hướng (phòng trường hợp setTimeout delay)
+                        if (this.timerInterval) {
+                            clearInterval(this.timerInterval);
+                            this.timerInterval = null;
                         }
+                        window.location.href = resultUrl;
                     }, 1000);
                 } else {
                     console.error('No attemptId in result:', result); // Debug log

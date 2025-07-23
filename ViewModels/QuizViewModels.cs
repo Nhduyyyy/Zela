@@ -13,6 +13,9 @@ public class QuizzesViewModel
     public int TermCount { get; set; }
     public string Author { get; set; } = string.Empty;
     public string IconUrl { get; set; } = string.Empty;
+    public bool IsPublic { get; set; } = true;
+    public string? Password { get; set; }
+    public int CreatorId { get; set; } // Thêm dòng này để view so sánh
 }
 
 /// <summary>
@@ -38,6 +41,8 @@ public class QuizEditViewModel
     // Display properties (read-only)
     public string? CreatorName { get; set; }
     public int QuestionCount { get; set; }
+    public bool IsPublic { get; set; } = true;
+    public string? Password { get; set; }
 }
 
 /// <summary>

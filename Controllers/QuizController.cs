@@ -29,8 +29,7 @@ public class RequireSessionAttribute : ActionFilterAttribute
     }
 }
 
-// Custom AllowAnonymous Attribute
-public class AllowAnonymousAttribute : Attribute { }
+// XÓA hoàn toàn class AllowAnonymousAttribute vì không còn controller nào cần dùng.
 
 [RequireSession] // Yêu cầu đăng nhập cho tất cả actions trong controller
 public class QuizController : Controller
@@ -45,7 +44,6 @@ public class QuizController : Controller
     }
 
     // Trang danh sách quiz - cho phép xem mà không cần đăng nhập
-    [AllowAnonymous]
     public IActionResult Index()
     {
         try
@@ -62,7 +60,6 @@ public class QuizController : Controller
     }
 
     // Trang chi tiết quiz - cho phép xem mà không cần đăng nhập
-    [AllowAnonymous]
     public IActionResult Details(int id)
     {
         try
@@ -99,6 +96,12 @@ public class QuizController : Controller
             return View();
         }
 
+        // Nếu là Private mà không nhập Password thì báo lỗi
+        if (!quiz.IsPublic && string.IsNullOrWhiteSpace(quiz.Password))
+        {
+            ModelState.AddModelError("Password", "Quiz riêng tư phải có mật khẩu");
+        }
+
         if (ModelState.IsValid)
         {
             try
@@ -132,8 +135,8 @@ public class QuizController : Controller
         var editViewModel = _quizService.GetEditViewModelForEdit(id);
         if (editViewModel == null)
         {
-            TempData["ErrorMessage"] = "Không tìm thấy hoặc không có quyền sửa quiz";
-            return RedirectToAction("Index");
+            ViewBag.ErrorMessage = "Bạn không có quyền chỉnh sửa quiz này hoặc quiz không tồn tại.";
+            return View("Error");
         }
         return View(editViewModel);
     }
@@ -141,12 +144,24 @@ public class QuizController : Controller
     [HttpPost]
     public IActionResult Edit(QuizEditViewModel viewModel)
     {
+        // Nếu là Private mà không nhập Password thì báo lỗi
+        if (!viewModel.IsPublic && string.IsNullOrWhiteSpace(viewModel.Password))
+        {
+            ModelState.AddModelError("Password", "Quiz riêng tư phải có mật khẩu");
+        }
+
         if (!ModelState.IsValid)
             return View(viewModel);
         
         var result = _quizService.UpdateQuizFromEditViewModel(viewModel);
         if (!result.Success)
         {
+            // Nếu là lỗi quyền, trả về view lỗi rõ ràng
+            if (result.Message.Contains("không có quyền"))
+            {
+                ViewBag.ErrorMessage = result.Message;
+                return View("Error");
+            }
             TempData["ErrorMessage"] = result.Message;
             return View(viewModel);
         }
@@ -191,18 +206,40 @@ public class QuizController : Controller
 
     // Trang làm bài quiz - yêu cầu đăng nhập
     [HttpGet]
-    public IActionResult Take(int id)
+    public IActionResult Take(int id, string password = null)
     {
-        var (access, quiz) = _quizService.CheckHomeworkAccess(id);
+        var quiz = _quizService.GetById(id);
+        if (quiz == null)
+        {
+            TempData["ErrorMessage"] = "Không tìm thấy quiz";
+            return RedirectToAction("Index");
+        }
+        if (!quiz.IsPublic)
+        {
+            // Quiz private, kiểm tra password
+            if (string.IsNullOrEmpty(password))
+            {
+                // Hiển thị view nhập password
+                ViewBag.QuizId = id;
+                return View("EnterPassword");
+            }
+            if (!string.Equals(quiz.Password ?? "", password, StringComparison.Ordinal))
+            {
+                ViewBag.QuizId = id;
+                ViewBag.PasswordError = "Mật khẩu không đúng!";
+                return View("EnterPassword");
+            }
+        }
+        var (access, quizObj) = _quizService.CheckHomeworkAccess(id);
         switch (access)
         {
             case IQuizService.HomeworkAccessResult.NotFound:
                 TempData["ErrorMessage"] = "Không tìm thấy quiz";
                 return RedirectToAction("Index");
             case IQuizService.HomeworkAccessResult.NotOpen:
-                return View("HomeworkNotOpen", quiz);
+                return View("HomeworkNotOpen", quizObj);
             case IQuizService.HomeworkAccessResult.Closed:
-                return View("HomeworkClosed", quiz);
+                return View("HomeworkClosed", quizObj);
             case IQuizService.HomeworkAccessResult.Ok:
             default:
                 var result = _quizService.ValidateTakeQuiz(id);
@@ -333,6 +370,9 @@ public class QuizController : Controller
         ViewBag.QuizCreatorId = data?.Quiz?.CreatorId;
         ViewBag.QuestionTypeStats = data?.Quiz?.Questions?.GroupBy(q => q.QuestionType)
             .Select(g => new { Type = g.Key, Count = g.Count() }).ToList();
+        // Truyền comment vào ViewBag
+        var attempt = _quizService.GetQuizAttemptById(attemptId);
+        ViewBag.AttemptComment = attempt?.Comment;
         return View(data?.Details);
     }
 
@@ -433,7 +473,6 @@ public class QuizController : Controller
     }
 
     [HttpGet]
-    [AllowAnonymous]
     public IActionResult QuizRealtime(int id, string roomCode = null)
     {
         var quiz = _quizService.GetById(id);
@@ -460,9 +499,23 @@ public class QuizController : Controller
     }
 
     [HttpGet]
-    [AllowAnonymous]
     public IActionResult JoinQuizRoom()
     {
         return View();
+    }
+
+    [HttpPost]
+    public IActionResult SaveComment(Guid attemptId, int quizId, string comment)
+    {
+        var result = _quizService.SaveAttemptComment(attemptId, quizId, comment);
+        if (!result.Success)
+        {
+            TempData["ErrorMessage"] = result.Message;
+        }
+        else
+        {
+            TempData["SuccessMessage"] = "Đã lưu phản hồi cho bài làm.";
+        }
+        return RedirectToAction("AttemptDetail", new { attemptId, quizId });
     }
 }

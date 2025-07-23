@@ -17,6 +17,7 @@ public class QuizAttempt
     public DateTime EndedAt { get; set; }          // DATETIME2
     public float Score { get; set; }               // FLOAT
     public string DisplayName { get; set; } = string.Empty; // Lưu tên học sinh/sinh viên nếu không có UserId
+    public string? Comment { get; set; } // Nhận xét/phản hồi của creator
 
     [ForeignKey(nameof(QuizId))]
     public Quiz Quiz { get; set; }

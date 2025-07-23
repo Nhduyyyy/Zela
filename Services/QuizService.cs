@@ -136,6 +136,8 @@ public class QuizService : IQuizService
                 throw new ArgumentException("Tiêu đề quiz không được để trống");
             if (string.IsNullOrWhiteSpace(quiz.Description))
                 throw new ArgumentException("Mô tả quiz không được để trống");
+            if (!quiz.IsPublic && string.IsNullOrWhiteSpace(quiz.Password))
+                throw new ArgumentException("Quiz riêng tư phải có mật khẩu");
             quiz.CreatedAt = DateTime.UtcNow;
             var currentUserId = GetCurrentUserId();
             _logger.LogInformation("Current UserId from session: {UserId}", currentUserId);
@@ -146,6 +148,8 @@ public class QuizService : IQuizService
             }
             quiz.CreatorId = currentUserId.Value;
             _logger.LogInformation("Setting CreatorId to: {CreatorId}", quiz.CreatorId);
+            // Lưu IsPublic và Password (nếu có)
+            // (Đã có sẵn trong quiz object)
             _dbContext.Quizzes.Add(quiz);
             _dbContext.SaveChanges();
             _logger.LogInformation("Quiz saved to database with ID: {QuizId}", quiz.QuizId);
@@ -314,6 +318,11 @@ public class QuizService : IQuizService
                     throw new ArgumentException("Bạn phải nhập các lựa chọn cho câu hỏi trắc nghiệm");
                 if (string.IsNullOrWhiteSpace(question.AnswerKey))
                     throw new ArgumentException("Bạn phải nhập đáp án cho câu hỏi trắc nghiệm");
+                // Bổ sung: Đáp án đúng phải nằm trong các lựa chọn
+                var choicesList = question.Choices.Split(new[] { '\n', '\r', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                    .Select(c => c.Trim()).ToList();
+                if (!choicesList.Any(c => string.Equals(c, question.AnswerKey.Trim(), StringComparison.OrdinalIgnoreCase)))
+                    throw new ArgumentException("Đáp án đúng phải nằm trong các lựa chọn của câu hỏi trắc nghiệm");
                 _logger.LogInformation("MultipleChoice question validated successfully");
                 break;
             case "TrueFalse":
@@ -616,6 +625,9 @@ public class QuizService : IQuizService
             quiz.Title = viewModel.Title?.Trim();
             quiz.Description = viewModel.Description?.Trim();
             quiz.TimeLimit = viewModel.TimeLimit;
+            // Lưu IsPublic và Password
+            quiz.IsPublic = viewModel.IsPublic;
+            quiz.Password = viewModel.Password;
             _dbContext.SaveChanges();
             return new ServiceResult { Success = true };
         }
@@ -1340,13 +1352,20 @@ public class QuizService : IQuizService
             if (quiz == null)
                 return new ServiceResult { Success = false, Message = "Không tìm thấy quiz" };
 
-            // Chỉ cho phép người tạo quiz xem danh sách bài làm
-            if (quiz.CreatorId != currentUserId.Value)
-                return new ServiceResult { Success = false, Message = "Bạn không có quyền xem danh sách bài làm của quiz này" };
-
-            var attempts = GetAttemptListViewModel(quizId);
-            return new ServiceResult { 
-                Success = true, 
+            List<QuizAttemptListItemViewModel> attempts;
+            // Nếu là creator thì trả về tất cả bài làm, nếu không thì chỉ trả về bài làm của user hiện tại
+            if (quiz.CreatorId == currentUserId.Value)
+            {
+                attempts = GetAttemptListViewModel(quizId);
+            }
+            else
+            {
+                attempts = GetAttemptListViewModel(quizId)
+                    .Where(a => a.UserId == currentUserId.Value)
+                    .ToList();
+            }
+            return new ServiceResult {
+                Success = true,
                 Data = new IQuizService.AttemptsData { Attempts = attempts, Quiz = quiz }
             };
         }
@@ -1662,5 +1681,34 @@ public class QuizService : IQuizService
         if (quiz.EndTime.HasValue && now > quiz.EndTime.Value)
             return (IQuizService.HomeworkAccessResult.Closed, quiz);
         return (IQuizService.HomeworkAccessResult.Ok, quiz);
+    }
+
+    public ServiceResult SaveAttemptComment(Guid attemptId, int quizId, string comment)
+    {
+        try
+        {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+                return new ServiceResult { Success = false, Message = "Bạn phải đăng nhập để lưu phản hồi" };
+            var attempt = _dbContext.QuizAttempts.FirstOrDefault(a => a.AttemptId == attemptId && a.QuizId == quizId);
+            if (attempt == null)
+                return new ServiceResult { Success = false, Message = "Không tìm thấy bài làm" };
+            var quiz = _dbContext.Quizzes.FirstOrDefault(q => q.QuizId == quizId);
+            if (quiz == null || quiz.CreatorId != currentUserId.Value)
+                return new ServiceResult { Success = false, Message = "Bạn không có quyền phản hồi bài làm này" };
+            attempt.Comment = comment;
+            _dbContext.SaveChanges();
+            return new ServiceResult { Success = true };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving attempt comment: {Message}", ex.Message);
+            return new ServiceResult { Success = false, Message = "Có lỗi xảy ra khi lưu phản hồi: " + ex.Message };
+        }
+    }
+
+    public QuizAttempt GetQuizAttemptById(Guid attemptId)
+    {
+        return _dbContext.QuizAttempts.FirstOrDefault(a => a.AttemptId == attemptId);
     }
 }
