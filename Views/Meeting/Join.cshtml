@@ -1,0 +1,20 @@
+@model Zela.Models.ViewModels.JoinMeetingViewModel
+@{
+    ViewData["Title"] = "Tham gia cuộc họp";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/join-meeting.css" />
+}
+
+<div class="join-meeting-container">
+    <form asp-action="Join" method="post" class="join-meeting-form">
+        <h2>@ViewData["Title"]</h2>
+        <div class="form-group">
+            <label asp-for="Password"></label>
+            <input asp-for="Password" class="form-control" />
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+        <button type="submit">Tham gia</button>
+    </form>
+</div>

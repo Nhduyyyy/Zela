@@ -1,0 +1,112 @@
+/* Create Group Modal Mobile Responsive */
+@media (max-width: 576px) {
+    #createGroupModal .modal-dialog {
+        margin: 0.5rem;
+        max-width: none;
+    }
+
+    #createGroupModal .modal-content {
+        border-radius: 8px;
+    }
+
+    #createGroupModal .modal-header {
+        padding: 1rem;
+    }
+
+    #createGroupModal .modal-body {
+        padding: 1rem;
+    }
+
+    #createGroupModal .modal-footer {
+        padding: 1rem;
+    }
+
+    #createGroupModal .modal-title {
+        font-size: 1.1rem;
+    }
+
+    #createGroupModal .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+    }
+}
+
+/* Create Group Modal z-index */
+#createGroupModal {
+    z-index: 1050;
+}
+
+/* Modal backdrop fixes */
+.modal-backdrop {
+    z-index: 1040;
+}
+
+.modal {
+    z-index: 1050;
+}
+
+/* Ensure only one backdrop is visible */
+.modal-backdrop + .modal-backdrop {
+    display: none;
+}
+
+/* Toast positioning for mobile */
+@media (max-width: 768px) {
+    .toast-container {
+        bottom: 1rem;
+        right: 1rem;
+        left: 1rem;
+    }
+
+    #groupToast {
+        width: 100%;
+        max-width: none;
+    }
+}
+
+/* Groups header styling */
+.groups-header {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 1px solid #dee2e6;
+    padding: 0.75rem 1rem;
+}
+
+.groups-header .btn-sm {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    color: white;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.groups-header .btn-sm:hover {
+    background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Loading animation for button */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    left: 50%;
+    margin-left: -8px;
+    margin-top: -8px;
+    border: 2px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+} 

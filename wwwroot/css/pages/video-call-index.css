@@ -1,0 +1,264 @@
+/* video-call-index.css
+   Styling cho trang Video Call Index - FRIEND PAGES STYLE
+*/
+
+:root {
+    /* Friend Pages Color Scheme */
+    --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --container-bg: rgba(255, 255, 255, 0.95);
+    --primary: #667eea;
+    --primary-dark: #5a67d8;
+    --accent: #764ba2;
+    --accent-alt: #6b46c1;
+    --success: #38a169;
+    --success-alt: #48bb78;
+    --warning: #d69e2e;
+    --warning-alt: #f6e05e;
+    --text-primary: #1a202c;
+    --text-secondary: #2d3748;
+    --text-white: #ffffff;
+    --radius: 16px;
+    --gap: 1.5rem;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body {
+    background: var(--bg-gradient);
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+    margin: 0;
+    padding: 0;
+    color: var(--text-primary);
+}
+
+.video-call-index-container {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: var(--gap);
+    position: relative;
+    overflow: hidden;
+}
+
+.video-call-index-container::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    background: var(--container-bg);
+    border-radius: 50%;
+    backdrop-filter: blur(30px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow:
+            0 20px 60px rgba(0, 0, 0, 0.1),
+            inset 0 0 60px rgba(255, 255, 255, 0.1);
+    animation: pulse 4s ease-in-out infinite;
+    z-index: -1;
+}
+
+.video-call-index-container h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    margin-bottom: var(--gap);
+    position: relative;
+    background: linear-gradient(135deg, var(--primary-dark), var(--accent-alt));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    letter-spacing: -1px;
+    animation: slideInUp 0.8s ease-out;
+}
+
+.video-call-index-container h1::after {
+    content: '';
+    position: absolute;
+    bottom: -15px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary), var(--accent));
+    border-radius: 2px;
+    animation: expandWidth 1s ease-out 0.5s both;
+}
+
+.video-call-index-container .action-buttons {
+    display: flex;
+    gap: var(--gap);
+    flex-wrap: wrap;
+    justify-content: center;
+    animation: slideInUp 1s ease-out 0.3s both;
+}
+
+.video-call-index-container .action-buttons a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 200px;
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius);
+    color: var(--text-white);
+    text-decoration: none;
+    transition: var(--transition);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    border: 2px solid transparent;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.video-call-index-container .action-buttons a::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+}
+
+.video-call-index-container .action-buttons a:hover::before {
+    left: 100%;
+}
+
+.video-call-index-container .action-buttons a.btn-create {
+    background: linear-gradient(135deg, var(--success), var(--success-alt));
+    box-shadow: 0 4px 15px rgba(56, 161, 105, 0.3);
+    border-color: var(--success);
+}
+
+.video-call-index-container .action-buttons a.btn-create:hover {
+    background: linear-gradient(135deg, #2f855a, var(--success));
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(56, 161, 105, 0.4);
+}
+
+.video-call-index-container .action-buttons a.btn-join {
+    background: linear-gradient(135deg, var(--primary), var(--accent));
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    border-color: var(--primary);
+}
+
+.video-call-index-container .action-buttons a.btn-join:hover {
+    background: linear-gradient(135deg, var(--primary-dark), var(--accent-alt));
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+}
+
+.video-call-index-container .action-buttons a.btn-recordings {
+    background: linear-gradient(135deg, #9f7aea, #d53f8c);
+    box-shadow: 0 4px 15px rgba(159, 122, 234, 0.3);
+    border-color: #9f7aea;
+}
+
+.video-call-index-container .action-buttons a.btn-recordings:hover {
+    background: linear-gradient(135deg, #805ad5, #b83280);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(159, 122, 234, 0.4);
+}
+
+.video-call-index-container .action-buttons a:active {
+    transform: translateY(-1px) scale(0.98);
+}
+
+/* Icons */
+.video-call-index-container .action-buttons i {
+    font-size: 1.3rem;
+}
+
+/* Animations */
+@keyframes slideInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes expandWidth {
+    from {
+        width: 0;
+    }
+    to {
+        width: 80px;
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 0.7;
+    }
+    50% {
+        transform: translate(-50%, -50%) scale(1.05);
+        opacity: 0.5;
+    }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .video-call-index-container h1 {
+        font-size: 2.5rem;
+    }
+
+    .video-call-index-container .action-buttons {
+        flex-direction: column;
+        gap: 1rem;
+        width: 100%;
+        max-width: 300px;
+    }
+
+    .video-call-index-container .action-buttons a {
+        min-width: 100%;
+        font-size: 1.1rem;
+        padding: 0.9rem 1.5rem;
+        justify-content: center;
+    }
+
+    .video-call-index-container::before {
+        width: 600px;
+        height: 600px;
+    }
+}
+
+@media (max-width: 480px) {
+    .video-call-index-container {
+        padding: 1rem;
+    }
+
+    .video-call-index-container h1 {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .video-call-index-container .action-buttons a {
+        font-size: 1rem;
+        padding: 0.8rem 1.2rem;
+    }
+
+    .video-call-index-container::before {
+        width: 400px;
+        height: 400px;
+    }
+}
+
+/* Focus states for accessibility */
+.video-call-index-container .action-buttons a:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}

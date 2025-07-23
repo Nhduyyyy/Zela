@@ -1,0 +1,178 @@
+<!-- Modal tạo nhóm -->
+<div class="modal fade" id="createGroupModal" tabindex="-1" aria-labelledby="createGroupModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="createGroupModalLabel">
+                    <i class="bi bi-chat-square-dots me-2"></i>Tạo nhóm chat mới
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="createGroupForm" enctype="multipart/form-data">
+                    <div class="mb-3 text-center">
+                        <img id="groupAvatarPreview" src="/images/default-group-avatar.png" alt="Avatar" style="width: 80px; height: 80px; border-radius: 50%; object-fit: cover; border: 2px solid #ccc;">
+                        <input type="file" class="form-control mt-2" id="groupAvatar" name="avatar" accept="image/*" style="display: none;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm mt-2" id="changeAvatarBtn">Chọn ảnh đại diện</button>
+                    </div>
+                    <div class="mb-3">
+                        <label for="groupName" class="form-label">Tên nhóm <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="groupName" name="name" required maxlength="100" placeholder="Nhập tên nhóm...">
+                        <div class="form-text">Tối đa 100 ký tự</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="groupDescription" class="form-label">Mô tả</label>
+                        <textarea class="form-control" id="groupDescription" name="description" rows="3" maxlength="50" placeholder="Nhập mô tả nhóm (tùy chọn)..."></textarea>
+                        <div class="form-text">Tối đa 50 ký tự</div>
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="enablePassword" name="enablePassword">
+                        <label class="form-check-label" for="enablePassword">Đặt mật khẩu cho nhóm</label>
+                    </div>
+                    <div class="mb-3" id="passwordField" style="display: none;">
+                        <label for="groupPassword" class="form-label">Mật khẩu nhóm</label>
+                        <div class="input-group">
+                            <input type="password" class="form-control" id="groupPassword" name="password" maxlength="50" placeholder="Nhập mật khẩu...">
+                            <button class="btn btn-outline-secondary" type="button" id="togglePassword"><i class="bi bi-eye"></i></button>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Chọn ít nhất 2 bạn để tạo nhóm <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control mb-2" id="friendSearchInput" placeholder="Tìm kiếm bạn bè...">
+                        <div id="friendList" style="max-height: 200px; overflow-y: auto; border: 1px solid #eee; border-radius: 5px; padding: 10px;">
+                            <!-- Danh sách bạn bè sẽ được render ở đây -->
+                        </div>
+                        <div class="form-text text-danger" id="friendListError" style="display: none;">Bạn phải chọn ít nhất 2 người bạn!</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" id="submitCreateGroup">
+                    <i class="bi bi-check-circle me-1"></i>Tạo nhóm
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    // Avatar preview
+    document.getElementById('changeAvatarBtn').onclick = function() {
+        document.getElementById('groupAvatar').click();
+    };
+    document.getElementById('groupAvatar').onchange = function(e) {
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                document.getElementById('groupAvatarPreview').src = ev.target.result;
+            };
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    };
+
+    // Password toggle
+    document.getElementById('enablePassword').onchange = function() {
+        document.getElementById('passwordField').style.display = this.checked ? 'block' : 'none';
+    };
+    document.getElementById('togglePassword').onclick = function() {
+        const pwdInput = document.getElementById('groupPassword');
+        const icon = this.querySelector('i');
+        if (pwdInput.type === 'password') {
+            pwdInput.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            pwdInput.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    };
+
+    // Friend list & search
+    let allFriends = [];
+    function renderFriendList(filter = '') {
+        const list = document.getElementById('friendList');
+        list.innerHTML = '';
+        const filtered = allFriends.filter(f => f.name.toLowerCase().includes(filter.toLowerCase()));
+        filtered.forEach(friend => {
+            const div = document.createElement('div');
+            div.className = 'form-check';
+            div.innerHTML = `
+                <input class="form-check-input friend-checkbox" type="checkbox" value="${friend.userId}" id="friend_${friend.userId}">
+                <label class="form-check-label" for="friend_${friend.userId}">
+                    <img src="${friend.avatarUrl}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;margin-right:6px;">
+                    ${friend.name}
+                </label>
+            `;
+            list.appendChild(div);
+        });
+    }
+    function loadFriendList() {
+        fetch('/Friendship/GetMyFriends')
+            .then(res => res.json())
+            .then(data => {
+                allFriends = data;
+                renderFriendList();
+            });
+    }
+    document.getElementById('friendSearchInput').oninput = function() {
+        renderFriendList(this.value);
+    };
+    // Gọi khi modal mở
+    $('#createGroupModal').on('shown.bs.modal', loadFriendList);
+
+    // Validate số bạn bè
+    function validateFriendSelection() {
+        const checked = document.querySelectorAll('.friend-checkbox:checked');
+        if (checked.length < 2) {
+            document.getElementById('friendListError').style.display = 'block';
+            return false;
+        }
+        document.getElementById('friendListError').style.display = 'none';
+        return true;
+    }
+
+    // Submit
+    document.getElementById('submitCreateGroup').onclick = async function() {
+        if (!validateFriendSelection()) return;
+
+        const btn = this;
+        btn.disabled = true; // Disable nút khi bắt đầu gửi request
+
+        const form = document.getElementById('createGroupForm');
+        const formData = new FormData(form);
+        // Lấy danh sách bạn bè
+        const friends = Array.from(document.querySelectorAll('.friend-checkbox:checked')).map(cb => Number(cb.value));
+        formData.append('friendIds', JSON.stringify(friends));
+
+        try {
+            const res = await fetch('/GroupChat/CreateGroup', {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.success) {
+                    location.reload();
+                } else {
+                    alert(data.message || 'Tạo nhóm thất bại!');
+                    btn.disabled = false; // Enable lại nếu lỗi
+                }
+            } else {
+                let msg = 'Tạo nhóm thất bại!';
+                try {
+                    const err = await res.json();
+                    msg = err.message || msg;
+                } catch {}
+                alert(msg);
+                btn.disabled = false; // Enable lại nếu lỗi
+            }
+        } catch (e) {
+            alert('Có lỗi xảy ra!');
+            btn.disabled = false; // Enable lại nếu lỗi
+        }
+    };
+</script>

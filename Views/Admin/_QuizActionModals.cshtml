@@ -1,0 +1,209 @@
+<!-- Delete Quiz Modal -->
+<div class="modal fade" id="deleteQuizModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xóa Quiz</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="deleteQuizForm">
+                    <input type="hidden" id="deleteQuizId" />
+                    <div class="mb-3">
+                        <label class="form-label">Quiz:</label>
+                        <span id="deleteQuizName" class="fw-bold"></span>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Cảnh báo:</strong> Hành động này sẽ xóa quiz khỏi hệ thống. Tất cả câu hỏi và kết quả làm bài sẽ bị mất vĩnh viễn.
+                    </div>
+                    <div class="mb-3">
+                        <label for="deleteQuizReason" class="form-label">Lý do xóa quiz:</label>
+                        <textarea class="form-control" id="deleteQuizReason" rows="3" placeholder="Nhập lý do xóa quiz..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="submitDeleteQuiz()">Xóa Quiz</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quiz Settings Modal -->
+<div class="modal fade" id="quizSettingsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cài đặt Quiz</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="quizSettingsForm">
+                    <input type="hidden" id="settingsQuizId" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="settingsQuizTitle" class="form-label">Tiêu đề:</label>
+                                <input type="text" class="form-control" id="settingsQuizTitle" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="settingsQuizDescription" class="form-label">Mô tả:</label>
+                                <textarea class="form-control" id="settingsQuizDescription" rows="3"></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="settingsTimeLimit" class="form-label">Thời gian (phút):</label>
+                                <input type="number" class="form-control" id="settingsTimeLimit" min="0" max="300">
+                                <small class="form-text text-muted">0 = không giới hạn thời gian</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Cài đặt:</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsIsActive">
+                                    <label class="form-check-label" for="settingsIsActive">
+                                        Kích hoạt quiz
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsAllowRetake">
+                                    <label class="form-check-label" for="settingsAllowRetake">
+                                        Cho phép làm lại
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsShowResults">
+                                    <label class="form-check-label" for="settingsShowResults">
+                                        Hiển thị kết quả ngay
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsRandomizeQuestions">
+                                    <label class="form-check-label" for="settingsRandomizeQuestions">
+                                        Trộn thứ tự câu hỏi
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="settingsPassingScore" class="form-label">Điểm đậu (%):</label>
+                                <input type="number" class="form-control" id="settingsPassingScore" min="0" max="100" value="60">
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitQuizSettings()">Lưu cài đặt</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Questions Modal -->
+<div class="modal fade" id="questionsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quản lý câu hỏi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="d-flex justify-content-between mb-3">
+                    <h6>Danh sách câu hỏi</h6>
+                    <button class="btn btn-sm btn-primary" onclick="addNewQuestion()">
+                        <i class="bi bi-plus"></i> Thêm câu hỏi
+                    </button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Câu hỏi</th>
+                                <th>Loại</th>
+                                <th>Điểm</th>
+                                <th>Độ khó</th>
+                                <th>Hành động</th>
+                            </tr>
+                        </thead>
+                        <tbody id="questionsList">
+                            <!-- Questions will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Question Modal -->
+<div class="modal fade" id="questionModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="questionModalTitle">Thêm câu hỏi</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="questionForm">
+                    <input type="hidden" id="questionId" />
+                    <input type="hidden" id="questionQuizId" />
+                    
+                    <div class="mb-3">
+                        <label for="questionText" class="form-label">Câu hỏi:</label>
+                        <textarea class="form-control" id="questionText" rows="3" required></textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="questionType" class="form-label">Loại câu hỏi:</label>
+                                <select class="form-control" id="questionType">
+                                    <option value="MultipleChoice">Trắc nghiệm</option>
+                                    <option value="TrueFalse">Đúng/Sai</option>
+                                    <option value="Essay">Tự luận</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="questionScore" class="form-label">Điểm:</label>
+                                <input type="number" class="form-control" id="questionScore" min="1" max="100" value="10">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="questionDifficulty" class="form-label">Độ khó:</label>
+                                <select class="form-control" id="questionDifficulty">
+                                    <option value="Easy">Dễ</option>
+                                    <option value="Medium">Trung bình</option>
+                                    <option value="Hard">Khó</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="answersSection">
+                        <label class="form-label">Đáp án:</label>
+                        <div id="answersList">
+                            <!-- Answers will be dynamically added here -->
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addAnswer()">
+                            <i class="bi bi-plus"></i> Thêm đáp án
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitQuestion()">Lưu câu hỏi</button>
+            </div>
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,227 @@
+@using Zela.ViewModels
+@model IEnumerable<Zela.ViewModels.UserWithFriendshipStatus>
+@{
+    ViewData["Title"] = "🔍 Tìm bạn mới";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/friend-find.css" />
+}
+
+<div class="container">
+    <h2>
+        <span style="display: block; font-size: 0.6em; color: #718096; font-weight: 500; margin-bottom: 0.5rem;">Kết nối & Kết bạn</span>
+        🔍 Tìm bạn mới
+    </h2>
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger" role="alert">
+            <strong>⚠️ Oops!</strong> @TempData["Error"]
+        </div>
+    }
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success" role="alert" style="background: linear-gradient(135deg, rgba(56, 161, 105, 0.1), rgba(72, 187, 120, 0.1)); border: 1px solid rgba(56, 161, 105, 0.3); color: #38a169; border-radius: 16px; padding: 1rem 1.5rem; border-left: 4px solid #38a169; font-weight: 500;">
+            <strong>✅ Thành công!</strong> @TempData["Success"]
+        </div>
+    }
+
+    <!-- 🔍 Search Section -->
+    <div class="search-section mb-4">
+        <div class="search-container">
+            <input type="text" id="searchInput" class="form-control" 
+                   placeholder="💭 Nhập tên hoặc email để tìm kiếm bạn bè..." 
+                   autocomplete="off" />
+        </div>
+        <div class="search-stats mt-2 text-center">
+            <small class="text-muted">
+                <span id="searchCount">@Model.Count()</span> người dùng được tìm thấy
+            </small>
+        </div>
+    </div>
+
+    <!-- 🔽 Results Section -->
+    <div class="results-section" id="searchResults">
+        @if (Model.Any())
+        {
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-id-badge"></i> ID</th>
+                            <th><i class="fas fa-user"></i> Tên người dùng</th>
+                            <th><i class="fas fa-users"></i> Bạn chung</th>
+                            <th><i class="fas fa-heart"></i> Trạng thái kết bạn</th>
+                            <th><i class="fas fa-cogs"></i> Hành động</th>
+                        </tr>
+                    </thead>
+                    <tbody id="resultsBody">
+                        @{int fakeId = 1;}
+                        @foreach (var user in Model)
+                        {
+                            <tr data-user-id="@user.UserId" data-username="@user.UserName.ToLower()" data-fake-id="@fakeId">
+                                <td>
+                                    <span class="user-id">#@fakeId</span>
+                                </td>
+                                <td>
+                                    <div class="user-info">
+                                        <div class="user-avatar">
+                                            <img src="~/images/default-avatar.jpeg" alt="@user.UserName" class="avatar-img">
+                                        </div>
+                                        <div class="user-details">
+                                            <strong>@user.UserName</strong>
+                                            <small class="d-block text-muted" title="@user.Email">@user.Email</small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    @if (user.MutualFriendsCount > 0)
+                                    {
+                                        <span class="mutual-friends-badge" 
+                                              data-user-id="@user.UserId" 
+                                              data-user-name="@user.UserName"
+                                              style="cursor: pointer;"
+                                              title="Nhấn để xem danh sách bạn chung">
+                                            <i class="fas fa-users text-primary"></i>
+                                            <strong class="text-primary">@user.MutualFriendsCount</strong>
+                                            <small class="text-muted">bạn chung</small>
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">
+                                            <i class="fas fa-users"></i> Không có
+                                        </span>
+                                    }
+                                </td>
+                                <td>
+                                    @switch (user.Role)
+                                    {
+                                        case FriendshipRole.None:
+                                            <span class="text-muted">
+                                                <i class="fas fa-user-plus"></i> Chưa kết bạn
+                                            </span>
+                                            break;
+                                        case FriendshipRole.PendingSent:
+                                            <span class="text-info">
+                                                <i class="fas fa-clock"></i> Đã gửi lời mời
+                                            </span>
+                                            break;
+                                        case FriendshipRole.PendingReceived:
+                                            <span class="text-warning">
+                                                <i class="fas fa-envelope"></i> Có lời mời đến
+                                            </span>
+                                            break;
+                                        case FriendshipRole.Accepted:
+                                            <span class="text-success">
+                                                <i class="fas fa-check-circle"></i> Đã là bạn
+                                            </span>
+                                            break;
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        @switch (user.Role)
+                                        {
+                                            case FriendshipRole.None:
+                                                <form asp-action="SendRequest" method="post" class="mb-0">
+                                                    @Html.AntiForgeryToken()
+                                                    <input type="hidden" name="userId2" value="@user.UserId" />
+                                                    <button type="submit" class="btn btn-sm btn-primary" title="Gửi lời mời kết bạn">
+                                                        <i class="fas fa-user-plus"></i> Kết bạn
+                                                    </button>
+                                                </form>
+                                                break;
+                                            case FriendshipRole.PendingSent:
+                                                <span class="text-secondary status-waiting">
+                                                    <i class="fas fa-hourglass-half"></i> Đang chờ phản hồi
+                                                </span>
+                                                break;
+                                            case FriendshipRole.PendingReceived:
+                                                <div class="btn-group-vertical" style="gap: 0.5rem;">
+                                                    <form asp-action="AcceptRequest" method="post" class="mb-0">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="requesterId" value="@user.UserId" />
+                                                        <button type="submit" class="btn btn-sm btn-success" title="Chấp nhận lời mời">
+                                                            <i class="fas fa-check"></i> Chấp nhận
+                                                        </button>
+                                                    </form>
+                                                    <form asp-action="RejectRequest" method="post" class="mb-0">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="requesterId" value="@user.UserId" />
+                                                        <button type="submit" class="btn btn-sm btn-secondary" title="Từ chối lời mời">
+                                                            <i class="fas fa-times"></i> Từ chối
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                break;
+                                            case FriendshipRole.Accepted:
+                                                <div class="btn-group" style="gap: 0.5rem;">
+                                                    <a href="@Url.Action("Index", "Chat", new { friendId = user.UserId })" 
+                                                       class="btn btn-sm btn-chat" 
+                                                       title="Nhắn tin với @user.UserName">
+                                                        <i class="fas fa-comment-dots"></i>
+                                                        <span>Chat</span>
+                                                    </a>
+                                                    <form asp-action="RemoveFriend" method="post" class="mb-0">
+                                                        @Html.AntiForgeryToken()
+                                                        <input type="hidden" name="friendId" value="@user.UserId" />
+                                                        <button type="submit" class="btn btn-sm btn-danger" 
+                                                                title="Hủy kết bạn"
+                                                                onclick="return confirm('Bạn có chắc muốn hủy kết bạn với @user.UserName?')">
+                                                            <i class="fas fa-user-times"></i> Hủy bạn
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                                break;
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                            fakeId++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="empty-state">
+                <div class="icon">👥</div>
+                <h4>Chưa có người dùng nào</h4>
+                <p>Hãy thử tìm kiếm hoặc quay lại sau để khám phá thêm bạn bè mới!</p>
+            </div>
+        }
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingState" class="text-center" style="display: none;">
+        <div class="loading"></div>
+        <p class="mt-3 text-muted">Đang tìm kiếm...</p>
+    </div>
+
+    <!-- No Results State -->
+    <div id="noResultsState" class="empty-state" style="display: none;">
+        <div class="icon">🔍</div>
+        <h4>Không tìm thấy kết quả</h4>
+        <p>Hãy thử tìm kiếm với từ khóa khác hoặc kiểm tra lại chính tả.</p>
+    </div>
+
+    <!-- Navigation -->
+    <div class="text-center mt-5">
+        <a asp-action="Index" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Quay về danh sách bạn bè
+        </a>
+        <a href="#" class="btn btn-primary ms-3" onclick="window.location.reload()">
+            <i class="fas fa-sync-alt"></i> Làm mới
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/friend-search.js"></script>
+    <script src="~/js/mutual-friends.js"></script>
+}

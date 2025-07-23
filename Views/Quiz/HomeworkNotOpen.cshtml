@@ -1,0 +1,16 @@
+@model Zela.Models.Quiz
+@{
+    ViewData["Title"] = "Bài tập chưa mở";
+}
+<div class="container" style="max-width:500px;margin:3rem auto;">
+    <div class="alert alert-warning text-center" style="font-size:1.2rem;">
+        <i class="bi bi-clock-history" style="font-size:2rem;"></i><br/>
+        <b>Bài tập này chưa mở!</b><br/>
+        Bạn chỉ có thể làm bài từ <b>@Model.StartTime?.ToString("dd/MM/yyyy HH:mm")</b> đến <b>@Model.EndTime?.ToString("dd/MM/yyyy HH:mm")</b>.
+    </div>
+    <div class="text-center">
+        <a href="@Url.Action("Index", "Quiz")" class="btn btn-primary mt-2">
+            <i class="bi bi-arrow-left"></i> Quay lại danh sách Quiz
+        </a>
+    </div>
+</div> 

@@ -1,0 +1,190 @@
+/**
+ * Quiz CSS Variables
+ * CSS variables chung cho tất cả trang Quiz
+ */
+
+:root {
+    /* Color Palette - Primary */
+    --quiz-primary: #6366f1;
+    --quiz-primary-light: #818cf8;
+    --quiz-primary-dark: #4f46e5;
+    --quiz-primary-rgb: 99, 102, 241;
+    
+    /* Color Palette - Secondary */
+    --quiz-secondary: #8b5cf6;
+    --quiz-secondary-light: #a78bfa;
+    --quiz-secondary-dark: #7c3aed;
+    --quiz-secondary-rgb: 139, 92, 246;
+    
+    /* Color Palette - Accent */
+    --quiz-accent: #ef4444;
+    --quiz-accent-light: #f87171;
+    --quiz-accent-dark: #dc2626;
+    --quiz-accent-rgb: 239, 68, 68;
+    
+    /* Color Palette - Status */
+    --quiz-success: #10b981;
+    --quiz-success-light: #34d399;
+    --quiz-success-dark: #059669;
+    --quiz-success-rgb: 16, 185, 129;
+    
+    --quiz-warning: #f59e0b;
+    --quiz-warning-light: #fbbf24;
+    --quiz-warning-dark: #d97706;
+    --quiz-warning-rgb: 245, 158, 11;
+    
+    --quiz-info: #06b6d4;
+    --quiz-info-light: #22d3ee;
+    --quiz-info-dark: #0891b2;
+    --quiz-info-rgb: 6, 182, 212;
+    
+    --quiz-danger: #ef4444;
+    --quiz-danger-light: #f87171;
+    --quiz-danger-dark: #dc2626;
+    --quiz-danger-rgb: 239, 68, 68;
+    
+    /* Background Colors - Light Mode */
+    --quiz-bg-primary: #ffffff;
+    --quiz-bg-secondary: #f8fafc;
+    --quiz-bg-card: #ffffff;
+    --quiz-bg-hover: #f1f5f9;
+    --quiz-bg-input: #ffffff;
+    --quiz-bg-overlay: rgba(0, 0, 0, 0.5);
+    --quiz-bg-modal: rgba(0, 0, 0, 0.5);
+    
+    /* Border Colors - Light Mode */
+    --quiz-border-primary: #e2e8f0;
+    --quiz-border-secondary: #cbd5e1;
+    --quiz-border-focus: #6366f1;
+    --quiz-border-selected: #6366f1;
+    --quiz-border-accent: rgba(99, 102, 241, 0.3);
+    
+    /* Text Colors - Light Mode */
+    --quiz-text-primary: #1e293b;
+    --quiz-text-secondary: #64748b;
+    --quiz-text-muted: #94a3b8;
+    --quiz-text-light: #ffffff;
+    --quiz-text-inverse: #ffffff;
+    
+    /* Shadow Colors - Light Mode */
+    --quiz-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    --quiz-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --quiz-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --quiz-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    --quiz-shadow-primary: rgba(0, 0, 0, 0.3);
+    --quiz-shadow-accent: rgba(99, 102, 241, 0.25);
+    --quiz-shadow-card: rgba(239, 68, 68, 0.3);
+    --quiz-shadow-modal: rgba(0, 0, 0, 0.5);
+    
+    /* Spacing */
+    --quiz-spacing-xs: 0.25rem;
+    --quiz-spacing-sm: 0.5rem;
+    --quiz-spacing-md: 1rem;
+    --quiz-spacing-lg: 1.5rem;
+    --quiz-spacing-xl: 2rem;
+    --quiz-spacing-2xl: 3rem;
+    
+    /* Typography */
+    --quiz-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --quiz-font-size-xs: 0.75rem;
+    --quiz-font-size-sm: 0.875rem;
+    --quiz-font-size-base: 1rem;
+    --quiz-font-size-lg: 1.125rem;
+    --quiz-font-size-xl: 1.25rem;
+    --quiz-font-size-2xl: 1.5rem;
+    --quiz-font-size-3xl: 1.875rem;
+    
+    /* Border Radius */
+    --quiz-radius-sm: 0.375rem;
+    --quiz-radius-md: 0.5rem;
+    --quiz-radius-lg: 0.75rem;
+    --quiz-radius-xl: 1rem;
+    --quiz-radius-2xl: 1.5rem;
+    
+    /* Transitions */
+    --quiz-transition-fast: 0.15s ease;
+    --quiz-transition-normal: 0.3s ease;
+    --quiz-transition-slow: 0.5s ease;
+    
+    /* Z-index */
+    --quiz-z-dropdown: 1000;
+    --quiz-z-modal: 1050;
+    --quiz-z-tooltip: 1070;
+    --quiz-z-notification: 1100;
+}
+
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    :root {
+        /* Background Colors - Dark Mode */
+        --quiz-bg-primary: #0f172a;
+        --quiz-bg-secondary: #1e293b;
+        --quiz-bg-card: #1e293b;
+        --quiz-bg-hover: #334155;
+        --quiz-bg-input: #334155;
+        --quiz-bg-overlay: rgba(0, 0, 0, 0.7);
+        --quiz-bg-modal: rgba(0, 0, 0, 0.7);
+        
+        /* Border Colors - Dark Mode */
+        --quiz-border-primary: #334155;
+        --quiz-border-secondary: #475569;
+        --quiz-border-focus: #6366f1;
+        --quiz-border-selected: #6366f1;
+        --quiz-border-accent: rgba(99, 102, 241, 0.3);
+        
+        /* Text Colors - Dark Mode */
+        --quiz-text-primary: #f1f5f9;
+        --quiz-text-secondary: #cbd5e1;
+        --quiz-text-muted: #64748b;
+        --quiz-text-light: #ffffff;
+        --quiz-text-inverse: #1e293b;
+        
+        /* Shadow Colors - Dark Mode */
+        --quiz-shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+        --quiz-shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+        --quiz-shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+        --quiz-shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+        --quiz-shadow-primary: rgba(0, 0, 0, 0.5);
+        --quiz-shadow-accent: rgba(99, 102, 241, 0.3);
+        --quiz-shadow-card: rgba(239, 68, 68, 0.4);
+        --quiz-shadow-modal: rgba(0, 0, 0, 0.8);
+    }
+}
+
+/* High Contrast Support */
+@media (prefers-contrast: high) {
+    :root {
+        --quiz-border-primary: #000000;
+        --quiz-border-secondary: #000000;
+        --quiz-text-primary: #000000;
+        --quiz-text-secondary: #000000;
+        --quiz-bg-primary: #ffffff;
+        --quiz-bg-secondary: #ffffff;
+        --quiz-bg-card: #ffffff;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --quiz-transition-fast: 0s;
+        --quiz-transition-normal: 0s;
+        --quiz-transition-slow: 0s;
+    }
+}
+
+/* Print Styles */
+@media print {
+    :root {
+        --quiz-bg-primary: #ffffff;
+        --quiz-bg-secondary: #ffffff;
+        --quiz-bg-card: #ffffff;
+        --quiz-text-primary: #000000;
+        --quiz-text-secondary: #000000;
+        --quiz-border-primary: #000000;
+        --quiz-shadow-sm: none;
+        --quiz-shadow-md: none;
+        --quiz-shadow-lg: none;
+        --quiz-shadow-xl: none;
+    }
+} 

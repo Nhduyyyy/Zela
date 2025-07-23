@@ -1,0 +1,395 @@
+@{
+    ViewData["Title"] = "Whiteboard Management";
+    Layout = "_Layout";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <link rel="stylesheet" href="~/css/components/whiteboard.css" />
+}
+
+<div class="whiteboard-management-container">
+    <div class="whiteboard-header">
+        <h1>Whiteboard Management</h1>
+        <p class="text-muted">Quản lý template và tạo whiteboard mới</p>
+    </div>
+
+    <div class="whiteboard-content">
+        <!-- Quick Actions -->
+        <div class="quick-actions-section">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="action-card" id="createNewCard">
+                        <div class="action-icon">
+                            <i class="fas fa-plus-circle"></i>
+                        </div>
+                        <h4>Tạo Whiteboard Mới</h4>
+                        <p>Tạo whiteboard trống để bắt đầu vẽ</p>
+                        <button class="btn btn-primary btn-block">Bắt đầu</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="action-card" id="importCard">
+                        <div class="action-icon">
+                            <i class="fas fa-upload"></i>
+                        </div>
+                        <h4>Import Template</h4>
+                        <p>Import template từ file hoặc URL</p>
+                        <button class="btn btn-secondary btn-block">Import</button>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="action-card" id="joinMeetingCard">
+                        <div class="action-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <h4>Join Meeting</h4>
+                        <p>Tham gia meeting để sử dụng whiteboard</p>
+                        <a href="/Meeting" class="btn btn-success btn-block">Join Meeting</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Sessions -->
+        <div class="recent-sessions-section">
+            <div class="section-header">
+                <h3>Sessions Gần Đây</h3>
+                <div class="section-actions">
+                    <button class="btn btn-outline-primary" id="refreshSessionsBtn">
+                        <i class="fas fa-sync-alt"></i> Làm mới
+                    </button>
+                </div>
+            </div>
+            
+            <div class="sessions-grid" id="sessionsGrid">
+                <div class="loading-sessions">
+                    <i class="fas fa-spinner fa-spin"></i> Đang tải sessions...
+                </div>
+            </div>
+        </div>
+
+        <!-- Template Library -->
+        <div class="template-library-section">
+            <div class="section-header">
+                <h3>Template Library</h3>
+                <div class="section-actions">
+                    <div class="search-box">
+                        <input type="text" id="templateSearch" placeholder="Tìm kiếm template..." class="form-control">
+                    </div>
+                    <div class="filter-dropdown">
+                        <select id="templateFilter" class="form-control">
+                            <option value="all">Tất cả</option>
+                            <option value="mine">Của tôi</option>
+                            <option value="public">Công khai</option>
+                            <option value="recent">Gần đây</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div class="template-grid" id="templateGrid">
+                @if (ViewBag.Templates != null && ViewBag.Templates.Count > 0)
+                {
+                    foreach (var template in ViewBag.Templates)
+                    {
+                        <div class="template-card" data-template-id="@template.Id" data-template-name="@template.Name">
+                            <div class="template-thumbnail">
+                                @if (!string.IsNullOrEmpty(template.Thumbnail))
+                                {
+                                    <img src="data:image/png;base64,@template.Thumbnail" alt="@template.Name">
+                                }
+                                else
+                                {
+                                    <div class="template-placeholder">
+                                        <i class="fas fa-image"></i>
+                                    </div>
+                                }
+                                <div class="template-overlay">
+                                    <button class="btn btn-sm btn-primary preview-btn" title="Preview">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-success edit-btn" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-danger delete-btn" title="Delete">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="template-info">
+                                <h5>@template.Name</h5>
+                                <p>@template.Description</p>
+                                <div class="template-meta">
+                                    <span class="creator">
+                                        <i class="fas fa-user"></i> @template.CreatedByUser?.FullName
+                                    </span>
+                                    <span class="date">
+                                        <i class="fas fa-calendar"></i> @template.CreatedAt.ToString("MM/dd/yyyy")
+                                    </span>
+                                    @if (template.IsPublic)
+                                    {
+                                        <span class="public-badge">
+                                            <i class="fas fa-globe"></i> Public
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-layer-group"></i>
+                        </div>
+                        <h4>Chưa có template nào</h4>
+                        <p>Bắt đầu tạo template đầu tiên của bạn</p>
+                        <button class="btn btn-primary" id="createFirstTemplate">
+                            <i class="fas fa-plus"></i> Tạo Template Đầu Tiên
+                        </button>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Preview Modal -->
+<div class="modal fade" id="templatePreviewModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Template Preview</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="preview-content">
+                    <div class="preview-image">
+                        <img id="previewImage" src="" alt="Template Preview">
+                    </div>
+                    <div class="preview-info">
+                        <h4 id="previewTitle"></h4>
+                        <p id="previewDescription"></p>
+                        <div class="preview-meta">
+                            <p><strong>Creator:</strong> <span id="previewCreator"></span></p>
+                            <p><strong>Created:</strong> <span id="previewDate"></span></p>
+                            <p><strong>Status:</strong> <span id="previewStatus"></span></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="editTemplateBtn">
+                    <i class="fas fa-edit"></i> Edit Template
+                </button>
+                <button type="button" class="btn btn-success" id="useInMeetingBtn">
+                    <i class="fas fa-video"></i> Use in Meeting
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Load sessions on page load
+            loadUserSessions();
+            
+            // Create new whiteboard (redirect to editor)
+            $('#createNewCard, #createFirstTemplate').on('click', function() {
+                window.location.href = '/Whiteboard/Editor';
+            });
+            
+            // Refresh sessions button
+            $('#refreshSessionsBtn').on('click', function() {
+                loadUserSessions();
+            });
+
+            // Preview template
+            $(document).on('click', '.preview-btn', function() {
+                const templateId = $(this).closest('.template-card').data('template-id');
+                showTemplatePreview(templateId);
+            });
+
+            // Edit template (redirect to editor with template)
+            $(document).on('click', '.edit-btn', function() {
+                const templateId = $(this).closest('.template-card').data('template-id');
+                window.location.href = `/Whiteboard/Editor?templateId=${templateId}`;
+            });
+
+            // Load user sessions
+            async function loadUserSessions() {
+                try {
+                    const response = await fetch('/Whiteboard/GetUserSessions');
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        displaySessions(result.sessions);
+                    } else {
+                        console.error('Error loading sessions:', result.error);
+                        $('#sessionsGrid').html('<div class="error-message">Lỗi tải sessions</div>');
+                    }
+                } catch (error) {
+                    console.error('Error loading sessions:', error);
+                    $('#sessionsGrid').html('<div class="error-message">Lỗi tải sessions</div>');
+                }
+            }
+            
+            function displaySessions(sessions) {
+                if (sessions.length === 0) {
+                    $('#sessionsGrid').html(`
+                        <div class="empty-state">
+                            <div class="empty-icon">
+                                <i class="fas fa-easel"></i>
+                            </div>
+                            <h4>Chưa có session nào</h4>
+                            <p>Tạo whiteboard đầu tiên để bắt đầu</p>
+                        </div>
+                    `);
+                    return;
+                }
+                
+                const sessionsHtml = sessions.map(session => `
+                    <div class="session-card" data-session-id="${session.sessionId}">
+                        <div class="session-info">
+                            <h5>${session.sessionName}</h5>
+                            <div class="session-meta">
+                                <span><i class="fas fa-calendar"></i> ${new Date(session.createdAt).toLocaleDateString()}</span>
+                                <span><i class="fas fa-pen"></i> ${session.actionCount} actions</span>
+                            </div>
+                            <div class="session-actions">
+                                <button class="btn btn-primary continue-btn" title="Tiếp tục vẽ">
+                                    <i class="fas fa-edit"></i> Tiếp tục
+                                </button>
+                                <button class="btn btn-secondary template-btn" title="Tạo template">
+                                    <i class="fas fa-layer-group"></i> Template
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                $('#sessionsGrid').html(sessionsHtml);
+            }
+            
+            // Continue session
+            $(document).on('click', '.continue-btn', function() {
+                const sessionId = $(this).closest('.session-card').data('session-id');
+                window.location.href = `/Whiteboard/Editor?sessionId=${sessionId}`;
+            });
+            
+            // Create template from session
+            $(document).on('click', '.template-btn', function() {
+                const sessionId = $(this).closest('.session-card').data('session-id');
+                window.location.href = `/Whiteboard/Editor?sessionId=${sessionId}&createTemplate=true`;
+            });
+            
+            // Delete template
+            $(document).on('click', '.delete-btn', function() {
+                const templateId = $(this).closest('.template-card').data('template-id');
+                const templateName = $(this).closest('.template-card').data('template-name');
+                deleteTemplate(templateId, templateName);
+            });
+
+            // Search templates
+            $('#templateSearch').on('input', function() {
+                filterTemplates();
+            });
+
+            // Filter templates
+            $('#templateFilter').on('change', function() {
+                filterTemplates();
+            });
+
+            // Functions
+            async function showTemplatePreview(templateId) {
+                try {
+                    const response = await fetch(`/Whiteboard/GetTemplate/${templateId}`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        const template = result.template;
+                        $('#previewTitle').text(template.name);
+                        $('#previewDescription').text(template.description || 'No description');
+                        $('#previewCreator').text(template.createdByUserName || 'Unknown');
+                        $('#previewDate').text(new Date(template.createdAt).toLocaleDateString());
+                        $('#previewStatus').text(template.isPublic ? 'Public' : 'Private');
+                        
+                        if (template.thumbnail) {
+                            $('#previewImage').attr('src', `data:image/png;base64,${template.thumbnail}`);
+                        } else {
+                            $('#previewImage').attr('src', '/images/default-template.png');
+                        }
+                        
+                        // Store template ID for modal actions
+                        $('#templatePreviewModal').data('template-id', templateId);
+                        $('#templatePreviewModal').modal('show');
+                    } else {
+                        alert('Lỗi: ' + result.error);
+                    }
+                } catch (error) {
+                    console.error('Error showing template preview:', error);
+                    alert('Có lỗi xảy ra khi xem preview');
+                }
+            }
+
+            async function deleteTemplate(templateId, templateName) {
+                if (!confirm(`Bạn có chắc muốn xóa template "${templateName}"?`)) {
+                    return;
+                }
+
+                try {
+                    const response = await fetch(`/Whiteboard/DeleteTemplate/${templateId}`, {
+                        method: 'DELETE'
+                    });
+
+                    const result = await response.json();
+                    if (result.success) {
+                        location.reload();
+                    } else {
+                        alert('Lỗi: ' + result.error);
+                    }
+                } catch (error) {
+                    console.error('Error deleting template:', error);
+                    alert('Có lỗi xảy ra khi xóa template');
+                }
+            }
+
+            function filterTemplates() {
+                const searchTerm = $('#templateSearch').val().toLowerCase();
+                const filterType = $('#templateFilter').val();
+                
+                $('.template-card').each(function() {
+                    const card = $(this);
+                    const name = card.data('template-name').toLowerCase();
+                    const isVisible = name.includes(searchTerm);
+                    
+                    if (isVisible) {
+                        card.show();
+                    } else {
+                        card.hide();
+                    }
+                });
+            }
+
+            // Modal actions
+            $('#editTemplateBtn').on('click', function() {
+                const templateId = $('#templatePreviewModal').data('template-id');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('templatePreviewModal'));
+                modal.hide();
+                window.location.href = `/Whiteboard/Editor?templateId=${templateId}`;
+            });
+
+            $('#useInMeetingBtn').on('click', function() {
+                const templateId = $('#templatePreviewModal').data('template-id');
+                const modal = bootstrap.Modal.getInstance(document.getElementById('templatePreviewModal'));
+                modal.hide();
+                window.location.href = `/Meeting?templateId=${templateId}`;
+            });
+        });
+    </script>
+} 

@@ -1,0 +1,203 @@
+<!-- Delete Meeting Modal -->
+<div class="modal fade" id="deleteMeetingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xóa phòng họp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="deleteMeetingForm">
+                    <input type="hidden" id="deleteMeetingId" />
+                    <div class="mb-3">
+                        <label class="form-label">Phòng họp:</label>
+                        <span id="deleteMeetingName" class="fw-bold"></span>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Cảnh báo:</strong> Hành động này sẽ xóa phòng họp khỏi hệ thống. Tất cả dữ liệu liên quan sẽ không thể khôi phục.
+                    </div>
+                    <div class="mb-3">
+                        <label for="deleteMeetingReason" class="form-label">Lý do xóa phòng họp:</label>
+                        <textarea class="form-control" id="deleteMeetingReason" rows="3" placeholder="Nhập lý do xóa phòng họp..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="submitDeleteMeeting()">Xóa phòng họp</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- End Meeting Modal -->
+<div class="modal fade" id="endMeetingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Kết thúc phòng họp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="endMeetingForm">
+                    <input type="hidden" id="endMeetingId" />
+                    <div class="mb-3">
+                        <label class="form-label">Phòng họp:</label>
+                        <span id="endMeetingName" class="fw-bold"></span>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Thông tin:</strong> Phòng họp sẽ được đóng và tất cả người tham gia sẽ bị ngắt kết nối.
+                    </div>
+                    <div class="mb-3">
+                        <label for="endMeetingReason" class="form-label">Lý do kết thúc (tùy chọn):</label>
+                        <textarea class="form-control" id="endMeetingReason" rows="2" placeholder="Nhập lý do kết thúc phòng họp..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" onclick="submitEndMeeting()">Kết thúc phòng họp</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Meeting Settings Modal -->
+<div class="modal fade" id="meetingSettingsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Cài đặt phòng họp</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="meetingSettingsForm">
+                    <input type="hidden" id="settingsMeetingId" />
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="settingsMeetingName" class="form-label">Tên phòng họp:</label>
+                                <input type="text" class="form-control" id="settingsMeetingName">
+                            </div>
+                            <div class="mb-3">
+                                <label for="settingsMaxParticipants" class="form-label">Số người tối đa:</label>
+                                <input type="number" class="form-control" id="settingsMaxParticipants" min="1" max="1000">
+                            </div>
+                            <div class="mb-3">
+                                <label for="settingsPassword" class="form-label">Mật khẩu phòng:</label>
+                                <input type="text" class="form-control" id="settingsPassword" maxlength="10">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Quyền:</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsAllowVideo">
+                                    <label class="form-check-label" for="settingsAllowVideo">
+                                        Cho phép bật camera
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsAllowAudio">
+                                    <label class="form-check-label" for="settingsAllowAudio">
+                                        Cho phép bật microphone
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsAllowScreenShare">
+                                    <label class="form-check-label" for="settingsAllowScreenShare">
+                                        Cho phép chia sẻ màn hình
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsAllowChat">
+                                    <label class="form-check-label" for="settingsAllowChat">
+                                        Cho phép chat
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsAutoRecord">
+                                    <label class="form-check-label" for="settingsAutoRecord">
+                                        Tự động ghi hình
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsWaitingRoom">
+                                    <label class="form-check-label" for="settingsWaitingRoom">
+                                        Bật phòng chờ
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsIsLocked">
+                                    <label class="form-check-label" for="settingsIsLocked">
+                                        Khóa phòng họp
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="settingsEndWhenHostLeaves">
+                                    <label class="form-check-label" for="settingsEndWhenHostLeaves">
+                                        Tự động kết thúc khi host rời
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitMeetingSettings()">Lưu cài đặt</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manage Participants Modal -->
+<div class="modal fade" id="participantsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quản lý người tham gia</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <h6>Danh sách người tham gia</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Tên</th>
+                                        <th>Email</th>
+                                        <th>Tham gia lúc</th>
+                                        <th>Trạng thái</th>
+                                        <th>Hành động</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="participantsList">
+                                    <!-- Participants will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div> 

@@ -1,0 +1,119 @@
+<link rel="stylesheet" href="~/css/components/create-group.css"/>
+<link rel="stylesheet" href="~/css/components/sidebar-chat.css"/>
+
+<div class="sidebar">
+    <div class="sidebar-header">
+        <h4><i class="bi bi-chat-dots me-2"></i>Zela Chat</h4>
+    </div>
+
+    <div class="sidebar-search">
+        <div class="search-input d-flex align-items-center">
+            <input id="searchBox" type="text" class="form-control" placeholder="Tìm kiếm bạn bè, nhóm...">
+            <i class="bi bi-search"></i>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="friends-tab-btn" data-bs-toggle="tab" data-bs-target="#friends-tab">
+                <i class="bi bi-people me-1"></i>Bạn bè
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="groups-tab-btn" data-bs-toggle="tab" data-bs-target="#groups-tab">
+                <i class="bi bi-chat-square-dots me-1"></i>Nhóm
+            </button>
+        </li>
+    </ul>
+    
+    <div class="tab-content">
+        <div class="tab-pane fade show active" id="friends-tab" role="tabpanel">
+            <!-- Nội dung bạn bè sẽ được load từ Chat/Index -->
+        </div>
+        <div class="tab-pane fade" id="groups-tab" role="tabpanel">
+            <!-- Nội dung nhóm sẽ được load từ GroupChat/Index -->
+            <div class="groups-header d-flex justify-content-between align-items-center p-2">
+                <div class="input-group group-link-join-box">
+                    <input type="text" class="form-control" id="groupLinkInput" placeholder="Dán link nhóm để tham gia hoặc tạo nhóm mới...">
+                    <button class="btn btn-sm btn-primary transition" id="groupActionBtn" data-bs-toggle="modal" data-bs-target="#createGroupModal">
+                        <i class="bi bi-plus-circle me-1" id="groupActionIcon"></i><span id="groupActionText">Tạo nhóm</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast thông báo -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="groupToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <i class="bi bi-info-circle me-2"></i>
+            <strong class="me-auto">Thông báo</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+        </div>
+    </div>
+</div>
+
+<!-- Hidden element to store current user ID -->
+<div data-current-user-id="@(Context.Session.GetInt32("UserId") ?? 0)" style="display: none;"></div>
+
+<script>
+$(document).ready(function() {
+    // Xử lý chuyển đổi tab
+    $('#friends-tab-btn').on('click', function() {
+        // Load trang Chat/Index
+        window.location.href = '/Chat/Index';
+    });
+    
+    $('#groups-tab-btn').on('click', function() {
+        // Load trang GroupChat/Index
+        window.location.href = '/GroupChat/Index';
+    });
+    
+    // Highlight tab hiện tại dựa trên URL
+    const currentPath = window.location.pathname;
+    if (currentPath.includes('/GroupChat')) {
+        $('#friends-tab-btn').removeClass('active');
+        $('#groups-tab-btn').addClass('active');
+        $('#friends-tab').removeClass('show active');
+        $('#groups-tab').addClass('show active');
+    } else {
+        $('#groups-tab-btn').removeClass('active');
+        $('#friends-tab-btn').addClass('active');
+        $('#groups-tab').removeClass('show active');
+        $('#friends-tab').addClass('show active');
+    }
+
+    // Sidebar search logic
+    $('#searchBox').on('input', function() {
+        const keyword = $(this).val().toLowerCase();
+        if (currentPath.includes('/GroupChat')) {
+            // Chỉ lọc nhóm trong tab nhóm
+            $('#group-list .friend-item').each(function() {
+                const groupName = $(this).find('.friend-name').text().toLowerCase();
+                if (groupName.includes(keyword)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        } else {
+            // Chỉ lọc bạn bè trong tab bạn bè
+            $('#friend-list .friend-item').each(function() {
+                const friendName = $(this).find('.friend-name').text().toLowerCase();
+                if (friendName.includes(keyword)) {
+                    $(this).show();
+                } else {
+                    $(this).hide();
+                }
+            });
+        }
+    });
+});
+</script>
+
+<!-- Load create group JavaScript -->
+<script src="~/js/create-group.js"></script>

@@ -1,0 +1,166 @@
+@model Zela.Models.Quiz
+@using Zela.Services
+@inject IQuizService QuizService
+
+@{
+    ViewData["Title"] = "Chi tiết Quiz";
+    var currentUserId = QuizService.GetCurrentUserId();
+    var isCreator = currentUserId.HasValue && Model.CreatorId == currentUserId.Value;
+
+    // Thống kê theo loại câu hỏi (ĐÚNG)
+    IEnumerable<dynamic> questionStats = new List<dynamic>();
+    if (Model.Questions != null && Model.Questions.Any())
+    {
+        questionStats = Model.Questions
+            .GroupBy(q => q.QuestionType)
+            .Select(g => new { Type = g.Key, Count = g.Count() })
+            .OrderBy(x => x.Type)
+            .ToList();
+    }
+}
+
+<link rel="stylesheet" href="~/css/pages/quiz/quiz-index.css" />
+
+<div class="quiz-window">
+    <div class="quiz-header">
+        <div class="quiz-header-left">
+            <h2 class="quiz-title"><i class="bi bi-clipboard-check"></i> @Model.Title</h2>
+            @if (Model.IsPublic)
+            {
+                <span class="badge bg-success"><i class="bi bi-globe"></i> Public</span>
+            }
+            else
+            {
+                <span class="badge bg-secondary"><i class="bi bi-lock"></i> Private</span>
+            }
+        </div>
+        <div class="quiz-header-right">
+            <a href="@Url.Action("Index", "Quiz")" class="btn btn-outline-primary">Quay lại danh sách</a>
+            @if (isCreator)
+            {
+                <a href="@Url.Action("Attempts", "Quiz", new { quizId = Model.QuizId })" class="btn btn-success" style="margin-left: 1rem;">Xem kết quả</a>
+                <a href="@Url.Action("Statistics", "Quiz", new { quizId = Model.QuizId })" class="btn btn-info" style="margin-left: 1rem;">Xem thống kê</a>
+            }
+        </div>
+    </div>
+    <div class="quiz-content" style="padding: 2rem; max-width: 800px; margin: 0 auto;">
+        <div class="quiz-card" style="background: var(--quiz-bg-card); box-shadow: 0 4px 20px var(--quiz-shadow-card); border-radius: var(--quiz-radius-lg); padding: 2rem;">
+            <div class="quiz-card-title" style="font-size: var(--quiz-font-size-xl); font-weight: 600; color: var(--quiz-text-primary); margin-bottom: 1rem;">
+                @Model.Title
+            </div>
+            <div class="quiz-card-desc" style="color: var(--quiz-text-secondary); margin-bottom: 1rem;">
+                <strong>Mô tả:</strong> @Model.Description
+            </div>
+            <div class="quiz-card-meta" style="color: var(--quiz-text-muted); margin-bottom: 1rem;">
+                <span><i class="bi bi-clock"></i> Thời gian làm bài: @(Model.TimeLimit > 0 ? $"{Model.TimeLimit} phút" : "Không giới hạn")</span>
+                <span style="margin-left: 2rem;"><i class="bi bi-list-ol"></i> Tổng số câu hỏi: @(Model.Questions?.Count ?? 0)</span>
+            </div>
+
+            @if (Model.Questions != null && Model.Questions.Any())
+            {
+                if (isCreator)
+                {
+                    <!-- Creator view: Hiển thị chi tiết câu hỏi -->
+                    <div class="quiz-section" style="margin-top: 2rem;">
+                        <div class="section-header">
+                            <div class="section-title"><i class="bi bi-question-circle"></i> Danh sách câu hỏi</div>
+                        </div>
+                        <ul style="padding-left: 1.5rem;">
+                        @foreach (var question in Model.Questions.OrderBy(q => q.QuestionId))
+                        {
+                            <li style="margin-bottom: 1rem;">
+                                <strong style="color: var(--quiz-text-primary);">@Html.Raw(question.Content)</strong> <br />
+                                <em style="color: var(--quiz-text-secondary);">Loại: @question.QuestionType</em>
+                            </li>
+                        }
+                        </ul>
+                    </div>
+                }
+                else
+                {
+                    <!-- Non-creator view: Chỉ hiển thị thống kê -->
+                    <div class="quiz-section" style="margin-top: 2rem;">
+                        <div class="section-header">
+                            <div class="section-title"><i class="bi bi-bar-chart"></i> Thống kê câu hỏi</div>
+                        </div>
+                        <div class="question-stats">
+                            @foreach (var stat in questionStats)
+                            {
+                                var typeName = stat.Type switch
+                                {
+                                    "MultipleChoice" => "Trắc nghiệm",
+                                    "TrueFalse" => "Đúng/Sai",
+                                    "ShortAnswer" => "Câu trả lời ngắn",
+                                    "Essay" => "Tự luận",
+                                    _ => stat.Type
+                                };
+                                var badgeClass = stat.Type switch
+                                {
+                                    "MultipleChoice" => "badge-primary",
+                                    "TrueFalse" => "badge-success",
+                                    "ShortAnswer" => "badge-warning",
+                                    "Essay" => "badge-info",
+                                    _ => "badge-secondary"
+                                };
+                                <div class="stat-item">
+                                    <div class="stat-type">
+                                        <span class="badge @badgeClass">@typeName</span>
+                                    </div>
+                                    <div class="stat-count">
+                                        @stat.Count câu
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                        <div class="info-box">
+                            <i class="bi bi-info-circle"></i>
+                            <span>
+                                Chỉ người tạo quiz mới có thể xem chi tiết câu hỏi. Bạn có thể làm bài để kiểm tra kiến thức!
+                            </span>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <p style="color: var(--quiz-text-muted);"><em>Quiz này chưa có câu hỏi nào.</em></p>
+            }
+
+            <!-- Action buttons -->
+            <div class="quiz-actions">
+                @if (isCreator)
+                {
+                    <a href="@Url.Action("AddQuestions", "Quiz", new { id = Model.QuizId })" class="btn btn-primary">
+                        <i class="bi bi-plus-circle"></i> Thêm câu hỏi
+                    </a>
+                    <a href="@Url.Action("Edit", "Quiz", new { id = Model.QuizId })" class="btn btn-outline-secondary">
+                        <i class="bi bi-pencil"></i> Chỉnh sửa quiz
+                    </a>
+                    <form method="post" action="@Url.Action("Delete", "Quiz", new { id = Model.QuizId })" style="display:inline;">
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('Bạn có chắc muốn xóa quiz này?');">
+                            <i class="bi bi-trash"></i> Xóa quiz
+                        </button>
+                    </form>
+                    <!-- Đã ẩn hoàn toàn quiz realtime -->
+                }
+                else
+                {
+                    <a href="@Url.Action("Take", "Quiz", new { id = Model.QuizId })" class="btn btn-success">
+                        <i class="bi bi-play-circle"></i> Bắt đầu làm bài
+                    </a>
+                }
+            </div>
+            <!-- Đã ẩn hoàn toàn quizRealtimePanel -->
+        </div>
+    </div>
+</div>
+<!-- Thêm nút xem lịch sử làm bài cho mọi user -->
+<div class="mt-4" style="text-align:center;">
+    <a href="@Url.Action("Attempts", "Quiz", new { quizId = Model.QuizId })" class="btn btn-outline-primary">
+        <i class="bi bi-list-ul"></i> Xem lịch sử làm bài
+    </a>
+</div>
+
+@section Scripts {
+    <!-- Đã ẩn hoàn toàn script quiz realtime -->
+}

@@ -1,0 +1,627 @@
+/* =================================
+   ZELA ADMIN - ANALYTICS DASHBOARD
+   Styling hiện đại và đẹp mắt cho trang Analytics
+   ================================= */
+
+/* =================================
+   ANALYTICS PAGE LAYOUT
+   ================================= */
+
+.analytics-container {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    min-height: calc(100vh - 80px);
+    padding: var(--spacing-xl);
+}
+
+.analytics-header {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    padding: var(--spacing-xl);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    margin-bottom: var(--spacing-xl);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+}
+
+.analytics-header h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #92140C 0%, #B84A42 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.analytics-header h1 i {
+    background: linear-gradient(135deg, #92140C 0%, #B84A42 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-right: 0.5rem;
+    font-size: 2.2rem;
+}
+
+.analytics-header p {
+    color: #64748b;
+    margin-bottom: 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+}
+
+.analytics-controls {
+    display: flex;
+    gap: var(--spacing-sm);
+    align-items: center;
+}
+
+/* =================================
+   METRICS GRID
+   ================================= */
+
+.metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: var(--spacing-lg);
+    margin-bottom: var(--spacing-xl);
+}
+
+.metric-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    padding: var(--spacing-xl);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-lg);
+    position: relative;
+    overflow: hidden;
+}
+
+.metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #92140C 0%, #B84A42 100%);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.metric-card:hover::before {
+    transform: scaleX(1);
+}
+
+.metric-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border-color: #92140C;
+}
+
+.metric-icon {
+    width: 70px;
+    height: 70px;
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    color: var(--white);
+    background: linear-gradient(135deg, var(--primary-red) 0%, var(--primary-dark) 100%);
+    flex-shrink: 0;
+    box-shadow: 0 8px 20px rgba(146, 20, 12, 0.3);
+    transition: all 0.3s ease;
+}
+
+.metric-card:hover .metric-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 12px 30px rgba(146, 20, 12, 0.4);
+}
+
+.metric-card:nth-child(2) .metric-icon {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+}
+
+.metric-card:nth-child(3) .metric-icon {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+}
+
+.metric-card:nth-child(4) .metric-icon {
+    background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+}
+
+.metric-card:nth-child(5) .metric-icon {
+    background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+}
+
+.metric-card:nth-child(6) .metric-icon {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+}
+
+.metric-card:nth-child(7) .metric-icon {
+    background: linear-gradient(135deg, #06B6D4 0%, #0891B2 100%);
+}
+
+.metric-card:nth-child(8) .metric-icon {
+    background: linear-gradient(135deg, #84CC16 0%, #65A30D 100%);
+}
+
+.metric-card:nth-child(9) .metric-icon {
+    background: linear-gradient(135deg, #EC4899 0%, #DB2777 100%);
+}
+
+.metric-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.metric-number {
+    font-size: 2.2rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, #1e293b 0%, #475569 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    line-height: 1.1;
+}
+
+.metric-label {
+    font-size: 1rem;
+    color: #64748b;
+    margin-bottom: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.metric-change {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.metric-change.positive {
+    color: #10B981;
+}
+
+.metric-change.negative {
+    color: #EF4444;
+}
+
+.metric-change i {
+    font-size: 0.7rem;
+}
+
+/* =================================
+   CHARTS SECTION
+   ================================= */
+
+.charts-section {
+    margin-bottom: var(--spacing-xl);
+}
+
+.chart-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    overflow: hidden;
+    margin-bottom: var(--spacing-lg);
+    transition: all 0.3s ease;
+}
+
+.chart-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.chart-header {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--spacing-sm);
+}
+
+.chart-header h5 {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-header h5 i {
+    color: var(--primary-red);
+}
+
+.chart-controls {
+    display: flex;
+    gap: 0.25rem;
+}
+
+.chart-controls .btn {
+    font-size: 0.85rem;
+    padding: 0.5rem 1rem;
+    border-radius: 12px;
+    border: 2px solid transparent;
+    background: rgba(255, 255, 255, 0.8);
+    color: #64748b;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.chart-controls .btn:hover {
+    background: rgba(146, 20, 12, 0.1);
+    border-color: #92140C;
+    color: #92140C;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(146, 20, 12, 0.2);
+}
+
+.chart-controls .btn.active {
+    background: linear-gradient(135deg, #92140C 0%, #B84A42 100%);
+    border-color: #92140C;
+    color: white;
+    box-shadow: 0 4px 12px rgba(146, 20, 12, 0.3);
+}
+
+.chart-body {
+    padding: var(--spacing-xl);
+    min-height: 350px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.chart-body::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    border: 3px solid #f3f4f6;
+    border-top: 3px solid #92140C;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.chart-body.loading::before {
+    opacity: 1;
+}
+
+@keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* =================================
+   DETAILED ANALYTICS
+   ================================= */
+
+.detailed-analytics {
+    margin-bottom: var(--spacing-xl);
+}
+
+.analytics-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+    overflow: hidden;
+    height: 100%;
+    transition: all 0.3s ease;
+}
+
+.analytics-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.analytics-card .card-header {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    padding: var(--spacing-lg) var(--spacing-xl);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.analytics-card .card-header h5 {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.analytics-card .card-header h5 i {
+    color: var(--primary-red);
+}
+
+.analytics-card .card-body {
+    padding: var(--spacing-lg);
+}
+
+/* =================================
+   ACTIVITY LIST
+   ================================= */
+
+.activity-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border-radius: 12px;
+    margin-bottom: var(--spacing-md);
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.activity-item:hover {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    transform: translateX(8px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.activity-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    color: var(--white);
+    background: linear-gradient(135deg, #92140C 0%, #B84A42 100%);
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(146, 20, 12, 0.3);
+    transition: all 0.3s ease;
+}
+
+.activity-item:hover .activity-icon {
+    transform: scale(1.1) rotate(5deg);
+    box-shadow: 0 6px 18px rgba(146, 20, 12, 0.4);
+}
+
+.activity-item:nth-child(odd) .activity-icon {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+}
+
+.activity-item:nth-child(odd):hover .activity-icon {
+    box-shadow: 0 6px 18px rgba(16, 185, 129, 0.4);
+}
+
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.activity-description {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+    line-height: 1.4;
+}
+
+.activity-time {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.activity-user {
+    flex-shrink: 0;
+}
+
+/* =================================
+   TOP USERS LIST
+   ================================= */
+
+.top-users-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.top-user-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    padding: var(--spacing-lg);
+    border-radius: 12px;
+    margin-bottom: var(--spacing-md);
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.8);
+}
+
+.top-user-item:hover {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    transform: translateX(8px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.user-rank {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1rem;
+    color: var(--white);
+    background: linear-gradient(135deg, #92140C 0%, #B84A42 100%);
+    flex-shrink: 0;
+    box-shadow: 0 4px 12px rgba(146, 20, 12, 0.3);
+    transition: all 0.3s ease;
+}
+
+.top-user-item:hover .user-rank {
+    transform: scale(1.1);
+    box-shadow: 0 6px 18px rgba(146, 20, 12, 0.4);
+}
+
+.top-user-item:nth-child(1) .user-rank {
+    background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+}
+
+.top-user-item:nth-child(1):hover .user-rank {
+    box-shadow: 0 6px 18px rgba(245, 158, 11, 0.4);
+}
+
+.top-user-item:nth-child(2) .user-rank {
+    background: linear-gradient(135deg, #6B7280 0%, #4B5563 100%);
+    box-shadow: 0 4px 12px rgba(107, 114, 128, 0.3);
+}
+
+.top-user-item:nth-child(2):hover .user-rank {
+    box-shadow: 0 6px 18px rgba(107, 114, 128, 0.4);
+}
+
+.top-user-item:nth-child(3) .user-rank {
+    background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+    box-shadow: 0 4px 12px rgba(220, 38, 38, 0.3);
+}
+
+.top-user-item:nth-child(3):hover .user-rank {
+    box-shadow: 0 6px 18px rgba(220, 38, 38, 0.4);
+}
+
+.user-avatar {
+    flex-shrink: 0;
+}
+
+.user-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.user-name {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.user-activity {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.user-badge {
+    flex-shrink: 0;
+    font-size: 1.2rem;
+}
+
+/* =================================
+   RESPONSIVE DESIGN
+   ================================= */
+
+@media (max-width: 1200px) {
+    .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--spacing-md);
+    }
+}
+
+@media (max-width: 900px) {
+    .analytics-container {
+        padding: var(--spacing-md);
+    }
+
+    .analytics-header {
+        padding: var(--spacing-md);
+    }
+
+    .analytics-header h1 {
+        font-size: 1.5rem;
+    }
+
+    .metrics-grid {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: var(--spacing-sm);
+    }
+
+    .metric-card {
+        padding: var(--spacing-md);
+    }
+
+    .metric-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 1.2rem;
+    }
+
+    .metric-number {
+        font-size: 1.4rem;
+    }
+
+    .chart-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-sm);
+    }
+
+    .chart-controls {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+@media (max-width: 600px) {
+    .metrics-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .metric-card {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .chart-body {
+        padding: var(--spacing-md);
+        min-height: 250px;
+    }
+
+    .activity-item,
+    .top-user-item {
+        flex-direction: column;
+        text-align: center;
+        gap: var(--spacing-sm);
+    }
+
+    .activity-user {
+        align-self: center;
+    }
+} 

@@ -1,0 +1,144 @@
+using Microsoft.AspNetCore.SignalR;
+using Zela.Enum;
+using Zela.Models;
+using Zela.Services;
+using Zela.ViewModels;
+
+public class ChatHub : Hub
+{
+    private readonly IChatService _chatService;
+    private readonly IStickerService _stickerService;
+    public ChatHub(IChatService chatService, IStickerService stickerService)
+    {
+        _chatService = chatService;
+        _stickerService = stickerService;
+    }
+
+    // Gửi tin nhắn 1-1
+    public async Task SendMessage(int recipientId, string content)
+    {
+        // Lấy userId từ Claims hoặc Context.UserIdentifier
+        int senderId = int.Parse(Context.UserIdentifier);
+
+        // Lưu vào DB và trả về message mới (có thông tin avatar, tên, IsMine, SentAt...)
+        var msgVm = await _chatService.SendMessageAsync(senderId, recipientId, content);
+
+        // Gửi message cho người gửi
+        await Clients.User(senderId.ToString()).SendAsync("ReceiveMessage", msgVm);
+
+        // Gửi message cho người nhận (nếu khác người gửi)
+        if (senderId != recipientId)
+            await Clients.User(recipientId.ToString()).SendAsync("ReceiveMessage", msgVm);
+    }
+    
+    // Send sticker 1-1
+    public async Task SendSticker(int recipientId, string url)
+    {
+        // Lấy userId từ Claims hoặc Context.UserIdentifier
+        int senderId = int.Parse(Context.UserIdentifier);
+        
+        // Lưu vào DB và trả về sticker mới
+        var stickerVm = await _stickerService.SendStickerAsync(senderId, recipientId, url);
+        
+        // Gửi sticker cho người gửi và người nhận
+        await Clients.Users(senderId.ToString(), recipientId.ToString())
+            .SendAsync("ReceiveSticker", stickerVm);
+    }
+    
+    // Gửi tin nhắn nhóm
+    public async Task SendGroupMessage(int groupId, string content, long? replyToMessageId = null)
+    {
+        int senderId = int.Parse(Context.UserIdentifier);
+        var msgVm = await _chatService.SendGroupMessageAsync(senderId, groupId, content, null, replyToMessageId);
+        await Clients.Group(groupId.ToString()).SendAsync("ReceiveGroupMessage", msgVm);
+    }
+
+    // Tham gia vào nhóm chat
+    public async Task JoinGroup(int groupId)
+    {
+        await Groups.AddToGroupAsync(Context.ConnectionId, groupId.ToString());
+    }
+
+    // Rời khỏi nhóm chat
+    public async Task LeaveGroup(int groupId)
+    {
+        await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupId.ToString());
+    }
+
+    // Tạo nhóm chat mới
+    public async Task<ChatGroup> CreateGroup(string name, string description)
+    {
+        int creatorId = int.Parse(Context.UserIdentifier);
+        // Truyền null cho avatarUrl, password, friendIds (nếu cần có logic khác thì bổ sung sau)
+        var group = await _chatService.CreateGroupAsync(creatorId, name, description, null, null, new List<int>());
+        // Tự động tham gia vào nhóm sau khi tạo
+        await JoinGroup(group.GroupId);
+        return group;
+    }
+
+    // Thêm thành viên vào nhóm
+    public async Task AddMemberToGroup(int groupId, int userId)
+    {
+        await _chatService.AddMemberToGroupAsync(groupId, userId);
+        // Thông báo cho tất cả thành viên trong nhóm
+        await Clients.Group(groupId.ToString()).SendAsync("MemberAdded", userId);
+    }
+
+    // Xóa thành viên khỏi nhóm
+    public async Task RemoveMemberFromGroup(int groupId, int userId)
+    {
+        await _chatService.RemoveMemberFromGroupAsync(groupId, userId);
+        // Thông báo cho tất cả thành viên trong nhóm
+        await Clients.Group(groupId.ToString()).SendAsync("MemberRemoved", userId);
+    }
+
+    // Gửi sticker nhóm
+    public async Task SendGroupSticker(int groupId, string url)
+    {
+        int senderId = int.Parse(Context.UserIdentifier);
+        var stickerVm = await _chatService.SendGroupStickerAsync(senderId, groupId, url);
+        await Clients.Group(groupId.ToString()).SendAsync("ReceiveGroupSticker", stickerVm);
+    }
+    
+    // Search Message history
+    public async Task<List<MessageViewModel>> SearchMessages(int friendId, string keyword)
+    {
+        // Lấy userId từ context
+        var userId = int.Parse(Context.UserIdentifier);
+        var messages = await _chatService.SearchMessagesAsync(userId, friendId, keyword);
+        return messages;
+    }
+    
+    // Mark message as seen
+    public async Task MarkAsSeen(long messageId)
+    {
+        int userId = int.Parse(Context.UserIdentifier);
+        var messageIds = await _chatService.MarkAsSeenAsync(messageId, userId);
+
+        if (messageIds.Any())
+        {
+            await Clients.User(Context.UserIdentifier).SendAsync("MessageStatusUpdated", new
+            {
+                messageIds,
+                newStatus = MessageStatus.Seen,
+                statusText = "Đã xem"
+            });
+        }
+    }
+
+    public async Task MarkAsDelivered(long messageId)
+    {
+        int userId = int.Parse(Context.UserIdentifier);
+        var messageIds = await _chatService.MarkAsDeliveredAsync(messageId, userId);
+
+        if (messageIds.Any())
+        {
+            await Clients.User(Context.UserIdentifier).SendAsync("MessageStatusUpdated", new
+            {
+                messageIds,
+                newStatus = MessageStatus.Delivered,
+                statusText = "Đã nhận"
+            });
+        }
+    }
+}

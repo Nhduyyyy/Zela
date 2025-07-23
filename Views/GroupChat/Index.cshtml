@@ -1,0 +1,378 @@
+@model List<Zela.ViewModels.GroupViewModel>
+
+@{
+    ViewData["Title"] = "Zela Chat – Nhóm";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/themes/chat-theme.css"/>
+    <link rel="stylesheet" href="~/css/pages/chat.css"/>
+    <link rel="stylesheet" href="~/css/pages/chat/_reactions.css"/>
+    <link rel="stylesheet" href="~/css/pages/chat/_group-chat-messages.css"/>
+    <link rel="stylesheet" href="~/css/components/voice-record-dropdown.css"/>
+    <link rel="stylesheet" href="~/css/components/voice-record-fallback.css"/>
+}
+
+<section class="chat-window">
+    <div class="friend-list">
+        @Html.Partial("_SidebarChat")
+        <ul class="friend-items" id="group-list">
+            @foreach (var group in Model)
+            {
+                <li class="friend-item" data-id="@group.GroupId" data-type="group" data-banned="@group.IsCurrentUserBanned.ToString().ToLower()" data-banuntil="@(group.BanUntil?.ToString("yyyy-MM-ddTHH:mm:ss") ?? "")">
+                    <img class="friend-avatar" src="@group.AvatarUrl" alt="Group Avatar"/>
+                    <div class="friend-info">
+                        <div class="friend-name">@group.Name</div>
+                        <div class="friend-last-msg">@group.LastMessage</div>
+                    </div>
+                    <div class="friend-meta">
+                        <span class="friend-time">@group.LastTime</span>
+                        <span class="friend-status online">
+                            <i class="bi bi-circle-fill"></i>
+                        </span>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="chat-panel">
+        <div class="chat-header">
+            <button class="mobile-menu-btn d-md-none">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <div class="chat-user-info d-none">
+                @foreach (var group in Model)
+                {
+                    <div class="chat-user" data-id="@group.GroupId" data-type="group">
+                        <img class="chat-user-avatar online-avatar" src="@group.AvatarUrl" alt="Group Avatar">
+                        <div class="chat-user-details">
+                            <h5>@group.Name</h5>
+                            <p class="chat-user-status">
+                                <span class="status-dot status-online"></span>
+                                @group.MemberCount thành viên
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="chat-actions">
+                <i class="bi bi-telephone"></i>
+                <i class="bi bi-camera-video"></i>
+                <i class="bi bi-search"></i>
+                <i class="bi bi-three-dots-vertical toggle-sidebar-btn" style="cursor: pointer;"></i>
+            </div>
+        </div>
+
+        <div class="chat-content">
+            <div class="no-chat-placeholder text-center text-muted mt-5">
+                <i class="bi bi-chat-square-dots fs-1"></i>
+                <p class="mt-2">Hãy chọn nhóm để bắt đầu trò chuyện</p>
+            </div>
+        </div>
+        <div class="chat-input-bar">
+            <div id="reply-preview-bar">
+                <span id="reply-preview-content"></span>
+                <button type="button" id="cancel-reply-btn"></button>
+            </div>
+            <div class="input-group d-flex align-items-center">
+                <input type="text" placeholder="Nhập tin nhắn..." class="flex-fill" id="groupChatInput">
+                <div class="input-actions">
+                    <div class="voice-record-dropdown">
+                        <i class="bi bi-mic" title="Ghi âm giọng nói" id="voiceRecordBtn" style="cursor: pointer;"></i>
+                        <div class="voice-dropdown-content" id="voiceDropdown">
+                            <div class="language-label">Chọn ngôn ngữ:</div>
+                            <select id="voiceLangSelect" class="language-select">
+                                <option value="vi">Tiếng Việt</option>
+                                <option value="en">English</option>
+                                <option value="ja">日本語</option>
+                                <option value="zh">中文</option>
+                                <option value="ko">한국어</option>
+                                <option value="fr">Français</option>
+                                <option value="it">Italiano</option>
+                                
+                                <option value="th">ไทย</option>
+                            </select>
+                            <div class="button-group">
+                                <button type="button" id="startVoiceRecord" class="start-record-btn">Bắt đầu ghi âm</button>
+                                <button type="button" id="closeVoiceDropdown" class="close-btn">Đóng</button>
+                            </div>
+                        </div>
+                    </div>
+                    <i class="bi bi-image" title="Hình ảnh" id="indexImageBtn" style="cursor: pointer;"></i>
+                    <i class="bi bi-paperclip" title="Đính kèm" id="indexFileBtn" style="cursor: pointer;"></i>
+                    <i class="bi bi-emoji-smile" title="Emoji"></i>
+                    <i class="bi bi-send btn-send" title="Gửi"></i>
+                </div>
+            </div>
+            <!-- File preview area -->
+            <div id="indexFilePreview" class="file-preview-area"></div>
+            <!-- Hidden file input -->
+            <input type="file" id="indexGroupFileInput" multiple class="hidden-file-input"
+                   accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
+        </div>
+    </div>
+
+    <div id="sidebar-right" class="sidebar-right d-none">
+        <!-- Sidebar content will be loaded dynamically -->
+    </div>
+
+    <!-- Sidebar Media Container -->
+    <div id="sidebar-media-container" class="sidebar-right d-none">
+        <!-- Sidebar media content will be loaded dynamically -->
+    </div>
+</section>
+<!-- Hidden element to store current user ID -->
+<div data-current-user-id="@(Context.Session.GetInt32("UserId") ?? 0)" style="display: none;"></div>
+
+<!-- Include Create Group Modal -->
+@Html.Partial("_CreateGroup")
+
+<!-- Include Add Member Modal -->
+@Html.Partial("_AddMemberModal")
+
+@section Scripts {
+    <script src="~/js/group-chat-window.js"></script>
+    <script src="~/js/add-member.js"></script>
+    <script src="~/js/message-reactions.js"></script>
+    <script src="~/js/sidebar-media.js"></script>
+    <script src="~/js/voice-record-system.js"></script>
+    <script>
+        // File upload functionality for Index page
+        let indexSelectedFiles = [];
+        let indexCurrentGroupId = null;
+
+        $(document).ready(function () {
+            console.log('Index page: Setting up file upload...');
+
+            const fileInput = document.getElementById('indexGroupFileInput');
+            const imageBtn = document.getElementById('indexImageBtn');
+            const fileBtn = document.getElementById('indexFileBtn');
+            const preview = document.getElementById('indexFilePreview');
+
+            console.log('Index elements found:', {
+                fileInput: !!fileInput,
+                imageBtn: !!imageBtn,
+                fileBtn: !!fileBtn,
+                preview: !!preview
+            });
+
+            // Image button click
+            if (imageBtn) {
+                imageBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    console.log('Index: Image button clicked');
+
+                    if (!indexCurrentGroupId) {
+                        alert('Vui lòng chọn một nhóm trước!');
+                        return;
+                    }
+
+                    if (fileInput) {
+                        fileInput.accept = 'image/*';
+                        fileInput.click();
+                    } else {
+                        alert('Lỗi: Không tìm thấy file input!');
+                    }
+                });
+            }
+
+            // File button click  
+            if (fileBtn) {
+                fileBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    console.log('Index: File button clicked');
+
+                    if (!indexCurrentGroupId) {
+                        alert('Vui lòng chọn một nhóm trước!');
+                        return;
+                    }
+
+                    if (fileInput) {
+                        fileInput.accept = 'image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt';
+                        fileInput.click();
+                    } else {
+                        alert('Lỗi: Không tìm thấy file input!');
+                    }
+                });
+            }
+
+            // File input change
+            if (fileInput) {
+                fileInput.addEventListener('change', function (e) {
+                    console.log('Index: Files selected:', e.target.files.length);
+
+                    if (e.target.files.length > 0) {
+                        indexSelectedFiles = Array.from(e.target.files);
+                        showIndexFilePreview();
+                    } else {
+                        clearIndexFilePreview();
+                    }
+                });
+            }
+
+            // Update currentGroupId when group is selected
+            $(document).on('click', '.friend-item[data-type="group"]', function () {
+                indexCurrentGroupId = Number($(this).data('id'));
+                const isBanned = $(this).data('banned') === true || $(this).data('banned') === 'true';
+                const banUntil = $(this).data('banuntil');
+                if (isBanned) {
+                    $('.chat-input-bar').css('pointer-events', 'none').css('opacity', 0.5);
+                    $('.chat-actions').css('pointer-events', 'none').css('opacity', 0.5);
+                    if ($('#ban-message').length === 0) {
+                        let msg = `<div style=\"display: flex; align-items: center; justify-content: center; background: #fff3cd; color: #856404; border: 1px solid #ffeeba; border-radius: 8px; padding: 10px 16px; margin-top: 10px; font-weight: 500; font-size: 1rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04);\">`;
+                        msg += `<i class=\"bi bi-exclamation-triangle-fill\" style=\"font-size: 1.5rem; margin-right: 10px; color: #ffc107;\"></i>`;
+                        msg += `<span>Bạn đã bị cấm chat`;
+                        if (banUntil) msg += ` đến <b>${new Date(banUntil).toLocaleString()}</b>`;
+                        msg += `</span></div>`;
+                        $('.chat-input-bar').append(`<div id=\"ban-message\">${msg}</div>`);
+                    }
+                } else {
+                    $('.chat-input-bar').css('pointer-events', '').css('opacity', 1);
+                    $('.chat-actions').css('pointer-events', '').css('opacity', 1);
+                    $('#ban-message').remove();
+                }
+                console.log('Index: Group selected:', indexCurrentGroupId);
+            });
+
+            // Reply logic
+            let replyToMessageId = null;
+            let replyToMessageContent = null;
+
+            function replyToMessage(messageId, content) {
+                replyToMessageId = messageId;
+                replyToMessageContent = content;
+                $('#reply-preview-content').text(content);
+                $('#reply-preview-bar').show();
+                $('#groupChatInput').focus();
+            }
+            window.replyToMessage = replyToMessage;
+
+            $('#cancel-reply-btn').on('click', function() {
+                replyToMessageId = null;
+                replyToMessageContent = null;
+                $('#reply-preview-bar').hide();
+            });
+
+            // Gửi tin nhắn nhóm (override)
+            window.sendIndexGroupMessage = async function () {
+                const content = $('#groupChatInput').val().trim();
+                const files = indexSelectedFiles.length > 0 ? indexSelectedFiles : null;
+                if (!content && !files) return;
+                if (!indexCurrentGroupId) {
+                    alert('Vui lòng chọn một nhóm!');
+                    return;
+                }
+                try {
+                    if (files && files.length > 0) {
+                        const formData = new FormData();
+                        formData.append('content', content);
+                        formData.append('groupId', indexCurrentGroupId);
+                        if (replyToMessageId) formData.append('replyToMessageId', replyToMessageId);
+                        files.forEach(file => {
+                            formData.append('files', file);
+                        });
+                        const response = await fetch('/GroupChat/SendGroupMessage', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (response.ok) {
+                            $('#groupChatInput').val('');
+                            indexSelectedFiles = [];
+                            clearIndexFilePreview();
+                            fileInput.value = '';
+                            $('#reply-preview-bar').hide();
+                            replyToMessageId = null;
+                            replyToMessageContent = null;
+                            // alert('Gửi file thành công!');
+                        } else {
+                            alert('Có lỗi xảy ra khi gửi file!');
+                        }
+                    } else {
+                        if (typeof connection !== 'undefined' && connection.invoke) {
+                            await connection.invoke("SendGroupMessage", indexCurrentGroupId, content, replyToMessageId);
+                            $('#groupChatInput').val('');
+                            $('#reply-preview-bar').hide();
+                            replyToMessageId = null;
+                            replyToMessageContent = null;
+                        } else {
+                            alert('Lỗi kết nối SignalR!');
+                        }
+                    }
+                } catch (error) {
+                    alert('Có lỗi xảy ra khi gửi tin nhắn!');
+                }
+            };
+
+            // Bind send button
+            $('.btn-send').off('click').on('click', function () {
+                sendIndexGroupMessage();
+            });
+
+            // Bind Enter key
+            $('#groupChatInput').off('keypress').on('keypress', function (e) {
+                if (e.which === 13) {
+                    e.preventDefault();
+                    sendIndexGroupMessage();
+                }
+            });
+
+            console.log('Index: File upload setup completed');
+        });
+
+        function showIndexFilePreview() {
+            const preview = document.getElementById('indexFilePreview');
+            if (!preview) return;
+
+            let html = '<div style="color: white;"><strong>Files đã chọn:</strong><br>';
+            indexSelectedFiles.forEach((file, index) => {
+                html += `• ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB)<br>`;
+            });
+            html += '<br><button type="button" onclick="clearIndexFiles()" style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 3px; cursor: pointer;">Xóa files</button></div>';
+
+            preview.innerHTML = html;
+            preview.style.display = 'block';
+        }
+
+        function clearIndexFilePreview() {
+            const preview = document.getElementById('indexFilePreview');
+            if (preview) {
+                preview.style.display = 'none';
+                preview.innerHTML = '';
+            }
+        }
+
+        window.clearIndexFiles = function () {
+            indexSelectedFiles = [];
+            const fileInput = document.getElementById('indexGroupFileInput');
+            if (fileInput) {
+                fileInput.value = '';
+            }
+            clearIndexFilePreview();
+            console.log('Index: Files cleared');
+        };
+
+        // Group search logic
+        $(document).ready(function () {
+            $('#searchGroupBtn').on('click', function () {
+                filterGroups();
+            });
+            $('#searchGroupInput').on('input', function () {
+                filterGroups();
+            });
+            function filterGroups() {
+                var keyword = $('#searchGroupInput').val().toLowerCase();
+                $('#group-list .friend-item').each(function () {
+                    var groupName = $(this).find('.friend-name').text().toLowerCase();
+                    if (groupName.includes(keyword)) {
+                        $(this).show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            }
+        });
+    </script>
+} 

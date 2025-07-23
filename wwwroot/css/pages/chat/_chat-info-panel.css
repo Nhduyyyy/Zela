@@ -1,0 +1,365 @@
+/*=======================================================================================*/
+/*                                5. CHAT INFO PANEL                                    */
+/*=======================================================================================*/
+
+.chat-info-panel {
+    height: 100%;
+    width: 320px;
+    border-left: 1px solid var(--theme-border-color);
+    background: rgba(11, 29, 52, 0.7);
+    backdrop-filter: blur(10px);
+    overflow-y: auto;
+    padding: 20px;
+}
+
+/* 5.1 Info Header */
+.info-header {
+    text-align: center;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--theme-border-color);
+    position: relative;
+}
+
+.info-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 50px;
+    height: 2px;
+    background: var(--theme-accent-green);
+}
+
+.info-header h4 {
+    color: var(--theme-text-primary);
+    margin: 10px 0 5px;
+    font-weight: 600;
+}
+
+/* 5.2 Group Meta Information */
+.group-meta {
+    text-align: center;
+}
+
+.group-meta h5 {
+    color: var(--theme-text-primary);
+    font-size: 1.1rem;
+    margin: 0 0 5px;
+}
+
+.group-meta p {
+    color: var(--theme-text-muted);
+    font-size: 0.9rem;
+}
+
+.group-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.group-actions .btn {
+    padding: 8px 15px;
+    font-size: 0.9rem;
+    border-radius: 20px;
+    border: 1px solid var(--theme-text-secondary);
+    background: transparent;
+    color: var(--theme-text-secondary);
+}
+
+.group-actions .btn:hover {
+    background: var(--theme-bg-hover);
+    color: var(--theme-accent-green);
+    border-color: var(--theme-accent-green);
+}
+
+.group-actions .btn.primary {
+    background: var(--theme-accent-green);
+    color: var(--theme-text-dark);
+    border-color: var(--theme-accent-green);
+}
+
+.group-actions .btn.primary:hover {
+    background: var(--theme-accent-green-alt);
+    transform: translateY(-2px);
+    box-shadow: var(--theme-shadow-neon);
+}
+
+/* 5.3 Info Sections */
+.info-section {
+    margin-bottom: 25px;
+}
+
+.info-section h6 {
+    color: var(--theme-text-secondary);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    margin-bottom: 15px;
+    border-bottom: 1px solid var(--theme-border-color);
+    padding-bottom: 5px;
+}
+
+/* 5.4 Media Grid */
+.media-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+}
+
+.media-grid img,
+.media-grid video {
+    width: 100%;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s ease;
+    border: 1px solid var(--theme-border-color);
+    background: var(--theme-bg-dark);
+    min-width: 80px;
+    min-height: 80px;
+    max-width: 80px;
+    max-height: 80px;
+}
+
+.media-grid img:hover,
+.media-grid video:hover {
+    transform: scale(1.05);
+    border-color: var(--theme-accent-green);
+    box-shadow: 0 0 10px var(--theme-accent-green);
+}
+
+.media-grid video {
+    background: var(--theme-bg-dark);
+}
+
+.media-grid video::-webkit-media-controls {
+    display: none;
+}
+
+.media-grid video::-webkit-media-controls-panel {
+    display: none;
+}
+
+.media-grid video::-webkit-media-controls-play-button {
+    display: none;
+}
+
+.media-grid video::-webkit-media-controls-start-playback-button {
+    display: none;
+}
+
+.view-all-link {
+    display: block;
+    text-align: right;
+    margin-top: 10px;
+    color: var(--theme-accent-green);
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.view-all-link:hover {
+    text-decoration: underline;
+}
+
+/* Responsive cho media grid */
+@media (max-width: 768px) {
+    .media-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+    }
+
+    .media-grid img,
+    .media-grid video {
+        height: 60px;
+        min-width: 60px;
+        min-height: 60px;
+        max-width: 60px;
+        max-height: 60px;
+    }
+}
+
+@media (max-width: 480px) {
+    .media-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 4px;
+    }
+
+    .media-grid img,
+    .media-grid video {
+        height: 50px;
+        min-width: 50px;
+        min-height: 50px;
+        max-width: 50px;
+        max-height: 50px;
+    }
+}
+
+/* 5.5 File List */
+.file-list {
+    list-style: none;
+    padding: 0;
+}
+
+.file-item {
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid var(--theme-border-color);
+}
+
+.file-item:last-child {
+    border-bottom: none;
+}
+
+.file-item:hover {
+    background: var(--theme-bg-hover);
+}
+
+.file-item i {
+    font-size: 24px;
+    color: var(--theme-accent-sky-blue);
+    margin-right: 15px;
+}
+
+.file-item:hover i {
+    color: var(--theme-accent-green);
+}
+
+.file-details {
+    flex: 1;
+}
+
+.file-name {
+    word-break: break-word;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    color: var(--theme-text-primary);
+    font-weight: 500;
+    display: block;
+    text-decoration: none;
+}
+
+.file-size {
+    font-size: 0.8rem;
+    color: var(--theme-text-muted);
+}
+
+.file-download-btn {
+    color: var(--theme-text-muted);
+    text-decoration: none;
+    padding: 5px;
+    border-radius: 4px;
+    transition: 0.3s ease;
+}
+
+.file-download-btn:hover {
+    color: var(--theme-accent-green);
+    background: var(--theme-bg-hover);
+}
+
+/*=======================================================================================*/
+/*                                6. SIDEBAR MEDIA                                      */
+/*=======================================================================================*/
+
+/* CSS đã được chuyển sang file riêng: components/sidebar-media.css */
+
+/* Modal Media Styles */
+.modal-content {
+    background: var(--theme-bg-dark);
+    border: 1px solid var(--theme-border-color);
+    border-radius: 15px;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--theme-border-color);
+    background: var(--theme-bg-secondary);
+    border-radius: 15px 15px 0 0;
+}
+
+.modal-title {
+    color: var(--theme-text-primary);
+}
+
+.btn-close {
+    filter: invert(1);
+}
+
+.modal-body {
+    background: var(--theme-bg-dark);
+    border-radius: 0 0 15px 15px;
+}
+
+/* Loading and Error States */
+.sidebar-media .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    color: var(--theme-accent-green);
+}
+
+.sidebar-media .text-danger {
+    color: var(--theme-accent-red) !important;
+}
+
+.sidebar-media .btn-outline-primary {
+    border-color: var(--theme-accent-green);
+    color: var(--theme-accent-green);
+}
+
+.sidebar-media .btn-outline-primary:hover {
+    background-color: var(--theme-accent-green);
+    border-color: var(--theme-accent-green);
+    color: var(--theme-text-dark);
+}
+
+/* Empty State */
+.empty-state {
+    padding: 2rem 1rem;
+}
+
+.empty-state i {
+    opacity: 0.5;
+    transition: all 0.3s ease;
+}
+
+.empty-state:hover i {
+    opacity: 0.8;
+    transform: scale(1.05);
+}
+
+/* Header Improvements */
+.sidebar-media .info-header {
+    text-align: left;
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--theme-border-color);
+    position: relative;
+}
+
+.sidebar-media .info-header::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    width: 50px;
+    height: 2px;
+    background: var(--theme-accent-green);
+}
+
+.sidebar-media .info-header h4 {
+    color: var(--theme-text-primary);
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.sidebar-media .info-header small {
+    font-size: 0.85rem;
+    opacity: 0.8;
+} 

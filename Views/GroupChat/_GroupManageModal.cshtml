@@ -1,0 +1,137 @@
+@* Modal Quản lý nhóm - Đậm chất Zela, tông tím-xanh, magenta, glass, shadow, bo góc lớn *@
+<link rel="stylesheet" href="/css/components/group-manage-modal.css" />
+<script src="/js/group-manage-modal.js"></script>
+<div class="modal fade" id="groupManageModal" tabindex="-1" aria-labelledby="groupManageModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content group-manage-modal">
+            <div class="modal-header">
+                <h5 class="modal-title" id="groupManageModalLabel">
+                    <i class="bi bi-gear me-2"></i>Quản lý nhóm
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                @* TempData message containers *@
+                <div data-tempdata-success="@TempData["SuccessMessage"]"></div>
+                <div data-tempdata-error="@TempData["ErrorMessage"]"></div>
+                
+                <div class="row g-3">
+                    <div class="col-12 col-md-4 mb-3 mb-md-0">
+                        <ul class="nav nav-pills flex-column group-manage-nav" id="groupManageTab" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="status-tab" data-bs-toggle="pill" data-bs-target="#status" type="button" role="tab" aria-controls="status" aria-selected="true">
+                                    <i class="bi bi-bar-chart me-2"></i>Trạng thái nhóm
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="settings-tab" data-bs-toggle="pill" data-bs-target="#settings" type="button" role="tab" aria-controls="settings" aria-selected="false">
+                                    <i class="bi bi-pencil-square me-2"></i>Thông tin nhóm
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="requests-tab" data-bs-toggle="pill" data-bs-target="#requests" type="button" role="tab" aria-controls="requests" aria-selected="false">
+                                    <i class="bi bi-person-check me-2"></i>Yêu cầu tham gia
+                                </button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-danger" id="delete-tab" data-bs-toggle="pill" data-bs-target="#delete" type="button" role="tab" aria-controls="delete" aria-selected="false">
+                                    <i class="bi bi-trash me-2"></i>Xóa nhóm
+                                </button>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="col-12 col-md-8">
+                        <div class="tab-content group-manage-content" id="groupManageTabContent">
+                            <div class="tab-pane fade show active" id="status" role="tabpanel" aria-labelledby="status-tab">
+                                <h6>Trạng thái nhóm</h6>
+                                <p>Hiển thị trạng thái hiện tại của nhóm. (Nội dung chi tiết sẽ bổ sung sau)</p>
+                                <div class="mb-2">
+                                    <label for="groupLink" class="form-label">Link tham gia nhóm:</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="groupLink" value="@($"{Context.Request.Scheme}://{Context.Request.Host}/GroupChat/Join?groupId={Model.GroupId}")" readonly @(Model.RoomType == Zela.Enum.RoomType.Private ? "disabled" : "")>
+                                        <button class="btn btn-outline-secondary" type="button" onclick="navigator.clipboard.writeText(document.getElementById('groupLink').value)" @(Model.RoomType == Zela.Enum.RoomType.Private ? "disabled" : "")>Copy</button>
+                                    </div>
+                                    <small class="text-muted">Chia sẻ link này để người khác có thể tham gia nhóm.</small>
+                                    @if (Model.RoomType == Zela.Enum.RoomType.Private)
+                                    {
+                                        <div class="text-danger mt-1">Phòng riêng tư không thể tham gia bằng link.</div>
+                                    }
+                                </div>
+                            </div>
+                            <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="settings-tab">
+                                <h6>Chỉnh sửa thông tin nhóm</h6>
+                                <form asp-action="EditGroup" asp-controller="GroupChat" method="post" enctype="multipart/form-data" id="editGroupForm">
+                                    <input type="hidden" name="GroupId" value="@Model.GroupId" />
+                                    <div class="mb-3">
+                                        <label for="RoomType" class="form-label">Loại phòng:</label>
+                                        <select class="form-select" id="RoomType" name="RoomType">
+                                            @if (Model.RoomType == Zela.Enum.RoomType.Public) {
+                                                <option value="0" selected="selected">Công cộng</option>
+                                            } else {
+                                                <option value="0">Công cộng</option>
+                                            }
+                                            @if (Model.RoomType == Zela.Enum.RoomType.Private) {
+                                                <option value="1" selected="selected">Riêng tư</option>
+                                            } else {
+                                                <option value="1">Riêng tư</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="Name" class="form-label">Tên nhóm</label>
+                                        <input type="text" class="form-control" id="Name" name="Name" value="@Model.Name" required>
+                                        <div class="invalid-feedback">Tên nhóm là bắt buộc</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="Description" class="form-label">Mô tả</label>
+                                        <input type="text" class="form-control" id="Description" name="Description" value="@Model.Description">
+                                        <div class="invalid-feedback">Mô tả không được vượt quá 50 ký tự</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="Password" class="form-label">Mật khẩu nhóm (nếu có)</label>
+                                        <input type="password" class="form-control" id="Password" name="Password" autocomplete="new-password">
+                                        <div class="invalid-feedback">Mật khẩu không được vượt quá 50 ký tự</div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Ảnh đại diện nhóm hiện tại</label><br />
+                                        <img src="@Model.AvatarUrl" alt="Avatar nhóm" class="rounded-circle mb-2" style="width: 80px; height: 80px; object-fit: cover;">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label">Đổi ảnh đại diện nhóm (upload cloud)</label>
+                                        <input type="file" name="avatarFile" class="form-control" accept="image/*" />
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="tab-pane fade" id="requests" role="tabpanel" aria-labelledby="requests-tab">
+                                <h6>Yêu cầu tham gia</h6>
+                                <p>Quản lý các yêu cầu tham gia nhóm. (Nội dung chi tiết sẽ bổ sung sau)</p>
+                            </div>
+                            <div class="tab-pane fade" id="delete" role="tabpanel" aria-labelledby="delete-tab">
+                                <h6 class="text-danger">Xóa nhóm</h6>
+                                <p>Bạn có chắc chắn muốn xóa nhóm này không? Hành động này không thể hoàn tác.</p>
+                                @{
+                                    var currentUserId = Context.Session.GetInt32("UserId") ?? 0;
+                                    if (Model.CreatorId == currentUserId)
+                                    {
+                                        <form asp-action="DeleteGroup" asp-controller="GroupChat" method="post" style="display:inline;" onsubmit="return confirm('Bạn có chắc chắn muốn xóa nhóm này?');">
+                                            <input type="hidden" name="groupId" value="@Model.GroupId" />
+                                            <button type="submit" class="btn btn-danger">Xóa nhóm</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <button class="btn btn-outline-danger" disabled>Chỉ chủ phòng mới được xóa nhóm</button>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

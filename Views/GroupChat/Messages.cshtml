@@ -1,0 +1,208 @@
+@model Zela.ViewModels.GroupMessagesViewModel
+@{
+    ViewData["Title"] = $"Chat nhóm - {Model.GroupName}";
+    Layout = "_Layout";
+}
+
+<div class="chat-container">
+    <div class="chat-header">
+        <div class="chat-header-info">
+            <img src="@(Model.Group?.AvatarUrl ?? "/images/default-group-avatar.png")" alt="Group Avatar" class="chat-avatar">
+            <div class="chat-info">
+                <h5 class="chat-name">@Model.GroupName</h5>
+                <span class="chat-status">@Model.Messages.Count tin nhắn</span>
+            </div>
+        </div>
+        <div class="chat-header-actions">
+            <button class="btn btn-outline-primary btn-sm" onclick="loadGroupSidebar(@Model.GroupId)">
+                <i class="bi bi-info-circle"></i> Thông tin
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" onclick="loadGroupSidebarMedia(@Model.GroupId)">
+                <i class="bi bi-images"></i> Media
+            </button>
+        </div>
+    </div>
+
+    <div class="chat-content" id="chat-content">
+        @if (Model.Messages != null && Model.Messages.Any())
+        {
+            foreach (var message in Model.Messages)
+            {
+                <div class="message @(message.IsMine ? "right" : "left")" data-id="@message.MessageId">
+                    @if (!message.IsMine)
+                    {
+                        <img src="@(message.AvatarUrl ?? "/images/default-avatar.jpeg")" class="message-avatar" alt="@message.SenderName">
+                    }
+                    <div class="message-content">
+                        @if (!message.IsMine)
+                        {
+                            <div class="message-sender">@message.SenderName</div>
+                        }
+                        <span class="message-time">@message.SentAt.ToString("HH:mm")</span>
+                        
+                        @if (message.Media != null && message.Media.Any())
+                        {
+                            foreach (var media in message.Media)
+                            {
+                                if (media.MediaType?.StartsWith("image/") == true)
+                                {
+                                    <img src="@media.Url" class="message-media-img" alt="Ảnh gửi" />
+                                }
+                                else if (media.MediaType?.StartsWith("video/") == true)
+                                {
+                                    <video src="@media.Url" class="message-media-video" controls></video>
+                                }
+                                else
+                                {
+                                    var isTextDoc = media.FileName != null && (media.FileName.EndsWith(".txt") || 
+                                                                               media.FileName.EndsWith(".doc") || 
+                                                                               media.FileName.EndsWith(".docx"));
+                                    if (isTextDoc)
+                                    {
+                                        <div class="file-block file-summary-block" data-media-url="@media.Url" data-filename="@media.FileName">
+                                            <div class="chat-file-attachment-group">
+                                                <div class="chat-file-attachment">
+                                                    <span class="file-icon"><i class="bi bi-file-earmark-text"></i></span>
+                                                    <span class="file-name">@media.FileName</span>
+                                                    <a href="@media.Url" download="@media.FileName" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                                                </div>
+                                                <div class="chat-file-attachment">
+                                                    <button type="button" class="btn btn-primary btn-preview-file" data-media-url="@media.Url" data-filename="@media.FileName">
+                                                        Xem trước
+                                                    </button>
+                                                    <button type="button" class="btn btn-primary btn-summarize-file" data-media-url="@media.Url" data-filename="@media.FileName">
+                                                        <span class="btn-summarize-text">Tóm tắt file</span>
+                                                        <span class="btn-summarize-loading" style="display:none;">
+                                                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Đang tóm tắt...
+                                                        </span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            @* preview-block *@
+                                            <div class="file-preview-content" style="display:none;"></div>
+                                            @* summary-block *@
+                                            <div class="file-summary-content" style="display:none;"></div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="chat-file-attachment">
+                                            <span class="file-icon"><i class="bi bi-file-earmark"></i></span>
+                                            <span class="file-name">@media.FileName</span>
+                                            <a href="@media.Url" download="@media.FileName" class="file-download-btn" title="Tải về"><i class="bi bi-download"></i></a>
+                                        </div>
+                                    }
+                                }
+                            }
+                        }
+
+                        @if (!string.IsNullOrEmpty(message.StickerUrl))
+                        {
+                            <img src="@message.StickerUrl" class="sticker-message" alt="Sticker" draggable="false">
+                        }
+
+                        @if (!string.IsNullOrEmpty(message.Content))
+                        {
+                            <span class="message-bubble">@Html.Raw(message.Content.Replace("\n", "<br>"))</span>
+                        }
+
+                        @if (message.IsMine)
+                        {
+                            <span class="message-status">Đã gửi</span>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="no-messages">
+                <div class="no-messages-content">
+                    <i class="bi bi-chat-dots"></i>
+                    <h5>Chưa có tin nhắn nào</h5>
+                    <p>Hãy bắt đầu cuộc trò chuyện trong nhóm này!</p>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="chat-input-container">
+        <form id="messageForm" class="chat-input-form">
+            <input type="hidden" name="groupId" value="@Model.GroupId" />
+            
+            <div class="chat-input-bar">
+                <div class="chat-input-actions">
+                    <button type="button" class="btn btn-link" onclick="document.getElementById('group-file-input').click()">
+                        <i class="bi bi-paperclip"></i>
+                    </button>
+                    <button type="button" class="btn btn-link sticker-btn">
+                        <i class="bi bi-emoji-smile"></i>
+                    </button>
+                </div>
+                
+                <div class="chat-input-wrapper">
+                    <input type="text" name="content" class="form-control" placeholder="Nhập tin nhắn..." id="messageInput">
+                    <input type="file" id="group-file-input" name="files" multiple style="display: none;" 
+                           accept="image/*,video/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-send">
+                    <i class="bi bi-send"></i>
+                </button>
+            </div>
+            
+            <div id="file-preview" class="file-preview" style="display: none;"></div>
+        </form>
+    </div>
+</div>
+
+<div id="sidebar-right" class="sidebar-right">
+    <!-- Sidebar content will be loaded here -->
+</div>
+
+@section Scripts {
+    <script src="~/js/group-chat-window.js"></script>
+    <script src="~/js/add-member.js"></script>
+    <script>
+        // Khởi tạo biến global cho group chat
+        window.currentGroupId = @Model.GroupId;
+        window.currentUserId = @Context.Session.GetInt32("UserId") ?? 0;
+        
+        console.log('View initialized with:', {
+            currentGroupId: window.currentGroupId,
+            currentUserId: window.currentUserId,
+            groupName: '@Model.GroupName',
+            messageCount: @Model.Messages.Count
+        });
+        
+        // Set data attribute để JavaScript có thể đọc
+        document.body.setAttribute('data-current-user-id', window.currentUserId);
+        document.body.setAttribute('data-group-id', window.currentGroupId);
+        
+        // Load sidebar khi trang load
+        $(document).ready(function() {
+            console.log('Document ready, loading sidebar...');
+            loadGroupSidebar(@Model.GroupId);
+        });
+        
+        function loadGroupSidebar(groupId) {
+            console.log('Loading sidebar for group:', groupId);
+            $.get('/GroupChat/GetGroupSidebar', { groupId: groupId }, function(html) {
+                $('#sidebar-right').html(html);
+                console.log('Sidebar loaded successfully');
+            }).fail(function(xhr, status, error) {
+                console.error('Failed to load sidebar:', error);
+            });
+        }
+        
+        function loadGroupSidebarMedia(groupId) {
+            console.log('Loading sidebar media for group:', groupId);
+            $.get('/GroupChat/GetGroupSidebarMedia', { groupId: groupId }, function(html) {
+                $('#sidebar-right').html(html);
+                console.log('Sidebar media loaded successfully');
+            }).fail(function(xhr, status, error) {
+                console.error('Failed to load sidebar media:', error);
+            });
+        }
+    </script>
+} 

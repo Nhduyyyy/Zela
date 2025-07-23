@@ -1,0 +1,113 @@
+@model Zela.ViewModels.FriendViewModel
+<div class="chat-info-panel">
+    <div class="info-header">
+        <h4><i class="bi bi-info-circle me-2"></i>Thông tin hội thoại</h4>
+    </div>
+
+    <div class="group-meta">
+        <div class="user-info">
+            <div class="user-avatar-panel-container text-center mb-3">
+                <img class="user-avatar rounded-circle" src="@Model.AvatarUrl" alt="Avatar" style="width: 80px; height: 80px; object-fit: cover;"/>
+            </div>
+            <div class="user-details text-center">
+                <h5 class="user-name">@Model.FullName</h5>
+                <p class="user-email text-muted">@Model.Email</p>
+                <span class="user-status @(Model.IsOnline ? "online" : "offline")">
+                    <i class="bi bi-circle-fill"></i>
+                    @(Model.IsOnline ? "Online" : "Offline")
+                </span>
+                @if (!string.IsNullOrEmpty(Model.LastTime))
+                {
+                    <p class="user-last-seen text-muted small">Hoạt động lúc @Model.LastTime</p>
+                }
+            </div>
+        </div>
+
+        <div class="group-actions">
+            <button class="btn">
+                <i class="bi bi-bell-slash me-1"></i>Tắt thông báo
+            </button>
+            <button class="btn">
+                <i class="bi bi-pin me-1"></i>Ghim hội thoại
+            </button>
+            <button class="btn">
+                <i class="bi bi-telephone me-1"></i>Gọi điện
+            </button>
+            <button class="btn">
+                <i class="bi bi-camera-video me-1"></i>Gọi video
+            </button>
+            <a>Tìm kiếm tin nhắn</a>
+        </div>
+    </div>
+    
+    @* search message *@
+    <div class="search-message-section">
+        <div class="search-message-input-group">
+            <input type="text" id="searchMessageInput" class="form-control" placeholder="Tìm kiếm tin nhắn...">
+            <button id="searchMessageBtn" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-search"></i>
+            </button>
+        </div>
+        <div id="searchMessageResults" class="search-message-results"></div>
+    </div>
+
+    <div class="info-section">
+        <h6><i class="bi bi-newspaper me-2"></i>Bảng tin</h6>
+        <ul class="list-unstyled">
+            <li class="mb-2">
+                <i class="bi bi-bell text-warning me-2"></i>
+                <a href="#" class="text-decoration-none">Danh sách nhắc hẹn</a>
+            </li>
+            <li>
+                <i class="bi bi-sticky text-info me-2"></i>
+                <a href="#" class="text-decoration-none">Ghi chú, ghim, bình chọn</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="info-section">
+        <h6><i class="bi bi-images me-2"></i>Ảnh/Video</h6>
+        <div class="media-grid">
+            <img src="https://images.unsplash.com/photo-1551033406-611cf9a28f67?w=150&h=150&fit=crop" alt="Media">
+            <img src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=150&h=150&fit=crop" alt="Media">
+            <img src="https://images.unsplash.com/photo-1484417894907-623942c8ee29?w=150&h=150&fit=crop" alt="Media">
+            <img src="https://images.unsplash.com/photo-1486312338219-ce68d2c6f44d?w=150&h=150&fit=crop" alt="Media">
+            <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=150&h=150&fit=crop" alt="Media">
+            <img src="https://images.unsplash.com/photo-1557804506-669a67965ba0?w=150&h=150&fit=crop" alt="Media">
+        </div>
+        <a href="#" class="view-all-link">
+            <i class="bi bi-arrow-right me-1"></i>Xem tất cả
+        </a>
+    </div>
+
+    <div class="info-section">
+        <h6><i class="bi bi-files me-2"></i>File đã chia sẻ</h6>
+        <ul class="file-list">
+            <li class="file-item">
+                <i class="bi bi-file-earmark-word-fill"></i>
+                <div class="file-details">
+                    <p class="file-name">Report 2.docx</p>
+                    <p class="file-size">1.57 MB</p>
+                </div>
+            </li>
+            <li class="file-item">
+                <i class="bi bi-file-earmark-word-fill"></i>
+                <div class="file-details">
+                    <p class="file-name">Report 3.docx</p>
+                    <p class="file-size">27.77 MB</p>
+                </div>
+            </li>
+            <li class="file-item">
+                <i class="bi bi-file-earmark-excel-fill text-success"></i>
+                <div class="file-details">
+                    <p class="file-name">Review.xlsx</p>
+                    <p class="file-size">11.3 KB</p>
+                </div>
+            </li>
+        </ul>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/search-message.js"></script>
+}

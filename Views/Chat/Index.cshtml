@@ -1,0 +1,133 @@
+@model List<Zela.ViewModels.FriendViewModel>
+@{
+    ViewData["Title"] = "Zela Chat – 1-1";
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/themes/chat-theme.css"/>
+    <link rel="stylesheet" href="~/css/pages/chat.css?v=@DateTime.Now.Ticks"/>
+    <link rel="stylesheet" href="~/css/pages/chat/_reactions.css"/>
+    <link rel="stylesheet" href="~/css/pages/chat/_group-chat-messages.css"/>
+    <link rel="stylesheet" href="~/css/pages/chat/_chat-sidebar.css">
+}
+
+<section class="chat-window">
+    <div class="friend-list">
+        @Html.Partial("_SidebarChat")
+        <ul class="friend-items" id="friend-list">
+            @foreach (var f in Model)
+            {
+                <li class="friend-item" data-id="@f.UserId">
+                    <img class="friend-avatar" src="@f.AvatarUrl" alt="Avatar"/>
+                    <div class="friend-info">
+                        <div class="friend-name">@f.FullName</div>
+                        <div class="friend-last-msg">@f.LastMessage</div>
+                    </div>
+                    <div class="friend-meta">
+                        <span class="friend-time">@f.LastTime</span>
+                        <span class="friend-status @(f.IsOnline ? "online" : "offline")">
+                            <i class="bi bi-circle-fill"></i>
+                        </span>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+
+    <div class="chat-panel">
+        <div class="chat-header">
+            <button class="mobile-menu-btn d-md-none">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <div class="chat-user-info d-none">
+                @foreach (var f in Model)
+                {
+                    <div class="chat-user" data-id="@f.UserId">
+                        <img class="chat-user-avatar @(f.IsOnline ? "online-avatar" : "offline-avatar")"
+                             src="@f.AvatarUrl"
+                             alt="Avatar">
+                        <div class="chat-user-details">
+                            <h5> @f.FullName</h5>
+                            <p class="chat-user-status @(f.IsOnline ? "" : "offline")">
+                                <span class="status-dot @(f.IsOnline ? "status-online" : "status-offline")"></span>
+                                @(f.IsOnline ? "Online" : "Offline")
+                            </p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <div class="chat-actions">
+                <i class="bi bi-telephone"></i>
+                <i class="bi bi-camera-video"></i>
+                @* <i class="bi bi-search"></i> *@
+                <i class="bi bi-three-dots-vertical toggle-sidebar-btn" style="cursor: pointer;"></i>
+            </div>
+        </div>
+
+        <div class="chat-content">
+            <div class="no-chat-placeholder text-center text-muted mt-5">
+                <i class="bi bi-chat-dots fs-1"></i>
+                <p class="mt-2">Hãy chọn bạn để bắt đầu trò chuyện</p>
+            </div>
+        </div>
+        <div class="chat-input-container">
+            <div id="chat-preview" style="display:none;"></div>
+            <div class="chat-input-bar">
+                <div class="input-group d-flex align-items-center">
+                    <input type="text" placeholder="Nhập tin nhắn..." class="flex-fill">
+                    <input type="file" id="chat-file-input" name="files" multiple style="display:none;"
+                           accept="image/*,video/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,audio/*"/>
+                    <div class="input-actions">
+                        <i class="bi bi-image" title="Hình ảnh"></i>
+                        <i class="bi bi-paperclip" title="Đính kèm"></i>
+                        <i class="bi bi-emoji-smile sticker-btn" title="Emoji"></i>
+                        <i class="bi bi-send btn-send" title="Gửi"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="sidebar-right" class="sidebar-right d-none">
+        <!-- Sidebar content will be loaded dynamically -->
+    </div>
+</section>
+
+<!-- Drag & Drop Overlay -->
+<div id="drag-drop-overlay" class="drag-drop-overlay">
+    <div class="drag-drop-content">
+        <i class="bi bi-cloud-upload"></i>
+        <h3>Thả file vào đây</h3>
+        <p>Hỗ trợ ảnh, video, tài liệu<br/>Có thể thả nhiều file cùng lúc</p>
+    </div>
+</div>
+
+<!-- Include Create Group Modal -->
+@Html.Partial("_CreateGroup")
+
+@section Scripts {
+    <script>
+        // Set current user ID để xác định tin nhắn của mình
+        const currentUserId = @(User.Identity.IsAuthenticated ? User.FindFirst("UserId")?.Value ?? "0" : "0");
+    </script>
+    <script src="~/js/chat-window.js"></script>
+    <script src="~/js/chat-search.js"></script>
+    <script src="~/js/search-message.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const toggleBtn = document.querySelector(".toggle-sidebar-btn");
+            const sidebar = document.getElementById("sidebar-right");
+
+            toggleBtn.addEventListener("click", function () {
+                sidebar.classList.toggle("d-none");
+                sidebar.classList.toggle("show");
+            });
+        });
+        
+        function selectFriend(userId) {
+            document
+        }
+    </script>
+}

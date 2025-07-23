@@ -1,0 +1,285 @@
+@inherits Microsoft.AspNetCore.Mvc.Razor.RazorPage<dynamic>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@ViewData["Title"] - Zela Admin</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    
+    <!-- Admin CSS Variables -->
+    <link rel="stylesheet" href="~/css/admin/variables.css" />
+    <!-- Admin CSS - UNIFIED THEME 🎨 -->
+    <link rel="stylesheet" href="~/css/admin/LayoutAdmin.css" />
+    
+    <!-- Page-specific CSS -->
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "Index")
+    {
+        <link rel="stylesheet" href="~/css/admin/dashboard.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "Users")
+    {
+        <link rel="stylesheet" href="~/css/admin/users.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "UserDetails")
+    {
+        <link rel="stylesheet" href="~/css/admin/users.css" />
+        <link rel="stylesheet" href="~/css/admin/user-details.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "Groups")
+    {
+        <link rel="stylesheet" href="~/css/admin/groups.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "GroupDetails")
+    {
+        <link rel="stylesheet" href="~/css/admin/groups.css" />
+        <link rel="stylesheet" href="~/css/admin/group-details.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "Meetings")
+    {
+        <link rel="stylesheet" href="~/css/admin/meetings.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "MeetingDetails")
+    {
+        <link rel="stylesheet" href="~/css/admin/meetings.css" />
+        <link rel="stylesheet" href="~/css/admin/meeting-details.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "Quizzes" || ViewContext.RouteData.Values["Action"]?.ToString() == "QuizDetails")
+    {
+        <link rel="stylesheet" href="~/css/admin/quizzes.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "Files" || ViewContext.RouteData.Values["Action"]?.ToString() == "FileDetails")
+    {
+        <link rel="stylesheet" href="~/css/admin/files.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "Payments" || ViewContext.RouteData.Values["Action"]?.ToString() == "PaymentDetails")
+    {
+        <link rel="stylesheet" href="~/css/admin/payments.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "Analytics")
+    {
+        <link rel="stylesheet" href="~/css/admin/analytics.css" />
+    }
+    @if (ViewContext.RouteData.Values["Action"]?.ToString() == "MeetingDetails")
+    {
+        <link rel="stylesheet" href="~/css/admin/meeting-details.css" />
+    }
+    @RenderSection("Styles", required: false)
+</head>
+<body class="admin-body">
+    <div class="admin-wrapper">
+        <!-- Sidebar -->
+        <nav id="sidebar" class="sidebar admin-sidebar">
+            <!-- Sidebar Header -->
+            <div class="sidebar-header">
+                <a href="#" class="logo">
+                    <i class="bi bi-lightning-charge-fill"></i>
+                    <span class="logo-text">Zela Admin</span>
+                </a>
+            </div>
+
+            <!-- Navigation Menu -->
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a asp-action="Index" class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Index" ? "active" : "")">
+                        <i class="bi bi-speedometer2"></i>
+                        <span class="link-text">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Users" class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Users" ? "active" : "")">
+                        <i class="bi bi-people-fill"></i>
+                        <span class="link-text">Quản lý User</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Groups" class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Groups" || ViewContext.RouteData.Values["Action"].ToString() == "GroupDetails" ? "active" : "")">
+                        <i class="bi bi-chat-dots-fill"></i>
+                        <span class="link-text">Quản lý Nhóm</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Meetings" class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Meetings" || ViewContext.RouteData.Values["Action"].ToString() == "MeetingDetails" ? "active" : "")">
+                        <i class="bi bi-camera-video-fill"></i>
+                        <span class="link-text">Quản lý Phòng họp</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Quizzes" class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Quizzes" || ViewContext.RouteData.Values["Action"].ToString() == "QuizDetails" ? "active" : "")">
+                        <i class="bi bi-clipboard-data-fill"></i>
+                        <span class="link-text">Quản lý Quiz</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Files" class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Files" || ViewContext.RouteData.Values["Action"].ToString() == "FileDetails" ? "active" : "")">
+                        <i class="bi bi-file-earmark-fill"></i>
+                        <span class="link-text">Quản lý File</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Payments" class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Payments" || ViewContext.RouteData.Values["Action"].ToString() == "PaymentDetails" || ViewContext.RouteData.Values["Action"].ToString() == "Subscriptions" ? "active" : "")">
+                        <i class="bi bi-credit-card-fill"></i>
+                        <span class="link-text">Thanh toán</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="SystemLogs" class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "SystemLogs" || ViewContext.RouteData.Values["Action"].ToString() == "LogDetails" ? "active" : "")">
+                        <i class="bi bi-journal-text"></i>
+                        <span class="link-text">System Logs</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a asp-action="Analytics" class="nav-link @(ViewContext.RouteData.Values["Action"].ToString() == "Analytics" ? "active" : "")">
+                        <i class="bi bi-bar-chart-fill"></i>
+                        <span class="link-text">Analytics</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="#" class="nav-link">
+                        <i class="bi bi-gear-fill"></i>
+                        <span class="link-text">Cài đặt</span>
+                    </a>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Main Content -->
+        <div class="content admin-main-content">
+            <!-- Top Navigation -->
+            <nav class="top-navbar">
+                <div class="container-fluid admin-d-flex admin-align-center admin-justify-between">
+                    <div class="admin-d-flex admin-align-center admin-gap-md">
+                        <button id="toggleSidebar" class="toggle-sidebar-btn">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        
+                        <div class="admin-breadcrumb">
+                            <span class="admin-text-secondary">Admin Panel</span>
+                            <i class="bi bi-chevron-right admin-text-light"></i>
+                            <span class="admin-text-primary">@ViewData["Title"]</span>
+                        </div>
+                    </div>
+
+                    <div class="admin-user-info">
+                        <div class="admin-d-flex admin-align-center admin-gap-sm">
+                            <img src="@(Context.Session.GetString("AvatarUrl") ?? "/images/default-avatar.jpeg")" 
+                                 alt="Admin Avatar" 
+                                 class="admin-user-avatar">
+                            <div>
+                                <div class="admin-user-name">@(Context.Session.GetString("FullName") ?? "Admin")</div>
+                                <small class="admin-text-secondary">Administrator</small>
+                            </div>
+                        </div>
+                        <!-- Nút chuyển dark mode -->
+                        <button id="toggleDarkMode" class="admin-btn admin-btn-secondary admin-btn-sm" title="Chuyển dark/light mode" style="margin-left: 1rem;">
+                            <i class="bi bi-moon-stars-fill" id="darkModeIcon"></i>
+                        </button>
+                        
+                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="admin-logout-btn">
+                                <i class="bi bi-box-arrow-right"></i>
+                                Đăng xuất
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </nav>
+
+            <!-- Main Content Area -->
+            <main class="admin-main">
+                <div class="admin-page-header admin-animate-fade-in">
+                    <h1 class="admin-page-title">@ViewData["Title"]</h1>
+                    <p class="admin-page-subtitle">Quản lý và giám sát hệ thống Zela</p>
+                </div>
+
+                <div class="admin-animate-slide-in">
+                    @RenderBody()
+                </div>
+            </main>
+
+            <!-- Footer -->
+            <footer class="admin-footer">
+                <div class="admin-d-flex admin-align-center admin-justify-between">
+                    <div>
+                        © @DateTime.Now.Year <strong>Zela Admin Panel</strong>. Tất cả quyền được bảo lưu.
+                    </div>
+                    <div class="admin-d-flex admin-align-center admin-gap-md">
+                        <span class="admin-text-secondary">Phiên bản 2.0.0</span>
+                        <span class="admin-text-light">|</span>
+                        <a href="#" class="admin-text-secondary">Hỗ trợ</a>
+                    </div>
+                </div>
+            </footer>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Toggle Sidebar
+        document.getElementById('toggleSidebar').addEventListener('click', function () {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('collapsed');
+            
+            // Save state to localStorage
+            localStorage.setItem('sidebarCollapsed', sidebar.classList.contains('collapsed'));
+        });
+
+        // Restore sidebar state
+        document.addEventListener('DOMContentLoaded', function() {
+            const isCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (isCollapsed) {
+                document.getElementById('sidebar').classList.add('collapsed');
+            }
+        });
+
+        // Mobile responsive
+        function handleResize() {
+            const sidebar = document.getElementById('sidebar');
+            if (window.innerWidth <= 768) {
+                sidebar.classList.add('collapsed');
+            }
+        }
+
+        window.addEventListener('resize', handleResize);
+        handleResize(); // Initial check
+
+        // Dark mode toggle
+        const htmlTag = document.documentElement;
+        const darkModeBtn = document.getElementById('toggleDarkMode');
+        const darkModeIcon = document.getElementById('darkModeIcon');
+        function setDarkMode(isDark) {
+            if (isDark) {
+                htmlTag.setAttribute('data-theme', 'dark');
+                darkModeIcon.classList.remove('bi-moon-stars-fill');
+                darkModeIcon.classList.add('bi-brightness-high-fill');
+            } else {
+                htmlTag.removeAttribute('data-theme');
+                darkModeIcon.classList.remove('bi-brightness-high-fill');
+                darkModeIcon.classList.add('bi-moon-stars-fill');
+            }
+            localStorage.setItem('zelaAdminDarkMode', isDark ? '1' : '0');
+        }
+        // Khởi tạo trạng thái dark mode
+        document.addEventListener('DOMContentLoaded', function() {
+            const isDark = localStorage.getItem('zelaAdminDarkMode') === '1';
+            setDarkMode(isDark);
+            darkModeBtn.addEventListener('click', function() {
+                setDarkMode(!htmlTag.hasAttribute('data-theme'));
+            });
+        });
+    </script>
+    
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,52 @@
+@{
+    ViewData["Title"] = "Đăng nhập";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Zela – Đăng nhập</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet" />
+    <link rel="stylesheet" href="~/css/pages/login.css" />
+</head>
+<body>
+<div class="login-wrapper">
+    <div class="login-box">
+        <div class="logo-circle animated-logo">
+            <i class="bi bi-chat-dots"></i>
+        </div>
+        <h2>Chào mừng đến Zela</h2>
+        <p>Hệ thống học tập trực tuyến thông minh</p>
+
+        <div class="oauth-buttons">
+            <!-- Google Login Razor with Icon -->
+            <form asp-controller="Account" asp-action="GoogleLogin" method="post">
+                <button type="submit" class="btn-oauth btn-google">
+                    <i class="bi bi-google"></i>
+                    <span>Đăng nhập bằng Google</span>
+                </button>
+            </form>
+
+            <!-- Facebook Login Razor with Icon -->
+            <form asp-controller="Account" asp-action="FacebookLogin" method="post">
+                <button type="submit" class="btn-oauth btn-facebook">
+                    <i class="bi bi-facebook"></i>
+                    <span>Đăng nhập bằng Facebook</span>
+                </button>
+            </form>
+
+            <!-- Optional GitHub (placeholder for future implementation) -->
+            <form asp-controller="Account" asp-action="GoogleLogin" method="post">
+                <button type="submit" class="btn-oauth btn-github" disabled>
+                    <i class="bi bi-github"></i>
+                    <span>Đăng nhập bằng GitHub (Sắp ra mắt)</span>
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

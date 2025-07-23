@@ -1,0 +1,103 @@
+<!-- Send Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Gửi thông báo</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="notificationForm">
+                    <input type="hidden" id="notificationUserId" />
+                    <div class="mb-3">
+                        <label class="form-label">Người nhận:</label>
+                        <span id="notificationUserName" class="fw-bold"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notificationTitle" class="form-label">Tiêu đề:</label>
+                        <input type="text" class="form-control" id="notificationTitle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notificationContent" class="form-label">Nội dung:</label>
+                        <textarea class="form-control" id="notificationContent" rows="4" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="notificationType" class="form-label">Loại:</label>
+                        <select class="form-control" id="notificationType">
+                            <option value="Info">Thông tin</option>
+                            <option value="Warning">Cảnh báo</option>
+                            <option value="Success">Thành công</option>
+                            <option value="Error">Lỗi</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-primary" onclick="submitNotification()">Gửi</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lock User Modal -->
+<div class="modal fade" id="lockModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Khóa tài khoản</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="lockForm">
+                    <input type="hidden" id="lockUserId" />
+                    <div class="mb-3">
+                        <label class="form-label">Người dùng:</label>
+                        <span id="lockUserName" class="fw-bold"></span>
+                    </div>
+                    <div class="mb-3">
+                        <label for="lockReason" class="form-label">Lý do khóa:</label>
+                        <textarea class="form-control" id="lockReason" rows="3" placeholder="Nhập lý do khóa tài khoản..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-warning" onclick="submitLock()">Khóa tài khoản</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete User Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Xóa người dùng</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="deleteForm">
+                    <input type="hidden" id="deleteUserId" />
+                    <div class="mb-3">
+                        <label class="form-label">Người dùng:</label>
+                        <span id="deleteUserName" class="fw-bold"></span>
+                    </div>
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Cảnh báo:</strong> Hành động này sẽ xóa người dùng khỏi hệ thống. Dữ liệu sẽ không thể khôi phục.
+                    </div>
+                    <div class="mb-3">
+                        <label for="deleteReason" class="form-label">Lý do xóa:</label>
+                        <textarea class="form-control" id="deleteReason" rows="3" placeholder="Nhập lý do xóa người dùng..." required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                <button type="button" class="btn btn-danger" onclick="submitDelete()">Xóa người dùng</button>
+            </div>
+        </div>
+    </div>
+</div> 

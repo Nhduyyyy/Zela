@@ -1,0 +1,248 @@
+@model Zela.ViewModels.GroupViewModel
+@await Html.PartialAsync("_GroupManageModal")
+<div class="chat-info-panel" data-group-id="@Model.GroupId">
+    <div class="info-header">
+        <h4><i class="bi bi-info-circle me-2" aria-hidden="true"></i>Thông tin nhóm</h4>
+    </div>
+
+    <div class="group-meta">
+        <div class="group-info">
+            <div class="group-avatar-container text-center mb-3">
+                <img class="group-avatar rounded-circle" src="@Model.AvatarUrl" alt="Ảnh đại diện nhóm @Model.Name"
+                     style="width: 80px; height: 80px; object-fit: cover;"/>
+            </div>
+            <div class="group-details text-center">
+                <h5 class="group-name">@Model.Name</h5>
+                <p class="group-description text-muted">@Model.Description</p>
+                <p class="group-member-count">
+                    <i class="bi bi-people me-1" aria-hidden="true"></i>@Model.MemberCount thành viên
+                </p>
+            </div>
+        </div>
+
+        <div class="group-actions d-flex flex-wrap gap-2 align-items-center mb-3">
+            <div class="btn-group btn-group-sm" role="group">
+                <button class="btn btn-light" type="button" title="Tắt thông báo nhóm" aria-label="Tắt thông báo nhóm">
+                    <i class="bi bi-bell-slash"></i>
+                </button>
+                <button class="btn btn-light" type="button" title="Ghim hội thoại" aria-label="Ghim hội thoại">
+                    <i class="bi bi-pin"></i>
+                </button>
+                <button class="btn btn-light" type="button" id="btnAddMember" title="Thêm thành viên vào nhóm" aria-label="Thêm thành viên vào nhóm">
+                    <i class="bi bi-person-plus"></i>
+                </button>
+                <div class="btn-group" role="group">
+                    <button class="btn btn-light dropdown-toggle" type="button" id="groupManageDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Quản lý nhóm" aria-label="Quản lý nhóm">
+                        <i class="bi bi-gear"></i>
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="groupManageDropdown">
+                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#groupManageModal">Quản Lý</a></li>
+                        <li><a class="dropdown-item" href="#">Thống Kê</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="info-section">
+        <h6><i class="bi bi-newspaper me-2"></i>Bảng tin nhóm</h6>
+        <ul class="list-unstyled">
+            <li class="mb-2">
+                <i class="bi bi-bell text-warning me-2"></i>
+                <a href="#" class="text-decoration-none">Danh sách nhắc hẹn</a>
+            </li>
+            <li>
+                <i class="bi bi-sticky text-info me-2"></i>
+                <a href="#" class="text-decoration-none">Ghi chú, ghim, bình chọn</a>
+            </li>
+        </ul>
+    </div>
+
+    <div class="info-section">
+        <h6><i class="bi bi-images me-2"></i>Ảnh/Video</h6>
+        @if (Model.Images.Count > 0 || Model.Videos.Count > 0)
+        {
+            <div class="media-grid">
+                @{
+                    var allMedia = Model.Images.Take(6).Select(img => new { Type = "image", Item = img })
+                                    .Concat(Model.Videos.Take(6 - Model.Images.Count).Select(vid => new { Type = "video", Item = vid }))
+                                    .Take(6).ToList();
+                }
+                @foreach (var media in allMedia)
+                {
+                    if (media.Type == "image")
+                    {
+                        <img src="@media.Item.Url" alt="Ảnh chia sẻ trong nhóm" style="width: 100%; height: 100%; object-fit: cover;">
+                    }
+                    else
+                    {
+                        <video src="@media.Item.Url" alt="Video chia sẻ trong nhóm" style="width: 100%; height: 100%; object-fit: cover;" muted>
+                            <source src="@media.Item.Url" type="@media.Item.MediaType">
+                        </video>
+                    }
+                }
+            </div>
+            <a href="#" class="view-all-link" onclick="showSidebarMedia()">
+                <i class="bi bi-arrow-right me-1"></i>Xem tất cả (@(Model.Images.Count + Model.Videos.Count) items)
+            </a>
+        }
+        else
+        {
+            <div class="text-muted">Chưa có ảnh hoặc video nào được chia sẻ.</div>
+        }
+    </div>
+
+    <div class="info-section">
+        <h6><i class="bi bi-files me-2"></i>File đã chia sẻ</h6>
+        @if (Model.Files.Count > 0)
+        {
+            <ul class="file-list">
+                @foreach (var file in Model.Files.Take(3))
+                {
+                    <li class="file-item">
+                        @{
+                            var fileExtension = System.IO.Path.GetExtension(file.FileName ?? file.Url)?.ToLower();
+                            var iconClass = fileExtension switch
+                            {
+                                ".doc" or ".docx" => "bi-file-earmark-word-fill",
+                                ".xls" or ".xlsx" => "bi-file-earmark-excel-fill text-success",
+                                ".ppt" or ".pptx" => "bi-file-earmark-ppt-fill text-warning",
+                                ".pdf" => "bi-file-earmark-pdf-fill text-danger",
+                                ".txt" => "bi-file-earmark-text-fill",
+                                _ => "bi-file-earmark-fill"
+                            };
+                        }
+                        <i class="bi @iconClass"></i>
+                        <div class="file-details">
+                            <p class="file-name">@(file.FileName ?? System.IO.Path.GetFileName(file.Url))</p>
+                            <p class="file-size">File</p>
+                        </div>
+                        <a href="@file.Url" download="@(file.FileName ?? System.IO.Path.GetFileName(file.Url))" class="file-download-btn" title="Tải về">
+                            <i class="bi bi-download"></i>
+                        </a>
+                    </li>
+                }
+            </ul>
+            @if (Model.Files.Count > 5)
+            {
+                <a href="#" class="view-all-link">
+                    <i class="bi bi-arrow-right me-1"></i>Xem tất cả (@Model.Files.Count files)
+                </a>
+            }
+        }
+        else
+        {
+            <div class="text-muted">Chưa có file nào được chia sẻ.</div>
+        }
+    </div>
+
+    <div class="info-section">
+        <h6><i class="bi bi-people me-2" aria-hidden="true"></i>Thành viên nhóm
+            <button id="toggle-member-list" class="btn btn-sm btn-outline-primary ms-2" type="button" aria-expanded="true" aria-controls="member-list-box">
+                <span class="bi bi-eye"></span>
+            </button>
+        </h6>
+        <div class="member-list" id="member-list-box">
+            @if (Model.Members != null && Model.Members.Count > 0)
+            {
+                foreach (var member in Model.Members)
+                {
+                    <div class="member-item d-flex align-items-center mb-3 position-relative group-member-item" data-user-id="@member.UserId">
+                        <img src="@(member.AvatarUrl ?? "/images/default-avatar.jpeg")"
+                             class="rounded-circle me-3" width="40" height="40" alt="Ảnh đại diện @member.FullName">
+                        <div class="member-info flex-fill">
+                            <div class="member-name fw-semibold">@member.FullName</div>
+                            <div class="member-status text-muted small">
+                                @if (member.UserId == Model.CreatorId)
+                                {
+                                    <span class="text-primary fw-bold">Chủ nhóm</span>
+                                }
+                                else if (member.IsBanned && member.BanUntil != null)
+                                {
+                                    <span class="badge bg-danger">Bị ban đến @member.BanUntil?.ToString("HH:mm dd/MM")</span>
+                                }
+                                else
+                                {
+                                    <span>Thành viên</span>
+                                }
+                            </div>
+                        </div>
+                        <span class="badge @(member.IsOnline ? "bg-success" : "bg-secondary")" aria-label="@(member.IsOnline ? "Đang online" : "Đang offline")">
+                            @(member.IsOnline ? "Online" : "Offline")
+                        </span>
+                        @if (member.UserId != Model.CreatorId) // Không cho kick/ban chủ nhóm
+                        {
+                            <div class="dropdown d-inline-block ms-2">
+                                <a href="#" id="memberActionsDropdown-@member.UserId" data-bs-toggle="dropdown" aria-expanded="false" title="Tùy chọn thành viên" class="text-dark text-decoration-none" style="font-size: 1.3rem; vertical-align: middle;">
+                                    <i class="bi bi-three-dots-vertical" style="color: white"></i>
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="memberActionsDropdown-@member.UserId">
+                                    <li>
+                                        <button class="dropdown-item btn-kick-member" data-user-id="@member.UserId" type="button">
+                                            <i class="bi bi-person-dash me-1 text-danger"></i> Kick thành viên
+                                        </button>
+                                    </li>
+                                    @if (!member.IsBanned)
+                                    {
+                                        <li>
+                                            <button class="dropdown-item btn-ban-member" data-user-id="@member.UserId" data-user-name="@member.FullName" type="button">
+                                                <i class="bi bi-person-x me-1 text-warning"></i> Ban thành viên
+                                            </button>
+                                        </li>
+                                    }
+                                    else
+                                    {
+                                        <li>
+                                            <button class="dropdown-item btn-unban-member" data-user-id="@member.UserId" type="button">
+                                                <i class="bi bi-person-check me-1 text-success"></i> Gỡ ban thành viên
+                                            </button>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="text-muted">Chưa có thành viên nào.</div>
+            }
+        </div>
+    </div>
+</div>
+<!-- Thêm container riêng cho sidebar media, nằm ngoài chat-info-panel -->
+<div id="sidebar-media-container" class="d-none"></div>
+
+<!-- Modal chọn thời gian ban thành viên -->
+<div class="modal fade" id="banMemberModal" tabindex="-1" aria-labelledby="banMemberModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="banMemberModalLabel">Ban thành viên</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form id="banMemberForm">
+          <input type="hidden" id="banUserId" name="userId" />
+          <div class="mb-3">
+            <label for="banUserName" class="form-label">Thành viên</label>
+            <input type="text" class="form-control" id="banUserName" name="userName" readonly />
+          </div>
+          <div class="mb-3">
+            <label for="banHours" class="form-label">Thời gian ban (giờ)</label>
+            <input type="number" class="form-control" id="banHours" name="banHours" min="1" max="168" value="1" required />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+        <button type="button" class="btn btn-warning" id="confirmBanBtn">Ban thành viên</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+@section Scripts {
+    <!-- Đã chuyển toàn bộ JS xử lý kick/ban/unban sang file group-sidebar.js. Hãy đảm bảo file này được load trong layout hoặc trang chính. -->
+}

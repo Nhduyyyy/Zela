@@ -1,0 +1,27 @@
+@model Zela.Models.ViewModels.CreateMeetingViewModel
+@{
+    // Đặt tiêu đề trang, sẽ hiển thị trên tab trình duyệt hoặc header của layout
+    ViewData["Title"] = "Tạo cuộc họp mới";
+}
+<!-- Hiển thị tiêu đề lớn của trang -->
+<h2>@ViewData["Title"]</h2>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/pages/create-meeting.css" />
+}
+
+<div class="create-meeting-container">
+    <!-- Form tạo cuộc họp mới, gửi dữ liệu bằng phương thức POST đến action Create của MeetingController -->
+    <form asp-action="Create" method="post" class="create-meeting-form">
+        <!-- Hiển thị lại tiêu đề trong form (có thể bỏ nếu đã có ở trên) -->
+        <h2>@ViewData["Title"]</h2>
+        <div class="form-group">
+            <!-- Label cho trường CreatorId (người tạo cuộc họp) -->
+            <label asp-for="CreatorId"></label>
+            <!-- Input hiển thị CreatorId, chỉ đọc (readonly), lấy từ ViewModel truyền xuống -->
+            <input asp-for="CreatorId" class="form-control" readonly />
+        </div>
+        <!-- Nút submit để gửi form tạo cuộc họp mới -->
+        <button type="submit">Tạo</button>
+    </form>
+</div>

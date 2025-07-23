@@ -1,0 +1,17 @@
+/* Quiz Realtime Styles - extracted from _QuizRealtimePartial.cshtml */
+
+:root {
+    --quiz-realtime-primary: #4f8cff;
+    --quiz-realtime-bg: #f7faff;
+}
+
+.quiz-realtime-leaderboard {
+    background: var(--quiz-realtime-bg);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.quiz-realtime-leaderboard h4 {
+    color: var(--quiz-realtime-primary);
+} 

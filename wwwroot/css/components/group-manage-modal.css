@@ -1,0 +1,289 @@
+/* Group Manage Modal Styles */
+.group-manage-modal {
+    background: linear-gradient(135deg, rgba(138, 43, 226, 0.1) 0%, rgba(75, 0, 130, 0.1) 100%);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(138, 43, 226, 0.2);
+    border-radius: 20px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.group-manage-modal .modal-header {
+    background: linear-gradient(135deg, #8a2be2 0%, #4b0082 100%);
+    color: white;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px 20px 0 0;
+    padding: 1.5rem;
+}
+
+.group-manage-modal .modal-title {
+    font-weight: 600;
+    font-size: 1.25rem;
+}
+
+.group-manage-modal .btn-close-white {
+    filter: brightness(0) invert(1);
+}
+
+.group-manage-modal .modal-body {
+    padding: 2rem;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 0 0 20px 20px;
+}
+
+/* Navigation Tabs */
+.group-manage-nav {
+    background: rgba(138, 43, 226, 0.05);
+    border-radius: 15px;
+    padding: 1rem;
+    border: 1px solid rgba(138, 43, 226, 0.1);
+}
+
+.group-manage-nav .nav-link {
+    color: #6c757d;
+    border: none;
+    border-radius: 10px;
+    margin-bottom: 0.5rem;
+    padding: 0.75rem 1rem;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    background: transparent;
+}
+
+.group-manage-nav .nav-link:hover {
+    background: rgba(138, 43, 226, 0.1);
+    color: #8a2be2;
+    transform: translateX(5px);
+}
+
+.group-manage-nav .nav-link.active {
+    background: linear-gradient(135deg, #8a2be2 0%, #4b0082 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(138, 43, 226, 0.3);
+}
+
+.group-manage-nav .nav-link.text-danger:hover {
+    background: rgba(220, 53, 69, 0.1);
+    color: #dc3545;
+}
+
+/* Tab Content */
+.group-manage-content {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    border: 1px solid rgba(138, 43, 226, 0.1);
+    min-height: 400px;
+}
+
+.group-manage-content h6 {
+    color: #8a2be2;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.group-manage-content p {
+    color: #6c757d;
+    margin-bottom: 1.5rem;
+}
+
+/* Form Styles */
+.group-manage-modal .form-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+}
+
+.group-manage-modal .form-control {
+    border: 2px solid rgba(138, 43, 226, 0.1);
+    border-radius: 10px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.group-manage-modal .form-control:focus {
+    border-color: #8a2be2;
+    box-shadow: 0 0 0 0.2rem rgba(138, 43, 226, 0.25);
+    background: white;
+}
+
+.group-manage-modal .form-control:invalid {
+    border-color: #dc3545;
+}
+
+.group-manage-modal .invalid-feedback {
+    color: #dc3545;
+    font-size: 0.875rem;
+    margin-top: 0.25rem;
+}
+
+/* Button Styles */
+.group-manage-modal .btn {
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.group-manage-modal .btn-primary {
+    background: linear-gradient(135deg, #8a2be2 0%, #4b0082 100%);
+    color: white;
+}
+
+.group-manage-modal .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(138, 43, 226, 0.4);
+}
+
+.group-manage-modal .btn-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+    color: white;
+}
+
+.group-manage-modal .btn-secondary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+}
+
+.group-manage-modal .btn-outline-secondary {
+    border: 2px solid #6c757d;
+    color: #6c757d;
+    background: transparent;
+}
+
+.group-manage-modal .btn-outline-secondary:hover {
+    background: #6c757d;
+    color: white;
+    transform: translateY(-2px);
+}
+
+.group-manage-modal .btn-outline-danger {
+    border: 2px solid #dc3545;
+    color: #dc3545;
+    background: transparent;
+}
+
+.group-manage-modal .btn-outline-danger:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* Avatar Styles */
+.group-manage-modal img.rounded-circle {
+    border: 3px solid rgba(138, 43, 226, 0.2);
+    transition: all 0.3s ease;
+}
+
+.group-manage-modal img.rounded-circle:hover {
+    border-color: #8a2be2;
+    transform: scale(1.05);
+}
+
+/* Alert Styles */
+.group-manage-modal .alert {
+    border-radius: 10px;
+    border: none;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.5rem;
+    font-weight: 500;
+}
+
+.group-manage-modal .alert-success {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.1) 0%, rgba(40, 167, 69, 0.05) 100%);
+    color: #155724;
+    border-left: 4px solid #28a745;
+}
+
+.group-manage-modal .alert-danger {
+    background: linear-gradient(135deg, rgba(220, 53, 69, 0.1) 0%, rgba(220, 53, 69, 0.05) 100%);
+    color: #721c24;
+    border-left: 4px solid #dc3545;
+}
+
+/* Input Group Styles */
+.group-manage-modal .input-group {
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.group-manage-modal .input-group .form-control {
+    border-radius: 10px 0 0 10px;
+    border-right: none;
+}
+
+.group-manage-modal .input-group .btn {
+    border-radius: 0 10px 10px 0;
+    border-left: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .group-manage-modal .modal-dialog {
+        margin: 1rem;
+    }
+    
+    .group-manage-modal .modal-body {
+        padding: 1rem;
+    }
+    
+    .group-manage-nav {
+        margin-bottom: 1rem;
+    }
+    
+    .group-manage-content {
+        padding: 1rem;
+    }
+    
+    .group-manage-modal .btn {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .group-manage-modal .d-flex.gap-2 {
+        flex-direction: column;
+    }
+}
+
+/* Loading Animation */
+.group-manage-modal .btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+/* Tab Animation */
+.group-manage-content .tab-pane {
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Custom Scrollbar */
+.group-manage-modal ::-webkit-scrollbar {
+    width: 8px;
+}
+
+.group-manage-modal ::-webkit-scrollbar-track {
+    background: rgba(138, 43, 226, 0.1);
+    border-radius: 10px;
+}
+
+.group-manage-modal ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #8a2be2 0%, #4b0082 100%);
+    border-radius: 10px;
+}
+
+.group-manage-modal ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #4b0082 0%, #8a2be2 100%);
+} 

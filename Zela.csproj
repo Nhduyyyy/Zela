@@ -7,6 +7,13 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="CloudinaryDotNet" Version="1.27.6" />
+      <PackageReference Include="CsvHelper" Version="33.1.0" />
+      <PackageReference Include="DocumentFormat.OpenXml" Version="3.3.0" />
+      <PackageReference Include="DocX" Version="4.0.25105.5786" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.Facebook" Version="8.0.17" />
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" Version="8.0.17" />
+      <PackageReference Include="Microsoft.AspNetCore.SignalR.Core" Version="1.2.0" />
       <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.16">
         <PrivateAssets>all</PrivateAssets>
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -17,6 +24,23 @@
         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       </PackageReference>
       <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="8.0.7" />
+      <PackageReference Include="PayOS" Version="1.0.9" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <_ContentIncludedByDefault Remove="Views\Admin\GroupDetails.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Groups.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Index.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Meetings.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\QuizDetails.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Quizzes.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\UserDetails.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\Users.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\_GroupActionModals.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\_MeetingActionModals.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\_QuizActionModals.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\_UserActionModals.cshtml" />
+      <_ContentIncludedByDefault Remove="Views\Admin\_ViewStart.cshtml" />
     </ItemGroup>
 
 </Project>

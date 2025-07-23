@@ -1,0 +1,506 @@
+@model List<Zela.ViewModels.PremiumPlanViewModel>
+@{
+ViewData["Title"] = "Nâng cấp Premium";
+}
+
+<style>
+    /* Premium Plans Styling với Theme Colors */
+    .premium-container {
+        background: linear-gradient(135deg, var(--theme-primary-color) 0%, var(--theme-primary-dark) 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+
+    .premium-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .premium-header h1 {
+        background: linear-gradient(45deg, var(--theme-accent-green), var(--theme-accent-green-alt));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800;
+        font-size: 3.5rem;
+        margin-bottom: 1rem;
+        text-shadow: var(--theme-shadow-neon);
+    }
+
+    .premium-header .lead {
+        color: var(--theme-text-secondary);
+        font-size: 1.25rem;
+        font-weight: 300;
+    }
+
+    .premium-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid var(--theme-border-color);
+        border-radius: 20px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .premium-card:hover {
+        transform: translateY(-10px);
+        box-shadow: var(--theme-shadow-neon);
+        border-color: var(--theme-accent-green);
+    }
+
+    .premium-card.popular {
+        border: 2px solid var(--theme-accent-green);
+        box-shadow: 0 0 30px rgba(224, 47, 117, 0.3);
+    }
+
+    .premium-card.popular::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--theme-accent-green), var(--theme-accent-sky-blue));
+    }
+
+    .popular-badge {
+        background: linear-gradient(45deg, var(--theme-accent-green), var(--theme-accent-green-alt));
+        border: none;
+        font-weight: 600;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0 0 15px 15px;
+        box-shadow: var(--theme-shadow-md);
+    }
+
+    .card-body {
+        padding: 2rem;
+    }
+
+    .card-title {
+        color: var(--theme-text-primary);
+        font-weight: 700;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .pricing {
+        margin-bottom: 1rem;
+    }
+
+    .pricing .display-6 {
+        background: linear-gradient(45deg, var(--theme-accent-green), var(--theme-accent-green-alt));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800;
+    }
+
+    .pricing .text-muted {
+        color: var(--theme-text-muted) !important;
+        font-size: 1.1rem;
+    }
+
+    .feature-list {
+        list-style: none;
+        padding: 0;
+        margin: 2rem 0;
+    }
+
+    .feature-list li {
+        color: var(--theme-text-secondary);
+        padding: 0.5rem 0;
+        display: flex;
+        align-items: center;
+        font-size: 0.95rem;
+    }
+
+    .feature-list li i {
+        color: var(--theme-accent-green);
+        margin-right: 0.75rem;
+        font-size: 1.1rem;
+    }
+
+    .premium-btn {
+        background: linear-gradient(45deg, var(--theme-accent-green), var(--theme-accent-green-alt));
+        border: none;
+        border-radius: 15px;
+        padding: 1rem 2rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s ease;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .premium-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--theme-shadow-neon);
+        background: linear-gradient(45deg, var(--theme-accent-green-alt), var(--theme-accent-green));
+    }
+
+    .premium-btn-outline {
+        background: transparent;
+        border: 2px solid var(--theme-accent-green);
+        color: var(--theme-accent-green);
+    }
+
+    .premium-btn-outline:hover {
+        background: var(--theme-accent-green);
+        color: var(--theme-text-dark);
+    }
+
+    /* Payment Modal Styling */
+    .payment-modal .modal-content {
+        background: var(--theme-bg-primary);
+        border: 1px solid var(--theme-border-color);
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+    }
+
+    .payment-modal .modal-header {
+        border-bottom: 1px solid var(--theme-border-color);
+        background: linear-gradient(90deg, var(--theme-primary-color), var(--theme-primary-light));
+    }
+
+    .payment-modal .modal-title {
+        color: var(--theme-text-primary);
+        font-weight: 600;
+    }
+
+    .payment-option-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--theme-border-color);
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+
+    .payment-option-card:hover {
+        border-color: var(--theme-accent-green);
+        box-shadow: var(--theme-shadow-sm);
+    }
+
+    .payment-option-card.primary {
+        border-color: var(--theme-accent-green);
+    }
+
+    .payment-option-card.success {
+        border-color: var(--theme-status-online);
+    }
+
+    .qr-code-container {
+        background: white;
+        padding: 1rem;
+        border-radius: 10px;
+        display: inline-block;
+    }
+
+    .status-alert {
+        border-radius: 15px;
+        border: none;
+        backdrop-filter: blur(10px);
+    }
+
+    .status-alert.success {
+        background: rgba(0, 240, 181, 0.1);
+        border: 1px solid var(--theme-status-online);
+        color: var(--theme-status-online);
+    }
+
+    .status-alert.info {
+        background: rgba(103, 0, 163, 0.1);
+        border: 1px solid var(--theme-accent-sky-blue);
+        color: var(--theme-accent-sky-blue);
+    }
+
+    .status-alert.warning {
+        background: rgba(255, 90, 87, 0.1);
+        border: 1px solid var(--theme-accent-red);
+        color: var(--theme-accent-red);
+    }
+
+    .status-alert.danger {
+        background: rgba(255, 90, 87, 0.1);
+        border: 1px solid var(--theme-accent-red);
+        color: var(--theme-accent-red);
+    }
+
+    /* Loading Animation */
+    .loading-spinner {
+        color: var(--theme-accent-green);
+    }
+
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .premium-header h1 {
+            font-size: 2.5rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        .premium-btn {
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+        }
+    }
+</style>
+
+<div class="premium-container">
+    <div class="container">
+        <div class="premium-header">
+            <h1>
+                <i class="bi bi-crown me-3"></i>Nâng cấp Premium
+            </h1>
+            <p class="lead">Tận hưởng tất cả tính năng cao cấp của Zela</p>
+        </div>
+
+        <div class="row justify-content-center">
+            @foreach (var plan in Model)
+            {
+            <div class="col-lg-4 col-md-6 mb-4">
+                <div class="premium-card h-100 @(plan.Popular ? "popular" : "")">
+                    @if (plan.Popular)
+                    {
+                    <div class="position-absolute top-0 start-50 translate-middle-x">
+                            <span class="popular-badge">
+                                <i class="bi bi-star-fill me-1"></i>Phổ biến nhất
+                            </span>
+                    </div>
+                    }
+
+                    <div class="card-body">
+                        <div class="text-center mb-4">
+                            <h3 class="card-title">@plan.Name</h3>
+                            <div class="pricing">
+                                <span class="display-6">@plan.Price.ToString("N0")</span>
+                                <span class="text-muted">VNĐ</span>
+                            </div>
+                            <small class="text-muted">@plan.Duration ngày</small>
+                        </div>
+
+                        <ul class="feature-list">
+                            @foreach (var feature in plan.Features)
+                            {
+                            <li>
+                                <i class="bi bi-check-circle-fill"></i>
+                                @feature
+                            </li>
+                            }
+                        </ul>
+
+                        <div class="d-grid">
+                            <button class="premium-btn @(plan.Popular ? "" : "premium-btn-outline")"
+                                    onclick="selectPlan('@plan.Id', @plan.Price, '@plan.Name')">
+                                <i class="bi bi-cart-plus me-2"></i>
+                                Chọn gói này
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+
+        <!-- Payment Modal -->
+        <div class="modal fade payment-modal" id="paymentModal" tabindex="-1">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">
+                            <i class="bi bi-credit-card me-2"></i>Thanh toán
+                        </h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="paymentContent">
+                            <!-- Payment content will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    function selectPlan(planId, price, planName) {
+        // Show loading
+        const modal = new bootstrap.Modal(document.getElementById('paymentModal'));
+        document.getElementById('paymentContent').innerHTML = `
+                <div class="text-center">
+                    <div class="spinner-border loading-spinner" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                    <p class="mt-3">Đang tạo đơn hàng thanh toán...</p>
+                </div>
+            `;
+        modal.show();
+
+        // Create payment order
+        fetch('/Payment/CreateOrder', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ planId: planId })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showPaymentOptions(data, planName, price);
+                } else {
+                    showError(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError('Có lỗi xảy ra, vui lòng thử lại');
+            });
+    }
+
+    function showPaymentOptions(data, planName, price) {
+        document.getElementById('paymentContent').innerHTML = `
+                <div class="text-center mb-4">
+                    <h4>${planName}</h4>
+                    <p class="text-muted">Số tiền: ${price.toLocaleString('vi-VN')} VNĐ</p>
+                    <p class="text-muted">Mã đơn hàng: ${data.orderCode}</p>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <div class="payment-option-card primary">
+                            <div class="card-body text-center">
+                                <i class="bi bi-phone fs-1 mb-3" style="color: var(--theme-accent-green);"></i>
+                                <h5>Thanh toán qua ứng dụng</h5>
+                                <p class="text-muted">Quét mã QR hoặc mở link</p>
+                                <button class="premium-btn" onclick="openPaymentUrl('${data.paymentUrl}')">
+                                    <i class="bi bi-arrow-up-right me-2"></i>Mở ứng dụng
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6 mb-3">
+                        <div class="payment-option-card success">
+                            <div class="card-body text-center">
+                                <i class="bi bi-qr-code fs-1 mb-3" style="color: var(--theme-status-online);"></i>
+                                <h5>Quét mã QR</h5>
+                                <p class="text-muted">Sử dụng app ngân hàng</p>
+                                <div class="qr-code-container">
+                                    <img src="data:image/png;base64,${data.qrCode}" 
+                                         alt="QR Code" 
+                                         class="img-fluid" 
+                                         style="max-width: 200px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="status-alert info">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Lưu ý:</strong> Sau khi thanh toán thành công, tài khoản của bạn sẽ được nâng cấp Premium ngay lập tức.
+                </div>
+                
+                <div class="text-center mt-3">
+                    <button class="premium-btn premium-btn-outline" onclick="checkPaymentStatus('${data.orderCode}')">
+                        <i class="bi bi-arrow-clockwise me-2"></i>Kiểm tra trạng thái thanh toán
+                    </button>
+                </div>
+                
+                <div id="paymentStatus" class="mt-3"></div>
+            `;
+
+        // Tự động check trạng thái mỗi 10 giây
+        startPaymentStatusPolling(data.orderCode);
+    }
+
+    function showError(message) {
+        document.getElementById('paymentContent').innerHTML = `
+                <div class="status-alert danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    ${message}
+                </div>
+                <div class="text-center">
+                    <button class="premium-btn premium-btn-outline" data-bs-dismiss="modal">Đóng</button>
+                </div>
+            `;
+    }
+
+    function openPaymentUrl(url) {
+        window.open(url, '_blank');
+    }
+
+    let pollingInterval;
+
+    function startPaymentStatusPolling(orderCode) {
+        // Clear existing interval
+        if (pollingInterval) {
+            clearInterval(pollingInterval);
+        }
+
+        // Check every 10 seconds
+        pollingInterval = setInterval(() => {
+            checkPaymentStatus(orderCode);
+        }, 10000);
+    }
+
+    function checkPaymentStatus(orderCode) {
+        fetch(`/Payment/CheckPaymentStatus?orderCode=${orderCode}`)
+            .then(response => response.json())
+            .then(data => {
+                const statusDiv = document.getElementById('paymentStatus');
+
+                if (data.success) {
+                    if (data.status === 'PAID') {
+                        statusDiv.innerHTML = `
+                                <div class="status-alert success">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <strong>Thanh toán thành công!</strong> Tài khoản của bạn đã được nâng cấp Premium.
+                                    <br><a href="/Payment/Success?orderCode=${orderCode}" class="premium-btn btn-sm mt-2" style="display: inline-block; text-decoration: none;">
+                                        <i class="bi bi-arrow-right me-1"></i>Xem chi tiết
+                                    </a>
+                                </div>
+                            `;
+                        clearInterval(pollingInterval);
+                    } else if (data.status === 'CANCELLED') {
+                        statusDiv.innerHTML = `
+                                <div class="status-alert warning">
+                                    <i class="bi bi-x-circle me-2"></i>
+                                    <strong>Thanh toán bị hủy.</strong> Bạn có thể thử lại.
+                                </div>
+                            `;
+                        clearInterval(pollingInterval);
+                    } else {
+                        statusDiv.innerHTML = `
+                                <div class="status-alert info">
+                                    <i class="bi bi-clock me-2"></i>
+                                    <strong>Đang chờ thanh toán...</strong> Trạng thái: ${data.status}
+                                </div>
+                            `;
+                    }
+                } else {
+                    statusDiv.innerHTML = `
+                            <div class="status-alert danger">
+                                <i class="bi bi-exclamation-triangle me-2"></i>
+                                ${data.message}
+                            </div>
+                        `;
+                }
+            })
+            .catch(error => {
+                console.error('Error checking payment status:', error);
+                const statusDiv = document.getElementById('paymentStatus');
+                statusDiv.innerHTML = `
+                        <div class="status-alert danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>
+                            Lỗi khi kiểm tra trạng thái thanh toán
+                        </div>
+                    `;
+            });
+    }
+</script>
+} 

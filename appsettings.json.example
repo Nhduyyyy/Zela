@@ -1,0 +1,40 @@
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "ConnectionStrings": { 
+    "_Comment": "Server=localhost,57000;Database=Zela;User ID=SA;Password=Str#ng_Passw#rd;MultipleActiveResultSets=true;Encrypt=True;TrustServerCertificate=True;",
+    "DefaultConnection": "Server=localhost,1433;Database=Zela;User ID=SA;Password=123456;MultipleActiveResultSets=true;Encrypt=True;TrustServerCertificate=True;"
+  },
+  "Authentication": {
+    "Google": {
+      "ClientId": "869228240475-lvt9jbd8fkrhjdt6tp6ktq305g218urv.apps.googleusercontent.com",
+      "ClientSecret": "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"
+    },
+        "Facebook": {
+          "AppId": "1647959242568460",
+          "AppSecret": "a92cf82c6cc834ddda945f412d426da5"
+        }
+  },
+  "Cloudinary": {
+    "CloudName": "da7a0c23y",
+    "ApiKey": "537419489853277",
+    "ApiSecret": "C2cV4EuSr5Yw_8OpGVex9SZ4Y9M"
+  },
+  "PayOS": {
+      "PartnerCode": "MOMO",
+      "ClientId": "f53a4fe9-338b-4040-b228-9329d85fee29",
+      "ApiKey": "22d0e505-cdb0-4233-b190-9dc5f68a5db8",
+      "Checksum": "b6911d00cd425ed894e78bd680cae70f9dfa14734cdf1bb77f44f9a835d0f744"
+    },
+    "AppSettings": {
+      "BaseUrl": "http://localhost:5160"
+    },
+    "OpenAI": {
+        "ApiKey": "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"
+      }
+}
