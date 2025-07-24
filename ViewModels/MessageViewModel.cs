@@ -29,6 +29,10 @@ public class MessageViewModel
         MessageStatus.Seen => "Đã xem",
         _ => ""
     };
+    // Reply support
+    public long? ReplyToMessageId { get; set; }
+    public string ReplyToMessageContent { get; set; }
+    public string ReplyToMessageSenderName { get; set; }
 }
 
 public class MediaViewModel

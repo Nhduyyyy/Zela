@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="~/css/components/sidebar-media.css"/>
     <link rel="stylesheet" href="~/css/video-call-popup.css"/>
     <link rel="stylesheet" href="~/css/pages/chat/_reactions.css"/>
+    <link rel="stylesheet" href="~/css/components/notification.css" asp-append-version="true" />
 
     @RenderSection("Styles", required: false)
 
@@ -171,6 +172,7 @@
 <script src="~/js/profile-dialog.js"></script>
 <script src="~/js/message-reactions.js"></script>
 <script src="~/js/group-sidebar.js"></script>
+<script src="~/js/notification.js" asp-append-version="true"></script>
 
 @await RenderSectionAsync("Scripts", required: false)
 <script>

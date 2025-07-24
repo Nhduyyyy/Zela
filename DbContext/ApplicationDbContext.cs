@@ -748,5 +748,13 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
             .HasPrecision(18, 3);
         
         #endregion
+        
+        #region Message Self-Reference (Reply)
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.ReplyToMessage)
+            .WithMany()
+            .HasForeignKey(m => m.ReplyToMessageId)
+            .OnDelete(DeleteBehavior.Restrict);
+        #endregion
     }
 }

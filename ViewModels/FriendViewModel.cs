@@ -9,4 +9,9 @@ public class FriendViewModel
     public bool IsOnline { get; set; }
     public string LastMessage { get; set; }
     public string LastTime { get; set; }
+    
+    // Thêm thuộc tính để lưu trữ media của cuộc hội thoại
+    public List<MediaViewModel> Images { get; set; } = new List<MediaViewModel>();
+    public List<MediaViewModel> Videos { get; set; } = new List<MediaViewModel>();
+    public List<MediaViewModel> Files { get; set; } = new List<MediaViewModel>();
 }

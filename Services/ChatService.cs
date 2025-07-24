@@ -22,10 +22,25 @@ public class ChatService : IChatService
     }
 
     public async Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content,
-        List<IFormFile>? files = null)
+        List<IFormFile>? files = null, long? replyToMessageId = null)
     {
         try
         {
+            string replyContent = null;
+            string replySenderName = null;
+            if (replyToMessageId.HasValue)
+            {
+                var replyMsg = await _dbContext.Messages
+                    .Include(m => m.Sender)
+                    .FirstOrDefaultAsync(m => m.MessageId == replyToMessageId.Value);
+
+                if (replyMsg != null)
+                {
+                    replyContent = replyMsg.Content;
+                    replySenderName = replyMsg.Sender?.FullName ?? "ai đó";
+                }
+            }
+
             var msg = new Message
             {
                 SenderId = senderId,
@@ -34,7 +49,8 @@ public class ChatService : IChatService
                 SentAt = DateTime.Now,
                 IsEdited = false,
                 Media = new List<Media>(),
-                MessageStatus = MessageStatus.Sent // Default MessageStatus value = sent
+                MessageStatus = MessageStatus.Sent,
+                ReplyToMessageId = replyToMessageId
             };
 
             MessageType notificationType = MessageType.Text;
@@ -100,7 +116,10 @@ public class ChatService : IChatService
                     Url = md.Url,
                     MediaType = md.MediaType,
                     FileName = md.FileName
-                }).ToList()
+                }).ToList(),
+                ReplyToMessageId = replyToMessageId,
+                ReplyToMessageContent = replyContent,
+                ReplyToMessageSenderName = replySenderName
             };
         }
         catch (Exception ex)
@@ -216,6 +235,8 @@ public class ChatService : IChatService
         await _dbContext.SaveChangesAsync();
         
         // Ánh xạ Message entity thành MessageViewModel để trả về client
+        var messageDict = message.ToDictionary(m => m.MessageId, m => m);
+
         return message.Select(m => new MessageViewModel
             {
                 MessageId = m.MessageId,
@@ -238,7 +259,14 @@ public class ChatService : IChatService
                 // Lấy sticker đầu tiên nếu có, sử dụng navigation property đã include:
                 StickerUrl = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerUrl : null,
                 StickerType = m.Sticker.FirstOrDefault() != null ? m.Sticker.FirstOrDefault().StickerType : null,
-                Status = m.MessageStatus
+                Status = m.MessageStatus,
+                ReplyToMessageId = m.ReplyToMessageId,
+                ReplyToMessageContent = m.ReplyToMessageId.HasValue && messageDict.ContainsKey(m.ReplyToMessageId.Value)
+                    ? messageDict[m.ReplyToMessageId.Value].Content
+                    : null,
+                ReplyToMessageSenderName = m.ReplyToMessageId.HasValue && messageDict.ContainsKey(m.ReplyToMessageId.Value)
+                    ? messageDict[m.ReplyToMessageId.Value].Sender.FullName
+                    : null
             })
             .ToList();
     }
@@ -1304,5 +1332,72 @@ public class ChatService : IChatService
             throw new Exception("Group not found");
         group.RoomType = roomType;
         await _dbContext.SaveChangesAsync();
+    }
+    
+    public async Task<FriendViewModel> BuildFriendSidebarViewModelAsync(int friendId, int mediaLimit)
+    {
+        var friend = await FindUserByIdAsync(friendId);
+        var (images, videos, files) = await GetFriendMediaAsync(friendId, mediaLimit);
+        return new FriendViewModel
+        {
+            UserId = friend.UserId,
+            FullName = friend.FullName,
+            AvatarUrl = friend.AvatarUrl,
+            Email = friend.Email,
+            // Xác định online nếu hoạt động trong 5 phút qua
+            IsOnline = friend.LastLoginAt > DateTime.UtcNow.AddMinutes(-5),
+            // Placeholder, có thể lấy tin nhắn gần nhất
+            LastMessage = "", // Có thể lấy từ service
+            // Format giờ phút
+            LastTime = friend.LastLoginAt.ToString("HH:mm"),
+            Images = images,
+            Videos = videos,
+            Files = files
+        };
+    }
+
+    public async Task<FriendViewModel> BuildFriendSidebarMediaViewModelAsync(int friendId, int mediaLimit)
+    {
+        return await BuildFriendSidebarViewModelAsync(friendId, mediaLimit);
+    }
+
+    public async Task<(List<MediaViewModel> Images, List<MediaViewModel> Videos, List<MediaViewModel> Files)>
+        GetFriendMediaAsync(int friendId, int limit = 20)
+    {
+        var media = await _dbContext.Media
+            .Include(m => m.Message)
+            .Where(m => m.Message.RecipientId == friendId)
+            .OrderByDescending(m => m.UploadedAt)
+            .Take(limit)
+            .ToListAsync();
+
+        var images = new List<MediaViewModel>();
+        var videos = new List<MediaViewModel>();
+        var files = new List<MediaViewModel>();
+
+        foreach (var item in media)
+        {
+            var mediaViewModel = new MediaViewModel
+            {
+                Url = item.Url,
+                MediaType = item.MediaType,
+                FileName = item.FileName
+            };
+
+            if (item.MediaType != null && item.MediaType.StartsWith("image/"))
+            {
+                images.Add(mediaViewModel);
+            }
+            else if (item.MediaType != null && item.MediaType.StartsWith("video/"))
+            {
+                videos.Add(mediaViewModel);
+            }
+            else
+            {
+                files.Add(mediaViewModel);
+            }
+        }
+
+        return (images, videos, files);
     }
 }
