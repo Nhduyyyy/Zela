@@ -1,37 +1,50 @@
-(()=>{
+(() =>{
+    // ========================
+    // Biến trạng thái toàn cục
+    // ========================
     let searchMessageInput = null;
     let searchMessageResults = null;
     let searchMessageDebounce = null;
     let searchResults = [];
     let currentResultIndex = 0;
     
-    // Khởi tạo kết nối SignalR (signalR đã được load trước qua CDN hoặc script tag)
+    // ========================
+    // Khởi tạo kết nối SignalR để tìm kiếm tin nhắn realtime
+    // ========================
     let connection = new signalR.HubConnectionBuilder()
         .withUrl('/chathub')
         .build();
 
     connection.start().catch(err => console.error('SignalR error:', err));
     
-    // Lấy ID người đang chat
+    // ========================
+    // Lấy ID người đang chat hiện tại
+    // ========================
     function getCurrentFriendId() {
         return Number(currentFriendId);
     }
 
-    // Hiển thị đang tìm kiếm
+    // ========================
+    // Hiển thị trạng thái loading khi tìm kiếm
+    // ========================
     function showSearchLoading() {
         if (searchMessageResults) {
             searchMessageResults.innerHTML = '';
         }
     }
 
-    // Hiển thị lỗi
+    // ========================
+    // Hiển thị lỗi khi tìm kiếm
+    // ========================
     function showSearchError() {
         if (searchMessageResults) {
             searchMessageResults.innerHTML = '';
         }
     }
 
-    // Hiển thị kết quả JSON
+    // ========================
+    // Render kết quả tìm kiếm tin nhắn ra giao diện
+    // ========================
     function renderSearchMessageResults(messages) {
         searchResults = messages;
         currentResultIndex = 0;
@@ -62,7 +75,9 @@
         searchMessageResults.appendChild(list);
     }
 
-    // Cuộn tới tin nhắn cụ thể
+    // ========================
+    // Cuộn tới tin nhắn cụ thể khi click vào kết quả tìm kiếm
+    // ========================
     function scrollToMessage(messageId) {
         const el = document.querySelector(`[data-message-id="${messageId}"]`);
         if (el) {
@@ -74,7 +89,9 @@
         }
     }
 
-    // Thực hiện gọi API tìm kiếm
+    // ========================
+    // Thực hiện gọi API tìm kiếm tin nhắn qua SignalR
+    // ========================
     function doSearchMessage() {
         const keyword = searchMessageInput?.value.trim();
         const friendId = getCurrentFriendId();
@@ -100,7 +117,9 @@
             });
     }
 
-    // Khởi tạo sau DOM ready
+    // ========================
+    // Khởi tạo sau khi DOM ready, gán event cho input và nút tìm kiếm
+    // ========================
     function setupSearchMessage() {
         searchMessageInput = document.getElementById('searchMessageInput');
         searchMessageResults = document.getElementById('searchMessageResults');
@@ -117,6 +136,7 @@
 
         console.log('Search message initialized successfully');
 
+        // Debounce tìm kiếm khi nhập input
         searchMessageInput.addEventListener('input', function () {
             clearTimeout(searchMessageDebounce);
             const keyword = this.value.trim();
@@ -130,13 +150,16 @@
             }, 1000); // ⏱ Delay 1s
         });
 
+        // Click nút tìm kiếm
         searchMessageBtn?.addEventListener('click', function (e) {
             e.preventDefault();
             doSearchMessage();
         });
     }
 
-    // Tránh XSS đơn giản
+    // ========================
+    // Tránh XSS đơn giản khi render nội dung tin nhắn
+    // ========================
     function escapeHtml(str) {
         if (!str) return '';
         return str.replace(/[&<>"']/g, function (m) {
@@ -147,7 +170,9 @@
         });
     }
 
-    // Format thời gian
+    // ========================
+    // Định dạng thời gian gửi tin nhắn
+    // ========================
     function formatDateTime(iso) {
         try {
             const d = new Date(iso);
@@ -160,7 +185,9 @@
         }
     }
 
+    // ========================
     // Hiển thị sidebar tìm kiếm tin nhắn
+    // ========================
     function showSearchMessageSidebar() {
         const sidebar = document.getElementById('searchMessageSidebar');
         if (sidebar) {
@@ -171,7 +198,9 @@
         }
     }
 
-    // Bắt sự kiện khi nhấn nút bi-search
+    // ========================
+    // Bắt sự kiện khi nhấn nút bi-search để mở sidebar tìm kiếm
+    // ========================
     const biSearchBtn = document.getElementById('biSearchBtn');
     if (biSearchBtn) {
         biSearchBtn.addEventListener('click', function (e) {
@@ -182,7 +211,9 @@
         console.warn('Không tìm thấy nút bi-search với id #biSearchBtn');
     }
 
-    // Init
+    // ========================
+    // Init: Gọi setup khi DOM ready
+    // ========================
     document.addEventListener('DOMContentLoaded', function() {
         setupSearchMessage();
         console.log('DOM loaded: setupSearchMessage has been called successfully.');

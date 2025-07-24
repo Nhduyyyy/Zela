@@ -18,6 +18,7 @@ namespace Zela.Services
         }
         public async Task<string> SummarizeAsync(string content)
         {
+            // Tạo request body cho API OpenAI ChatGPT với prompt tóm tắt tiếng Việt, định dạng Markdown
             var requestBody = new
             {
                 model = "gpt-4",
@@ -39,23 +40,29 @@ namespace Zela.Services
                 max_tokens = 650,
                 temperature = 0.5
             };
+            // Tạo request HTTP POST tới API OpenAI
             var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
             request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
+            // Gửi request và nhận response
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
+            // Đọc response JSON
             var json = await response.Content.ReadAsStringAsync();
+            // Parse JSON để lấy nội dung tóm tắt
             using var doc = JsonDocument.Parse(json);
             var summary = doc.RootElement
                 .GetProperty("choices")[0]
                 .GetProperty("message")
                 .GetProperty("content")
                 .GetString();
+            // Trả về nội dung tóm tắt
             return summary;
         }
 
         public async Task<string> TranslateTextAsync(string text, string sourceLanguage, string targetLanguage)
         {
+            // Map mã ngôn ngữ sang tên ngôn ngữ đầy đủ cho prompt
             var languageNames = new Dictionary<string, string>
             {
                 { "vi", "Vietnamese" },
@@ -71,6 +78,7 @@ namespace Zela.Services
             var sourceLangName = languageNames.GetValueOrDefault(sourceLanguage, sourceLanguage);
             var targetLangName = languageNames.GetValueOrDefault(targetLanguage, targetLanguage);
 
+            // Tạo request body cho API OpenAI ChatGPT với prompt dịch ngôn ngữ
             var requestBody = new
             {
                 model = "gpt-4",
@@ -83,14 +91,18 @@ namespace Zela.Services
                 temperature = 0.3
             };
 
+            // Tạo request HTTP POST tới API OpenAI
             var request = new HttpRequestMessage(HttpMethod.Post, "https://api.openai.com/v1/chat/completions");
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", _apiKey);
             request.Content = new StringContent(JsonSerializer.Serialize(requestBody), Encoding.UTF8, "application/json");
             
+            // Gửi request và nhận response
             var response = await _httpClient.SendAsync(request);
             response.EnsureSuccessStatusCode();
             
+            // Đọc response JSON
             var json = await response.Content.ReadAsStringAsync();
+            // Parse JSON để lấy nội dung bản dịch
             using var doc = JsonDocument.Parse(json);
             var translatedText = doc.RootElement
                 .GetProperty("choices")[0]
@@ -98,6 +110,7 @@ namespace Zela.Services
                 .GetProperty("content")
                 .GetString();
                 
+            // Trả về bản dịch (nếu null thì trả về text gốc)
             return translatedText ?? text;
         }
     }

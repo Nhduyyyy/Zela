@@ -149,19 +149,25 @@ namespace Zela.Controllers
         [HttpGet]
         public async Task<IActionResult> GetFriendSidebarMedia(int friendId)
         {
+            // Gọi service để lấy view model media của bạn chat
             var friendViewModel = await _chatService.BuildFriendSidebarMediaViewModelAsync(friendId, 100);
+            // Trả về partial view hiển thị media sidebar
             return PartialView("_SidebarMedia", friendViewModel);
         }
         
         [HttpGet]
         public async Task<IActionResult> SearchMessages(int friendId, string keyword)
         {
+            // Lấy userId hiện tại từ session, kiểm tra điều kiện đầu vào
             {
                 int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
                 if (userId == 0 || friendId == 0 || string.IsNullOrWhiteSpace(keyword))
+                    // Nếu thiếu thông tin, trả về danh sách rỗng
                     return Json(new List<MessageViewModel>());
 
+                // Gọi service tìm kiếm tin nhắn theo từ khóa giữa user và friendId
                 var messages = await _chatService.SearchMessagesAsync(userId, friendId, keyword);
+                // Trả về kết quả dạng JSON
                 return Json (messages);
             }
         }
