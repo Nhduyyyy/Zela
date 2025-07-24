@@ -4,6 +4,9 @@
     let stickerPanelVisible = false;
     let availableStickers = [];
     let selectedFiles = []; // Array để lưu nhiều file
+    let replyToMessageId = null; // <--- Thêm biến lưu trạng thái reply
+    let replyToMessageContent = null;
+    let replyToMessageSenderName = null;
 
     // Tham chiếu các phần tử DOM
     const chatContentEl = document.querySelector('.chat-content');
@@ -13,6 +16,7 @@
     const sendBtn = document.querySelector('.btn-send');
     const previewEl = document.getElementById('chat-preview');
     const chatFriendNameEl = document.getElementById('chat-friend-name');
+    const replyPreviewEl = document.getElementById('reply-preview'); // <--- Thêm phần tử hiển thị reply (nếu có)
 
     // Khởi tạo kết nối SignalR (signalR đã được load trước qua CDN hoặc script tag)
     const connection = new signalR.HubConnectionBuilder()
@@ -42,6 +46,7 @@
                 connection.invoke("MarkAsSeen", msg.messageId)
                     .catch(err => console.error('MarkAsSeen error:', err));
             }
+            addReplyButtons(); // Gọi lại sau mỗi lần render message
         }
     });
 
@@ -186,12 +191,16 @@
                 // Gửi nhiều file qua HTTP POST
                 const formData = new FormData();
                 formData.append('content', content);
-                formData.append('friendId', friendId);
+                formData.append('recipientId', friendId);
 
                 // Thêm tất cả file vào FormData
                 files.forEach(file => {
                     formData.append('files', file);
                 });
+                // Sửa: chỉ gửi replyToMessageId nếu là số hợp lệ
+                if (replyToMessageId != null && replyToMessageId !== '' && replyToMessageId !== 'null' && replyToMessageId !== 'undefined' && !isNaN(Number(replyToMessageId))) {
+                    formData.append('replyToMessageId', Number(replyToMessageId));
+                }
 
                 const res = await fetch('/Chat/SendMessage', {
                     method: 'POST',
@@ -212,15 +221,33 @@
                     const fileCount = files.length;
                     showSuccessToast(`${fileCount} file${fileCount > 1 ? 's' : ''} đã được gửi thành công!`);
                     console.log(`${fileCount} file(s) đã được gửi thành công!`);
+                    // Reset reply state
+                    clearReplyState();
                 } else {
                     console.error('Lỗi khi gửi file:', res.status);
                     alert('Có lỗi xảy ra khi gửi file. Vui lòng thử lại!');
                 }
             } else {
-                // Gửi text qua SignalR
-                await connection.invoke('SendMessage', friendId, content);
-                chatInputEl.value = '';
-                console.log("Tin nhắn đã gửi thành công");
+                // Gửi text qua HTTP POST để đồng bộ với file
+                const formData = new FormData();
+                formData.append('content', content);
+                formData.append('recipientId', friendId);
+                // Sửa: chỉ gửi replyToMessageId nếu là số hợp lệ
+                if (replyToMessageId != null && replyToMessageId !== '' && replyToMessageId !== 'null' && replyToMessageId !== 'undefined' && !isNaN(Number(replyToMessageId))) {
+                    formData.append('replyToMessageId', Number(replyToMessageId));
+                }
+                const res = await fetch('/Chat/SendMessage', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    chatInputEl.value = '';
+                    updateInputPlaceholder();
+                    // Reset reply state
+                    clearReplyState();
+                } else {
+                    alert('Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại!');
+                }
             }
         } catch (error) {
             console.error('SendMessage error:', error);
@@ -236,6 +263,17 @@
         const isMine = msg.senderId === currentUserId;
         const side = isMine ? 'right' : 'left';
         const time = msg.sentAt.substring(11, 16);
+
+        // Render phần reply nếu có
+        let replyHtml = '';
+        if (msg.replyToMessageId) {
+            replyHtml = `
+                <div class="reply-preview-in-bubble">
+                    <span class="reply-preview-sender">${msg.replyToMessageSenderName || ''}</span>
+                    <span class="reply-preview-content">${msg.replyToMessageContent || ''}</span>
+                </div>
+            `;
+        }
 
         // Render media nếu có
         let mediaHtml = '';
@@ -295,6 +333,7 @@
         <div class="message ${side}" data-id="${msg.messageId}">
           <div class="message-content">
             <span class="message-time">${time}</span>
+            ${replyHtml}
             ${mediaHtml}
             ${stickerHtml}
             ${textHtml}
@@ -307,6 +346,7 @@
           <img src="${msg.avatarUrl}" class="message-avatar" />
           <div class="message-content">
             <span class="message-time">${time}</span>
+            ${replyHtml}
             ${mediaHtml}
             ${stickerHtml}
             ${textHtml}
@@ -427,6 +467,7 @@
                             : html;
                     bindFileSummaryButtons();
                     scrollToBottom();
+                    addReplyButtons(); // Gọi lại sau mỗi lần render message
                 })
                 .catch(err => console.error('Load history error:', err));
             return;
@@ -488,6 +529,25 @@
             return;
         }
 
+        // Thêm nút reply cho mỗi message
+        const replyBtn = e.target.closest('.btn-reply-message');
+        if (replyBtn) {
+            const messageId = replyBtn.dataset.messageId;
+            const messageContent = replyBtn.dataset.messageContent;
+            const messageSender = replyBtn.dataset.messageSender;
+            replyToMessageId = messageId;
+            replyToMessageContent = messageContent;
+            replyToMessageSenderName = messageSender;
+            showReplyPreview();
+            chatInputEl.focus();
+            return;
+        }
+        // Nút hủy reply
+        if (e.target.classList.contains('btn-cancel-reply')) {
+            clearReplyState();
+            return;
+        }
+
         const stickerPanel = document.querySelector('.sticker-panel');
         if (stickerPanel && !stickerPanel.contains(e.target) && !e.target.closest('.sticker-btn')) {
             stickerPanel.style.display = 'none';
@@ -545,6 +605,7 @@
         chatContentEl.innerHTML = html;
         bindFileSummaryButtons();
         scrollToBottom();
+        addReplyButtons(); // Gọi lại sau mỗi lần render message
     }
 
     // File input change handler - Hỗ trợ nhiều file với tính năng tích lũy
@@ -888,6 +949,51 @@
         } catch (error) {
             console.error('Error loading friend sidebar:', error);
         }
+
+        // Load sidebar media
+        try {
+            const response = await fetch(`/Chat/GetFriendSidebarMedia?friendId=${friendId}`);
+            if (response.ok) {
+                const html = await response.text();
+                const sidebarMediaContainer = document.getElementById('sidebar-media-container');
+                if (sidebarMediaContainer) {
+                    sidebarMediaContainer.innerHTML = html;
+                }
+            } else {
+                console.error('Failed to load group sidebar media');
+            }
+        } catch (error) {
+            console.error('Error loading group sidebar media:', error);
+        }
+    }
+
+    // Hàm ẩn sidebar media
+    function hideSidebarMedia() {
+        const sidebarRight = document.querySelector('.chat-info-panel:not(.sidebar-media)');
+        const sidebarMedia = document.querySelector('.sidebar-media');
+        const sidebarMediaContainer = document.getElementById('sidebar-media-container');
+
+        if (!sidebarMedia) {
+            return;
+        }
+
+        // Thêm animation slide out
+        sidebarMedia.classList.add('slide-out');
+
+        // Sau khi animation hoàn thành, ẩn sidebar media và hiển thị sidebar right
+        setTimeout(() => {
+            sidebarMedia.style.display = 'none';
+            sidebarMedia.classList.remove('slide-out');
+
+            // Ẩn sidebar media container
+            if (sidebarMediaContainer) {
+                sidebarMediaContainer.classList.add('d-none');
+            }
+
+            if (sidebarRight) {
+                sidebarRight.style.display = 'block';
+            }
+        }, 300);
     }
 
     //=======================================================================================
@@ -1495,57 +1601,44 @@
         console.log('✅ Beautiful preview created');
     }
 
-    // Event delegation cho preview/tóm tắt file
-    document.addEventListener('click', function(e) {
-        // Preview
-        if (e.target.classList.contains('btn-preview-file')) {
-            e.preventDefault();
-            e.stopPropagation();
-            const btn = e.target;
-            const block = btn.closest('.file-summary-block');
-            const url = btn.getAttribute('data-media-url');
-            const filename = btn.getAttribute('data-filename');
-            const previewDiv = block.querySelector('.file-preview-content');
-            const summaryDiv = block.querySelector('.file-summary-content');
-            if (summaryDiv) summaryDiv.style.display = 'none';
-            if (getComputedStyle(previewDiv).display === 'block') {
-                previewDiv.style.display = 'none';
-            } else {
+    // Xử lý preview và tóm tắt file văn bản
+    function bindFileSummaryButtons() {
+        // Xem trước file
+        document.querySelectorAll('.btn-preview-file').forEach(btn => {
+            btn.onclick = function () {
+                const block = btn.closest('.file-summary-block');
+                const url = btn.getAttribute('data-media-url');
+                const filename = btn.getAttribute('data-filename');
+                const previewDiv = block.querySelector('.file-preview-content');
                 previewDiv.innerHTML = '<em>Đang tải xem trước...</em>';
-                previewDiv.style.display = 'block';
                 fetch(`/File/Preview?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`)
                     .then(res => res.text())
                     .then(html => {
                         previewDiv.innerHTML = html;
                         previewDiv.style.display = 'block';
                     })
-                    .catch(() => {
-                        previewDiv.innerHTML = '<div class="file-preview-box"><div class="text-danger">Không thể xem trước.</div></div>';
-                        previewDiv.style.display = 'block';
-                    });
-            }
-        }
-        // Summarize
-        if (e.target.classList.contains('btn-summarize-file')) {
-            e.preventDefault();
-            e.stopPropagation();
-            const btn = e.target;
-            const block = btn.closest('.file-summary-block');
-            const url = btn.getAttribute('data-media-url');
-            const filename = btn.getAttribute('data-filename');
-            const summaryDiv = block.querySelector('.file-summary-content');
-            const previewDiv = block.querySelector('.file-preview-content');
-            const btnText = btn.querySelector('.btn-summarize-text');
-            const btnLoading = btn.querySelector('.btn-summarize-loading');
-            if (previewDiv) previewDiv.style.display = 'none';
-            if (getComputedStyle(summaryDiv).display === 'block') {
-                summaryDiv.style.display = 'none';
-            } else {
+                    .catch(() => { previewDiv.innerHTML = 'Không thể xem trước.'; });
+            };
+        });
+
+        // Tóm tắt file
+        document.querySelectorAll('.btn-summarize-file').forEach(btn => {
+            btn.onclick = function () {
+                const block = btn.closest('.file-summary-block');
+                const url = btn.getAttribute('data-media-url');
+                const filename = btn.getAttribute('data-filename');
+                const summaryDiv = block.querySelector('.file-summary-content');
+                const btnText = btn.querySelector('.btn-summarize-text');
+                const btnLoading = btn.querySelector('.btn-summarize-loading');
+
+                // Hiệu ứng loading
                 btn.disabled = true;
                 btnText.style.display = 'none';
                 btnLoading.style.display = 'inline-block';
+
                 summaryDiv.innerHTML = '';
-                summaryDiv.style.display = 'block';
+                summaryDiv.style.display = 'none';
+
                 const formData = new FormData();
                 formData.append('url', url);
                 formData.append('filename', filename);
@@ -1567,9 +1660,16 @@
                         btnText.style.display = 'inline';
                         btnLoading.style.display = 'none';
                     });
-            }
-        }
-    });
+            };
+        });
+    }
+
+    // Initialize drag and drop when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeDragAndDrop);
+    } else {
+        initializeDragAndDrop();
+    }
 
     // Gán 1 lần duy nhất khi trang load
     document.addEventListener('click', function(e) {
@@ -1630,5 +1730,53 @@
             }
         };
     });
+
+    // Hiển thị UI reply phía trên input
+    function showReplyPreview() {
+        let el = document.getElementById('reply-preview');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'reply-preview';
+            el.className = 'reply-preview-bar';
+            chatInputEl.parentElement.insertBefore(el, chatInputEl);
+        }
+        el.innerHTML = `
+            <div class="reply-preview-content">
+                <span class="reply-sender">${replyToMessageSenderName || ''}:</span>
+                <span class="reply-content">${replyToMessageContent || ''}</span>
+                <button type="button" class="btn-cancel-reply" title="Hủy trả lời">&times;</button>
+            </div>
+        `;
+        el.style.display = 'block';
+    }
+    function clearReplyState() {
+        replyToMessageId = null;
+        replyToMessageContent = null;
+        replyToMessageSenderName = null;
+        const el = document.getElementById('reply-preview');
+        if (el) el.style.display = 'none';
+    }
+
+    // Bổ sung nút reply vào mỗi message khi render xong
+    function addReplyButtons() {
+        document.querySelectorAll('.message .message-content').forEach(function(contentEl) {
+            const msgEl = contentEl.closest('.message');
+            if (!msgEl) return;
+            const messageId = msgEl.getAttribute('data-id');
+            // Tránh thêm trùng
+            if (contentEl.querySelector('.btn-reply-message')) return;
+            // Lấy nội dung và tên người gửi
+            const replyContent = contentEl.querySelector('.message-bubble')?.textContent || '';
+            const replySender = msgEl.classList.contains('right') ? 'Bạn' : (msgEl.querySelector('.message-avatar')?.alt || 'Người dùng');
+            const btn = document.createElement('button');
+            btn.className = 'btn-reply-message';
+            btn.title = 'Trả lời tin nhắn này';
+            btn.dataset.messageId = messageId;
+            btn.dataset.messageContent = replyContent;
+            btn.dataset.messageSender = replySender;
+            btn.innerHTML = '<i class="bi bi-reply"></i>';
+            contentEl.appendChild(btn);
+        });
+    }
 })();
         
