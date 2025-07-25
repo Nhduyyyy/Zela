@@ -1,14 +1,19 @@
 (() => {
+    // ========================
+    // Biến trạng thái toàn cục
+    // ========================
     // ID của friend đang chat
     currentFriendId = null;
-    let stickerPanelVisible = false;
-    let availableStickers = [];
-    let selectedFiles = []; // Array để lưu nhiều file
-    let replyToMessageId = null; // <--- Thêm biến lưu trạng thái reply
+    let stickerPanelVisible = false; // Trạng thái hiển thị panel sticker
+    let availableStickers = [];      // Danh sách sticker đã load
+    let selectedFiles = [];          // Danh sách file đang chọn để gửi
+    let replyToMessageId = null;     // ID tin nhắn đang reply (nếu có)
     let replyToMessageContent = null;
     let replyToMessageSenderName = null;
 
+    // ========================
     // Tham chiếu các phần tử DOM
+    // ========================
     const chatContentEl = document.querySelector('.chat-content');
     const chatInputEl = document.querySelector('.chat-input-bar input[type="text"]');
     const chatUserInfoEl = document.querySelector('.chat-user-info');
@@ -18,12 +23,17 @@
     const chatFriendNameEl = document.getElementById('chat-friend-name');
     const replyPreviewEl = document.getElementById('reply-preview'); // <--- Thêm phần tử hiển thị reply (nếu có)
 
-    // Khởi tạo kết nối SignalR (signalR đã được load trước qua CDN hoặc script tag)
+    // ========================
+    // Khởi tạo kết nối SignalR
+    // ========================
+    // Kết nối tới hub chat để nhận/gửi tin nhắn realtime
     const connection = new signalR.HubConnectionBuilder()
         .withUrl('/chathub')
         .build();
 
-    // Xử lý khi nhận message mới
+    // ========================
+    // Xử lý sự kiện nhận message mới từ SignalR
+    // ========================
     connection.on('ReceiveMessage', msg => {
         console.log('SignalR nhận được:', msg);
         const cid = Number(currentFriendId);
@@ -50,7 +60,9 @@
         }
     });
 
-    // MessageStatus update
+    // ========================
+    // Xử lý cập nhật trạng thái message (đã nhận, đã xem)
+    // ========================
     connection.on("MessageStatusUpdated", function (info) {
         console.log("Cập nhật trạng thái:", info);
 
@@ -61,7 +73,9 @@
         }
     });
 
-    // Nhận sticker mới
+    // ========================
+    // Nhận sticker mới từ SignalR
+    // ========================
     connection.on("ReceiveSticker", function (msg) {
         console.log("SignalR nhận được sticker:", msg);
 
@@ -73,15 +87,18 @@
         }
     });
 
-    // Only start if not already connected or connecting
+    // ========================
+    // Khởi động kết nối SignalR nếu chưa kết nối
+    // ========================
     if (connection.state === signalR.HubConnectionState.Disconnected) {
         connection.start().catch(err => console.error('Chat SignalR error:', err));
     } else {
         console.log('Chat SignalR already connected or connecting');
     }
 
-    // Gửi tin nhắn
-    // Show loading state
+    // ========================
+    // Hàm hiển thị trạng thái loading khi gửi tin nhắn
+    // ========================
     function showLoadingState() {
         const sendBtn = document.querySelector('.btn-send');
         const chatInput = chatInputEl;
@@ -125,7 +142,9 @@
         }
     }
 
-    // Show success toast
+    // ========================
+    // Hàm hiển thị toast thành công
+    // ========================
     function showSuccessToast(message) {
         const toast = document.createElement('div');
         toast.className = 'success-toast';
@@ -154,7 +173,9 @@
         }, 3000);
     }
 
-    // Hide loading state
+    // ========================
+    // Hàm ẩn trạng thái loading
+    // ========================
     function hideLoadingState() {
         const sendBtn = document.querySelector('.btn-send');
         const chatInput = chatInputEl;
@@ -177,6 +198,9 @@
         }
     }
 
+    // ========================
+    // Hàm gửi tin nhắn (text hoặc file), xử lý đồng bộ với server
+    // ========================
     async function sendMessage() {
         const content = chatInputEl.value.trim();
         const files = selectedFiles.length > 0 ? selectedFiles : null;
@@ -258,7 +282,9 @@
         }
     }
 
-    // Render 1 tin nhắn
+    // ========================
+    // Hàm render 1 tin nhắn ra HTML để hiển thị lên giao diện
+    // ========================
     function renderMessage(msg) {
         const isMine = msg.senderId === currentUserId;
         const side = isMine ? 'right' : 'left';
@@ -356,12 +382,16 @@
         }
     }
 
-    // Cuộn xuống cuối chat
+    // ========================
+    // Cuộn xuống cuối chat khi có tin nhắn mới
+    // ========================
     function scrollToBottom() {
         chatContentEl.scrollTop = chatContentEl.scrollHeight;
     }
 
-    // Load danh sách sticker từ server
+    // ========================
+    // Load danh sách sticker từ server và render panel sticker
+    // ========================
     async function loadStickers() {
         try {
             const response = await fetch('/Chat/GetStickers');
@@ -373,8 +403,6 @@
             console.error('Failed to load stickers:', error);
         }
     }
-
-    // Render sticker panel
     function renderStickerPanel(stickers) {
         const grid = document.querySelector('.sticker-grid');
         if (!grid) return;
@@ -396,8 +424,6 @@
             grid.appendChild(img);
         });
     }
-
-    // Khởi tạo sticker panel khi DOM ready
     function initializeStickerPanel() {
         const stickerPanelHtml = `
             <div class="sticker-panel">
@@ -419,7 +445,9 @@
         loadStickers();
     }
 
-    // Event delegation cho click
+    // ========================
+    // Event delegation cho click các nút, sticker, reply, ...
+    // ========================
     document.addEventListener('click', e => {
         // Chọn friend
         const friendItem = e.target.closest('.friend-item');
@@ -555,7 +583,9 @@
         }
     });
 
-    // Gửi khi Enter
+    // ========================
+    // Gửi tin nhắn khi nhấn Enter
+    // ========================
     chatInputEl.addEventListener('keypress', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -563,7 +593,9 @@
         }
     });
 
+    // ========================
     // Thêm event listener cho Enter trên toàn bộ chat input area
+    // ========================
     document.addEventListener('keydown', function (e) {
         // Chỉ xử lý khi đang focus vào chat input hoặc preview area
         const isInChatInput = e.target.closest('.chat-input-container') ||
@@ -598,17 +630,9 @@
         });
     }
 
-    // Load messages function (from jQuery version)
-    async function loadMessages(friendId) {
-        const res = await fetch(`/Chat/GetMessages?friendId=${friendId}`);
-        const html = await res.text();
-        chatContentEl.innerHTML = html;
-        bindFileSummaryButtons();
-        scrollToBottom();
-        addReplyButtons(); // Gọi lại sau mỗi lần render message
-    }
-
-    // File input change handler - Hỗ trợ nhiều file với tính năng tích lũy
+    // ========================
+    // Xử lý chọn file, preview file, xóa file, thêm file vào danh sách gửi
+    // ========================
     if (fileInputEl) {
         fileInputEl.addEventListener('change', function () {
             if (this.files && this.files.length > 0) {
@@ -902,13 +926,30 @@
         });
     }
 
-    // Khởi tạo khi DOM đã sẵn sàng
+    // ========================
+    // Hàm load lại lịch sử tin nhắn với bạn bè
+    // ========================
+    async function loadMessages(friendId) {
+        const res = await fetch(`/Chat/GetMessages?friendId=${friendId}`);
+        const html = await res.text();
+        chatContentEl.innerHTML = html;
+        bindFileSummaryButtons();
+        scrollToBottom();
+        addReplyButtons(); // Gọi lại sau mỗi lần render message
+    }
+
+    // ========================
+    // Khởi tạo sticker panel khi DOM ready
+    // ========================
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeStickerPanel);
     } else {
         initializeStickerPanel();
     }
 
+    // ========================
+    // Ngăn kéo sticker không bị kéo ra khỏi chat
+    // ========================
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelector('.chat-content').addEventListener('dragstart', function (e) {
             if (e.target.classList.contains('sticker-message')) {
@@ -917,7 +958,9 @@
         });
     });
 
-    // Update input placeholder based on preview state
+    // ========================
+    // Cập nhật placeholder input dựa trên trạng thái file
+    // ========================
     function updateInputPlaceholder() {
         const fileCount = selectedFiles.length;
 
@@ -930,7 +973,9 @@
         }
     }
 
-    // Load thông tin sidebar cho friend
+    // ========================
+    // Load thông tin sidebar cho friend (thông tin phải, media)
+    // ========================
     async function loadFriendSidebar(friendId) {
         try {
             const response = await fetch(`/Chat/GetFriendSidebar?friendId=${friendId}`);
@@ -967,7 +1012,9 @@
         }
     }
 
+    // ========================
     // Hàm ẩn sidebar media
+    // ========================
     function hideSidebarMedia() {
         const sidebarRight = document.querySelector('.chat-info-panel:not(.sidebar-media)');
         const sidebarMedia = document.querySelector('.sidebar-media');
@@ -996,10 +1043,9 @@
         }, 300);
     }
 
-    //=======================================================================================
-    //                              DRAG & DROP FUNCTIONALITY
-    //=======================================================================================
-
+    // ========================
+    // DRAG & DROP FUNCTIONALITY: Kéo thả file vào khung chat
+    // ========================
     function initializeDragAndDrop() {
         const dragDropOverlay = document.getElementById('drag-drop-overlay');
         const chatContent = document.querySelector('.chat-content');
@@ -1247,7 +1293,9 @@
         }
     }
 
+    // ========================
     // Trigger existing file preview system
+    // ========================
     function triggerFilePreviewUpdate() {
         console.log('Triggering file preview update for', selectedFiles.length, 'files');
 
@@ -1285,7 +1333,9 @@
         }
     }
 
+    // ========================
     // Create a beautiful preview matching the app's design
+    // ========================
     function createSimplePreview() {
         console.log('Creating beautiful preview for', selectedFiles.length, 'files');
 
@@ -1601,7 +1651,9 @@
         console.log('✅ Beautiful preview created');
     }
 
+    // ========================
     // Xử lý preview và tóm tắt file văn bản
+    // ========================
     function bindFileSummaryButtons() {
         // Xem trước file
         document.querySelectorAll('.btn-preview-file').forEach(btn => {
@@ -1664,14 +1716,18 @@
         });
     }
 
-    // Initialize drag and drop when DOM is ready
+    // ========================
+    // Khởi tạo drag & drop khi DOM ready
+    // ========================
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeDragAndDrop);
     } else {
         initializeDragAndDrop();
     }
 
-    // Gán 1 lần duy nhất khi trang load
+    // ========================
+    // Đóng preview/summary khi click nút đóng
+    // ========================
     document.addEventListener('click', function(e) {
         // Đóng preview
         if (e.target.classList.contains('close-preview-btn')) {
@@ -1705,7 +1761,9 @@
         }
     });
 
+    // ========================
     // Đóng preview
+    // ========================
     document.querySelectorAll('.close-preview-btn').forEach(btn => {
         btn.onclick = function () {
             const box = btn.closest('.file-preview-box');
@@ -1718,7 +1776,9 @@
         };
     });
 
+    // ========================
     // Đóng summary
+    // ========================
     document.querySelectorAll('.close-summary-btn').forEach(btn => {
         btn.onclick = function () {
             const box = btn.closest('.file-summary-box');
@@ -1731,7 +1791,9 @@
         };
     });
 
+    // ========================
     // Hiển thị UI reply phía trên input
+    // ========================
     function showReplyPreview() {
         let el = document.getElementById('reply-preview');
         if (!el) {
@@ -1757,7 +1819,9 @@
         if (el) el.style.display = 'none';
     }
 
-    // Bổ sung nút reply vào mỗi message khi render xong
+    // ========================
+    // Thêm nút reply vào mỗi message khi render xong
+    // ========================
     function addReplyButtons() {
         document.querySelectorAll('.message .message-content').forEach(function(contentEl) {
             const msgEl = contentEl.closest('.message');
