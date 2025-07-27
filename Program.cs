@@ -138,9 +138,6 @@ builder.Services.AddScoped<IStickerService, StickerService>();
 // add Recording
 builder.Services.AddScoped<IRecordingService, RecordingService>();
 
-// add Whiteboard
-builder.Services.AddScoped<IWhiteboardService, WhiteboardService>();
-
 //add Quiz
 builder.Services.AddScoped<IQuizService, QuizService>();
 
@@ -231,6 +228,9 @@ app.UseRouting();
 //      - Session lưu trên server hoặc lưu file tạm, key-value, được xác định bởi cookie session.
 app.UseSession();
 
+// Tự động cập nhật trạng thái Premium cho user mỗi request
+app.UseMiddleware<Zela.Middleware.PremiumStatusMiddleware>();
+
 // 7.6) Bật Authentication middleware
 //      - Đọc cookie (nếu có) để khôi phục ClaimsPrincipal vào HttpContext.User.
 //      - Xử lý Challenge/Forbid (ví dụ [Authorize], HttpContext.ChallengeAsync).
@@ -251,7 +251,6 @@ app.UseStatusCodePagesWithRedirects("/Account/Login?error=403");
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<MeetingHub>("/meetingHub");
 app.MapHub<MeetingChatHub>("/meetingChatHub");
-app.MapHub<WhiteboardHub>("/whiteboardHub");
 
 // 7.10) Chạy ứng dụng, lắng nghe request trên port đã cấu hình
 app.Run();
