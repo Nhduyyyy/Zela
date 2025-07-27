@@ -36,7 +36,6 @@ public class User
     public ICollection<RoomParticipant> RoomParticipations { get; set; }
     public ICollection<Attendance> Attendances { get; set; }
     public ICollection<QuizAttempt> QuizAttempts { get; set; }
-    public ICollection<DrawAction> DrawActions { get; set; }
     public ICollection<Subscription> Subscriptions { get; set; }
     public ICollection<PaymentTransaction> PaymentTransactions { get; set; }
 }

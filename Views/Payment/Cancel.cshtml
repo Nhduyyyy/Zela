@@ -2,6 +2,71 @@
     ViewData["Title"] = "Thanh toán bị hủy";
 }
 
+<style>
+    .cancel-container {
+        background: linear-gradient(135deg, var(--theme-primary-color) 0%, var(--theme-primary-dark) 100%);
+        min-height: 100vh;
+        padding: 2rem 0;
+    }
+    .cancel-card {
+        background: rgba(255,255,255,0.05);
+        border: 2px solid var(--theme-accent-red);
+        border-radius: 20px;
+        box-shadow: var(--theme-shadow-neon);
+        backdrop-filter: blur(10px);
+        overflow: hidden;
+        transition: all 0.3s;
+    }
+    .cancel-icon {
+        font-size: 4rem;
+        color: var(--theme-accent-red);
+        text-shadow: var(--theme-shadow-neon);
+    }
+    .cancel-title {
+        background: linear-gradient(45deg, var(--theme-accent-red), var(--theme-accent-red-alt));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        font-weight: 800;
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        text-shadow: var(--theme-shadow-neon);
+    }
+    .cancel-alert {
+        background: rgba(255, 90, 87, 0.1);
+        border: 1px solid var(--theme-accent-red);
+        color: var(--theme-accent-red);
+        border-radius: 15px;
+        padding: 1rem 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    .cancel-btn {
+        background: linear-gradient(45deg, var(--theme-accent-red), var(--theme-accent-red-alt));
+        border: none;
+        border-radius: 15px;
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        font-size: 1.1rem;
+        transition: all 0.3s;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #fff;
+    }
+    .cancel-btn-outline {
+        background: transparent;
+        border: 2px solid var(--theme-accent-red);
+        color: var(--theme-accent-red);
+    }
+    .cancel-btn-outline:hover {
+        background: var(--theme-accent-red);
+        color: var(--theme-text-dark);
+    }
+    .cancel-btn:hover {
+        box-shadow: var(--theme-shadow-neon);
+        background: linear-gradient(45deg, var(--theme-accent-red-alt), var(--theme-accent-red));
+    }
+</style>
+
 <div class="container mt-5">
     <div class="row justify-content-center">
         <div class="col-md-8 col-lg-6">
