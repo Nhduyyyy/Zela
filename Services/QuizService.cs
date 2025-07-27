@@ -785,9 +785,23 @@ public class QuizService : IQuizService
     {
         try
         {
+            // Kiểm tra quiz có tồn tại không
+            var quiz = GetById(quizId);
+            if (quiz == null)
+                throw new InvalidOperationException("Không tìm thấy quiz");
+                
+            // Kiểm tra quyền truy cập
+            var currentUserId = GetCurrentUserId();
+            if (quiz.CreatorId != currentUserId)
+                throw new UnauthorizedAccessException("Bạn không có quyền xem thống kê của quiz này");
+
             var attempts = GetAttempts(quizId);
             if (!attempts.Any())
-                return new QuizStatisticsViewModel { QuizTitle = GetById(quizId)?.Title ?? "Unknown Quiz" };
+                return new QuizStatisticsViewModel 
+                { 
+                    QuizId = quizId,
+                    QuizTitle = quiz.Title ?? "Unknown Quiz" 
+                };
 
             var totalAttempts = attempts.Count;
             var uniqueUsers = attempts.Select(a => a.UserId).Distinct().Count();
@@ -796,15 +810,44 @@ public class QuizService : IQuizService
             var maxScore = attempts.Max(a => a.Score);
             var minScore = attempts.Min(a => a.Score);
 
+            // Lấy thống kê chi tiết cho từng câu hỏi
+            var questionStats = new List<QuestionStatistics>();
+            var questions = GetQuestions(quizId);
+
+            foreach (var question in questions)
+            {
+                var questionAttempts = _dbContext.QuizAttemptDetail
+                    .Where(d => d.QuestionId == question.QuestionId && 
+                              attempts.Select(a => a.AttemptId).Contains(d.AttemptId))
+                    .ToList();
+
+                var totalAnswers = questionAttempts.Count;
+                var correctAnswers = questionAttempts.Count(d => d.IsCorrect);
+                var correctRate = totalAnswers > 0 ? (float)correctAnswers / totalAnswers : 0;
+
+                questionStats.Add(new QuestionStatistics
+                {
+                    QuestionId = question.QuestionId,
+                    Content = question.Content,
+                    QuestionType = question.QuestionType,
+                    TotalAnswers = totalAnswers,
+                    CorrectAnswers = correctAnswers,
+                    CorrectRate = correctRate
+                });
+            }
+
             return new QuizStatisticsViewModel
             {
-                QuizTitle = GetById(quizId)?.Title ?? "Unknown Quiz",
+                QuizId = quizId,
+                QuizTitle = quiz.Title ?? "Unknown Quiz",
                 TotalAttempts = totalAttempts,
                 UniqueUsers = uniqueUsers,
                 MaxAttemptsPerUser = maxAttemptsPerUser,
                 AverageScore = averageScore,
                 MaxScore = maxScore,
-                MinScore = minScore
+                MinScore = minScore,
+                ScoreDistribution = attempts.OrderBy(a => a.StartedAt).Select(a => a.Score).ToList(),
+                QuestionStats = questionStats
             };
         }
         catch (Exception ex)
