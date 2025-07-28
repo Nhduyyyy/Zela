@@ -67,6 +67,10 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
 
     public DbSet<FileSummary> FileSummaries { get; set; }
 
+    // ------------ Whiteboard System ------------
+    public DbSet<Whiteboard> Whiteboards { get; set; }
+    public DbSet<WhiteboardSession> WhiteboardSessions { get; set; }
+
     // ------------ Real-time Subtitle System ------------
     public DbSet<RealTimeSubtitle> RealTimeSubtitles { get; set; }
 

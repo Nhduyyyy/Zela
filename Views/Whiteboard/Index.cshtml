@@ -1,0 +1,200 @@
+@model Zela.ViewModels.WhiteboardIndexViewModel
+@{
+    ViewData["Title"] = "Bảng trắng";
+}
+
+@section Styles {
+    <link href="~/css/pages/whiteboard/whiteboard-index.css" rel="stylesheet" />
+}
+
+<div class="whiteboard-container">
+    <!-- Header Section -->
+    <div class="whiteboard-header">
+        <h1>Bảng trắng</h1>
+        <p>Tạo, quản lý và chia sẻ bảng trắng của bạn</p>
+    </div>
+
+    <!-- Main Content -->
+    <div class="whiteboard-content">
+        <!-- Create New Section -->
+        <div class="whiteboard-section">
+            <div class="section-header">
+                <div class="section-icon">+</div>
+                <h2>Tạo mới</h2>
+            </div>
+            <p class="section-description">Tạo một bảng trắng mới để bắt đầu vẽ và ghi chú</p>
+            <a href="@Url.Action("Create", "Whiteboard")" class="btn-whiteboard btn-primary">
+                <span>✨</span>
+                Tạo bảng trắng
+            </a>
+        </div>
+
+        <!-- My Whiteboards Section -->
+        <div class="whiteboard-section">
+            <div class="section-header">
+                <div class="section-icon">📋</div>
+                <h2>Bảng trắng của tôi</h2>
+            </div>
+            
+            @if (Model.MyWhiteboards.Any())
+            {
+                foreach (var whiteboard in Model.MyWhiteboards)
+                {
+                    <div class="whiteboard-item">
+                        <div class="whiteboard-item-title">@whiteboard.Title</div>
+                        <div class="whiteboard-item-description">@whiteboard.Description</div>
+                        <div class="whiteboard-item-meta">
+                            @whiteboard.CreatedAt.ToString("dd/MM/yyyy") • @whiteboard.SessionCount phiên • 
+                            @(whiteboard.IsPublic ? "Công khai" : "Riêng tư")
+                        </div>
+                        <div class="whiteboard-actions">
+                            <a href="@Url.Action("Editor", "Whiteboard", new { id = whiteboard.WhiteboardId })" 
+                               class="btn-action btn-open">Mở</a>
+                            <a href="@Url.Action("TogglePublic", "Whiteboard", new { id = whiteboard.WhiteboardId })" 
+                               class="btn-action btn-hide">@(whiteboard.IsPublic ? "Ẩn" : "Công khai")</a>
+                            <a href="@Url.Action("Delete", "Whiteboard", new { id = whiteboard.WhiteboardId })" 
+                               class="btn-action btn-delete" 
+                               onclick="return confirm('Bạn có chắc muốn xóa bảng trắng này?')">Xóa</a>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <div class="empty-state-text">Chưa có bảng trắng nào được tạo</div>
+                </div>
+            }
+        </div>
+
+        <!-- Templates Section -->
+        <div class="whiteboard-section">
+            <div class="section-header">
+                <div class="section-icon">📄</div>
+                <h2>Từ template</h2>
+            </div>
+            <p class="section-description">Sử dụng template có sẵn để bắt đầu nhanh chóng</p>
+            
+            <!-- Search and Filter -->
+            <div class="search-filter-container">
+                <input type="text" class="search-input" placeholder="Tìm kiếm bảng trắng..." id="searchInput">
+                <select class="filter-select" id="filterSelect">
+                    <option value="all">Tất cả</option>
+                    <option value="public">Công khai</option>
+                    <option value="private">Riêng tư</option>
+                    <option value="template">Template</option>
+                </select>
+            </div>
+
+            @if (Model.PublicTemplates.Any())
+            {
+                foreach (var template in Model.PublicTemplates)
+                {
+                    <div class="whiteboard-item">
+                        <div class="whiteboard-item-title">@template.Title</div>
+                        <div class="whiteboard-item-description">@template.Description</div>
+                        <div class="whiteboard-item-meta">
+                            @template.CreatedAt.ToString("dd/MM/yyyy") • @template.SessionCount phiên • Template
+                        </div>
+                        <div class="whiteboard-actions">
+                            <a href="@Url.Action("Editor", "Whiteboard", new { id = template.WhiteboardId })" 
+                               class="btn-action btn-open">Mở</a>
+                            <a href="@Url.Action("Clone", "Whiteboard", new { id = template.WhiteboardId })" 
+                               class="btn-action btn-hide">Sao chép</a>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">📄</div>
+                    <div class="empty-state-text">Chưa có template công khai nào được tạo</div>
+                </div>
+            }
+        </div>
+
+        <!-- Recent Sessions Section -->
+        <div class="whiteboard-section">
+            <div class="section-header">
+                <div class="section-icon">🔄</div>
+                <h2>Phiên gần đây</h2>
+            </div>
+            <p class="section-description">Tiếp tục làm việc với các phiên đã tạo trước đó</p>
+            
+            @if (Model.RecentSessions.Any())
+            {
+                foreach (var session in Model.RecentSessions)
+                {
+                    <div class="whiteboard-item">
+                        <div class="whiteboard-item-title">@session.Title</div>
+                        <div class="whiteboard-item-description">@session.Description</div>
+                        <div class="whiteboard-item-meta">
+                            @(session.LastModifiedAt?.ToString("dd/MM/yyyy HH:mm") ?? session.CreatedAt.ToString("dd/MM/yyyy HH:mm"))
+                        </div>
+                        <div class="whiteboard-actions">
+                            <a href="@Url.Action("Editor", "Whiteboard", new { id = session.WhiteboardId })" 
+                               class="btn-action btn-open">Tiếp tục</a>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">⏰</div>
+                    <div class="empty-state-text">Chưa có phiên làm việc nào</div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const items = document.querySelectorAll('.whiteboard-item');
+            
+            items.forEach(item => {
+                const title = item.querySelector('.whiteboard-item-title').textContent.toLowerCase();
+                const description = item.querySelector('.whiteboard-item-description').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Filter functionality
+        document.getElementById('filterSelect').addEventListener('change', function() {
+            const filterValue = this.value;
+            const items = document.querySelectorAll('.whiteboard-item');
+            
+            items.forEach(item => {
+                const meta = item.querySelector('.whiteboard-item-meta').textContent.toLowerCase();
+                
+                if (filterValue === 'all' || 
+                    (filterValue === 'public' && meta.includes('công khai')) ||
+                    (filterValue === 'private' && meta.includes('riêng tư')) ||
+                    (filterValue === 'template' && meta.includes('template'))) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Add smooth animations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.whiteboard-section');
+            sections.forEach((section, index) => {
+                section.style.animationDelay = `${index * 0.1}s`;
+            });
+        });
+    </script>
+} 
