@@ -110,6 +110,20 @@
                                     }
                                 </div>
                             </div>
+                            <div class="quiz-card-body">
+                                <h4 class="quiz-card-title">@quiz.Title</h4>
+                                <p class="quiz-card-desc">@quiz.Description</p>
+                                <div class="quiz-card-meta">
+                                    <span class="quiz-terms">
+                                        <i class="bi bi-list-check me-1"></i>
+                                        @quiz.TermCount terms
+                                    </span>
+                                    <span class="quiz-author">
+                                        <i class="bi bi-person me-1"></i>
+                                        @quiz.Author
+                                    </span>
+                                </div>
+                            </div>
                             <div class="quiz-card-footer">
                                 <a href="@Url.Action("Take", "Quiz", new { id = quiz.QuizId })" class="btn btn-primary btn-sm">
                                     <i class="bi bi-play me-1"></i>
