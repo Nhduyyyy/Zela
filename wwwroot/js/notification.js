@@ -8,6 +8,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const countBadge = document.getElementById('notification-count');
     const markAllReadBtn = document.getElementById('mark-all-as-read');
 
+    // Kiểm tra xem có phải trang có notification không
+    if (!bell || !dropdown || !list || !countBadge || !markAllReadBtn) {
+        return; // Thoát nếu không phải trang notification
+    }
+
     // ========================
     // State lưu trữ thông báo và trạng thái dropdown
     // ========================

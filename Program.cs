@@ -162,6 +162,9 @@ builder.Services.AddHttpClient<IAudioTranscriptionService, AudioTranscriptionSer
 // Đăng ký NotificationService
 builder.Services.AddScoped<INotificationService, NotificationService>();
 
+// Đăng ký WhiteboardService
+builder.Services.AddScoped<Zela.Services.Interface.IWhiteboardService, Zela.Services.WhiteboardService>();
+
 // Configure form options for file uploads
 builder.Services.Configure<FormOptions>(options =>
 {
@@ -251,6 +254,7 @@ app.UseStatusCodePagesWithRedirects("/Account/Login?error=403");
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<MeetingHub>("/meetingHub");
 app.MapHub<MeetingChatHub>("/meetingChatHub");
+app.MapHub<WhiteboardHub>("/whiteboardHub");
 
 // 7.10) Chạy ứng dụng, lắng nghe request trên port đã cấu hình
 app.Run();

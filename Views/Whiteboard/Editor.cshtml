@@ -1,0 +1,328 @@
+@model Zela.ViewModels.WhiteboardEditorViewModel
+@{
+    ViewData["Title"] = "Whiteboard Editor";
+}
+
+@section Styles {
+    <link href="~/css/pages/whiteboard/whiteboard-editor.css" rel="stylesheet" />
+}
+
+<div class="whiteboard-editor">
+    <!-- Top Toolbar -->
+    <div class="editor-toolbar">
+        <div class="toolbar-left">
+            <div class="toolbar-title">@Model.WhiteboardTitle</div>
+        </div>
+        <div class="toolbar-actions">
+            <button id="saveBtn" class="btn-toolbar btn-save">
+                <span>💾</span>
+                Lưu
+            </button>
+            <a href="@Url.Action("Index", "Whiteboard")" class="btn-toolbar btn-back">
+                <span>←</span>
+                Quay lại
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Editor Area -->
+    <div class="editor-main">
+        <!-- Left Sidebar - Tools -->
+        <div class="editor-sidebar">
+            <!-- Drawing Tools -->
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <span>🖌️</span>
+                    Công cụ vẽ
+                </div>
+                <div class="tools-grid">
+                    <button class="tool-btn active" data-tool="pen" title="Bút vẽ">
+                        ✏️
+                    </button>
+                    <button class="tool-btn" data-tool="eraser" title="Tẩy">
+                        🧽
+                    </button>
+                    <button class="tool-btn" data-tool="text" title="Văn bản">
+                        T
+                    </button>
+                    <button class="tool-btn" data-tool="rectangle" title="Hình chữ nhật">
+                        ⬜
+                    </button>
+                    <button class="tool-btn" data-tool="circle" title="Hình tròn">
+                        ⭕
+                    </button>
+                    <button class="tool-btn" data-tool="line" title="Đường thẳng">
+                        ➖
+                    </button>
+                </div>
+            </div>
+
+            <!-- Color Palette -->
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <span>🎨</span>
+                    Màu sắc
+                </div>
+                <div class="color-palette">
+                    <div class="color-btn active" data-color="#000000" style="background-color: #000000;"></div>
+                    <div class="color-btn" data-color="#ff0000" style="background-color: #ff0000;"></div>
+                    <div class="color-btn" data-color="#00ff00" style="background-color: #00ff00;"></div>
+                    <div class="color-btn" data-color="#0000ff" style="background-color: #0000ff;"></div>
+                    <div class="color-btn" data-color="#ffff00" style="background-color: #ffff00;"></div>
+                    <div class="color-btn" data-color="#ff00ff" style="background-color: #ff00ff;"></div>
+                    <div class="color-btn" data-color="#00ffff" style="background-color: #00ffff;"></div>
+                    <div class="color-btn" data-color="#ffa500" style="background-color: #ffa500;"></div>
+                    <div class="color-btn" data-color="#800080" style="background-color: #800080;"></div>
+                    <div class="color-btn" data-color="#008000" style="background-color: #008000;"></div>
+                    <div class="color-btn" data-color="#ffc0cb" style="background-color: #ffc0cb;"></div>
+                    <div class="color-btn" data-color="#a52a2a" style="background-color: #a52a2a;"></div>
+                </div>
+            </div>
+
+            <!-- Brush Sizes -->
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <span>📏</span>
+                    Độ dày
+                </div>
+                <div class="brush-sizes">
+                    <button class="size-btn active" data-size="2" title="Mỏng"></button>
+                    <button class="size-btn" data-size="5" title="Trung bình"></button>
+                    <button class="size-btn" data-size="10" title="Dày"></button>
+                    <button class="size-btn" data-size="20" title="Rất dày"></button>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <span>⚙️</span>
+                    Thao tác
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <button id="clearBtn" class="btn-toolbar btn-secondary" style="width: 100%;">
+                        <span>🗑️</span>
+                        Xóa tất cả
+                    </button>
+                    <button id="undoBtn" class="btn-toolbar btn-secondary" style="width: 100%;">
+                        <span>↶</span>
+                        Hoàn tác
+                    </button>
+                    <button id="redoBtn" class="btn-toolbar btn-secondary" style="width: 100%;">
+                        <span>↷</span>
+                        Làm lại
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="canvas-container">
+            <canvas id="whiteboardCanvas" width="1200" height="800"></canvas>
+            
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="loading-spinner"></div>
+            </div>
+        </div>
+
+        <!-- Right Sidebar - Session History -->
+        <div class="session-sidebar">
+            <div class="session-header">
+                <div class="session-title">Lịch sử phiên</div>
+                <div class="session-info">@Model.SessionCount phiên làm việc</div>
+            </div>
+            
+            <div class="session-list" id="sessionList">
+                @if (Model.Sessions != null && Model.Sessions.Any())
+                {
+                    foreach (var session in Model.Sessions.OrderByDescending(s => s.LastModifiedAt))
+                    {
+                        <div class="session-item @(session.SessionId == Model.SessionId ? "active" : "")" 
+                             data-session-id="@session.SessionId">
+                            <div class="session-item-title">Phiên @session.SessionId</div>
+                            <div class="session-item-date">@(session.LastModifiedAt?.ToString("dd/MM/yyyy HH:mm") ?? session.CreatedAt.ToString("dd/MM/yyyy HH:mm"))</div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div style="text-align: center; color: var(--muted-text); padding: 2rem;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📝</div>
+                        <div>Chưa có phiên nào</div>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-left">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="connectionStatus">Đang kết nối...</span>
+            </div>
+            <div id="userCount">0 người dùng</div>
+        </div>
+        <div id="currentTool">Công cụ: Bút vẽ</div>
+    </div>
+</div>
+
+<!-- Notification Container -->
+<div id="notificationContainer"></div>
+
+@section Scripts {
+    <script src="~/js/whiteboard.js"></script>
+    <script>
+        // Initialize whiteboard with session data
+        document.addEventListener('DOMContentLoaded', function() {
+            const whiteboard = new Whiteboard('whiteboardCanvas', {
+                sessionId: @Model.SessionId,
+                whiteboardId: @Model.WhiteboardId,
+                canEdit: @Model.CanEdit.ToString().ToLower()
+            });
+
+            // Load session data if available
+            @if (!string.IsNullOrEmpty(Model.CanvasData))
+            {
+                <text>
+                whiteboard.loadCanvasData('@Html.Raw(Model.CanvasData)');
+                </text>
+            }
+
+            // Tool selection
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    whiteboard.setTool(this.dataset.tool);
+                    updateCurrentTool();
+                });
+            });
+
+            // Color selection
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    whiteboard.setColor(this.dataset.color);
+                });
+            });
+
+            // Size selection
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    whiteboard.setSize(parseInt(this.dataset.size));
+                });
+            });
+
+            // Action buttons
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                if (confirm('Bạn có chắc muốn xóa tất cả?')) {
+                    whiteboard.clearCanvas();
+                }
+            });
+
+            document.getElementById('undoBtn').addEventListener('click', function() {
+                whiteboard.undo();
+            });
+
+            document.getElementById('redoBtn').addEventListener('click', function() {
+                whiteboard.redo();
+            });
+
+            // Save button
+            document.getElementById('saveBtn').addEventListener('click', function() {
+                whiteboard.saveCanvasData();
+                showNotification('Đã lưu thành công!', 'success');
+            });
+
+            // Session selection
+            document.querySelectorAll('.session-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const sessionId = this.dataset.sessionId;
+                    if (sessionId != @Model.SessionId) {
+                        window.location.href = `/Whiteboard/Editor/@Model.WhiteboardId?sessionId=${sessionId}`;
+                    }
+                });
+            });
+
+            // Update current tool display
+            function updateCurrentTool() {
+                const activeTool = document.querySelector('.tool-btn.active');
+                const toolNames = {
+                    'pen': 'Bút vẽ',
+                    'eraser': 'Tẩy',
+                    'text': 'Văn bản',
+                    'rectangle': 'Hình chữ nhật',
+                    'circle': 'Hình tròn',
+                    'line': 'Đường thẳng'
+                };
+                document.getElementById('currentTool').textContent = `Công cụ: ${toolNames[activeTool.dataset.tool]}`;
+            }
+
+            // Show notification
+            function showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
+                
+                document.getElementById('notificationContainer').appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+
+            // Update connection status
+            function updateConnectionStatus(status, userCount = 0) {
+                const statusElement = document.getElementById('connectionStatus');
+                const userCountElement = document.getElementById('userCount');
+                
+                if (status === 'connected') {
+                    statusElement.textContent = 'Đã kết nối';
+                    userCountElement.textContent = `${userCount} người dùng`;
+                } else if (status === 'connecting') {
+                    statusElement.textContent = 'Đang kết nối...';
+                    userCountElement.textContent = '0 người dùng';
+                } else {
+                    statusElement.textContent = 'Mất kết nối';
+                    userCountElement.textContent = '0 người dùng';
+                }
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 's':
+                            e.preventDefault();
+                            whiteboard.saveCanvasData();
+                            showNotification('Đã lưu thành công!', 'success');
+                            break;
+                        case 'z':
+                            e.preventDefault();
+                            if (e.shiftKey) {
+                                whiteboard.redo();
+                            } else {
+                                whiteboard.undo();
+                            }
+                            break;
+                        case 'Delete':
+                        case 'Backspace':
+                            e.preventDefault();
+                            whiteboard.clearCanvas();
+                            break;
+                    }
+                }
+            });
+
+            // Initialize
+            updateCurrentTool();
+            updateConnectionStatus('connecting');
+        });
+    </script>
+} 

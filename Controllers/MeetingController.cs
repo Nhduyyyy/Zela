@@ -113,6 +113,17 @@ namespace Zela.Controllers
             // Truyền tên phòng họp cho view (ví dụ: "Meeting ABC123"), có thể dùng để hiển thị tiêu đề phòng
             ViewBag.meetingName = $"Meeting {code}";
 
+            // Lấy RoomId từ code để sử dụng cho whiteboard
+            try
+            {
+                var room = await _meetingService.GetRoomByCodeAsync(code);
+                ViewBag.RoomId = room?.RoomId ?? 0;
+            }
+            catch
+            {
+                ViewBag.RoomId = 0;
+            }
+
             // Trả về view mặc định (Views/Meeting/Room.cshtml), các biến ViewBag ở trên sẽ được sử dụng trong view này
             return View();
         }
