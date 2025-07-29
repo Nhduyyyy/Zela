@@ -46,4 +46,12 @@ public class PaymentTransaction
     
     // Navigation property
     public User User { get; set; }
+}
+
+public static class PaymentStatus
+{
+    public const string Pending = "Pending";
+    public const string Paid = "PAID";
+    public const string Failed = "FAILED";
+    public const string Cancelled = "CANCELLED";
 } 

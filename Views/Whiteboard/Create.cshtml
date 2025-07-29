@@ -1,0 +1,166 @@
+@model Zela.ViewModels.CreateWhiteboardViewModel
+@{
+    ViewData["Title"] = "Tạo bảng trắng mới";
+}
+
+@section Styles {
+    <link href="~/css/pages/whiteboard/whiteboard-create.css" rel="stylesheet" />
+}
+
+<div class="create-whiteboard-container">
+    <div class="create-form-container">
+        <!-- Header -->
+        <div class="create-header">
+            <h1>🎨 Tạo bảng trắng mới</h1>
+            <p>Bắt đầu tạo bảng trắng để vẽ, ghi chú và chia sẻ ý tưởng của bạn</p>
+        </div>
+
+        <!-- Form -->
+        <form asp-action="Create" method="post" class="create-form">
+            @Html.AntiForgeryToken()
+            
+            <!-- Room Info (if creating from meeting) -->
+            @if (Model.RoomId.HasValue && Model.RoomId > 0)
+            {
+                <div class="room-info">
+                    <div class="room-icon">📹</div>
+                    <div class="room-text">
+                        Đang tạo bảng trắng cho cuộc họp: <span class="room-id">Room #@Model.RoomId</span>
+                    </div>
+                </div>
+            }
+
+            <!-- Title -->
+            <div class="form-group">
+                <label asp-for="Title" class="form-label">Tên bảng trắng *</label>
+                <input asp-for="Title" class="form-input" placeholder="Nhập tên bảng trắng..." />
+                <span asp-validation-for="Title" class="validation-message"></span>
+            </div>
+
+            <!-- Description -->
+            <div class="form-group">
+                <label asp-for="Description" class="form-label">Mô tả</label>
+                <textarea asp-for="Description" class="form-input form-textarea" 
+                          placeholder="Mô tả ngắn gọn về bảng trắng này..."></textarea>
+                <span asp-validation-for="Description" class="validation-message"></span>
+            </div>
+
+            <!-- Hidden RoomId -->
+            <input asp-for="RoomId" type="hidden" />
+
+            <!-- Options -->
+            <div class="form-group">
+                <label class="form-label">Tùy chọn</label>
+                <div class="checkbox-group">
+                    <div class="checkbox-item">
+                        <input asp-for="IsPublic" type="checkbox" class="checkbox-input" id="isPublic" />
+                        <div>
+                            <label for="isPublic" class="checkbox-label">Công khai</label>
+                            <div class="checkbox-description">Cho phép người khác xem và sử dụng bảng trắng này</div>
+                        </div>
+                    </div>
+                    
+                    <div class="checkbox-item">
+                        <input asp-for="IsTemplate" type="checkbox" class="checkbox-input" id="isTemplate" />
+                        <div>
+                            <label for="isTemplate" class="checkbox-label">Làm template</label>
+                            <div class="checkbox-description">Sử dụng làm mẫu cho các bảng trắng khác</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <a href="@Url.Action("Index", "Whiteboard")" class="btn-create btn-secondary">
+                    <span>←</span>
+                    Hủy
+                </a>
+                <button type="submit" class="btn-create btn-primary">
+                    <span>✨</span>
+                    Tạo bảng trắng
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.querySelector('.create-form');
+            const submitBtn = form.querySelector('button[type="submit"]');
+            
+            // Form validation
+            form.addEventListener('submit', function(e) {
+                const title = document.getElementById('Title').value.trim();
+                const description = document.getElementById('Description').value.trim();
+                
+                // Clear previous validation messages
+                document.querySelectorAll('.validation-message').forEach(msg => msg.style.display = 'none');
+                document.querySelectorAll('.form-input').forEach(input => input.classList.remove('field-validation-error'));
+                
+                let isValid = true;
+                
+                // Validate title
+                if (!title) {
+                    showValidationError('Title', 'Vui lòng nhập tên bảng trắng');
+                    isValid = false;
+                } else if (title.length > 200) {
+                    showValidationError('Title', 'Tên bảng trắng không được quá 200 ký tự');
+                    isValid = false;
+                }
+                
+                // Validate description
+                if (description.length > 1000) {
+                    showValidationError('Description', 'Mô tả không được quá 1000 ký tự');
+                    isValid = false;
+                }
+                
+                if (!isValid) {
+                    e.preventDefault();
+                    return false;
+                }
+                
+                // Show loading state
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="loading-spinner" style="width: 16px; height: 16px; border: 2px solid transparent; border-top: 2px solid currentColor; border-radius: 50%; animation: spin 1s linear infinite;"></span> Đang tạo...';
+            });
+            
+            function showValidationError(fieldName, message) {
+                const field = document.getElementById(fieldName);
+                const validationSpan = field.nextElementSibling;
+                
+                field.classList.add('field-validation-error');
+                validationSpan.textContent = message;
+                validationSpan.style.display = 'flex';
+            }
+            
+            // Auto-resize textarea
+            const textarea = document.getElementById('Description');
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            });
+            
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 'Enter':
+                            e.preventDefault();
+                            form.submit();
+                            break;
+                        case 'Escape':
+                            e.preventDefault();
+                            window.location.href = '@Url.Action("Index", "Whiteboard")';
+                            break;
+                    }
+                }
+            });
+            
+            // Focus on title field
+            document.getElementById('Title').focus();
+        });
+    </script>
+} 

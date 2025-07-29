@@ -17,9 +17,9 @@
                         <div class="d-flex align-items-center gap-3">
                             <img id="avatarPreview" src="@(Context.Session.GetString("AvatarUrl") ?? "/images/default-avatar.jpeg")" alt="Avatar" class="rounded-circle" style="width: 64px; height: 64px; object-fit: cover;" />
                             <div class="flex-grow-1">
-                                <input type="file" class="form-control" id="avatarFile" accept="image/*" />
+                                <input type="file" class="form-control" id="avatarFile" name="AvatarFile" accept=".jpg,.jpeg,.png" />
                                 <input asp-for="AvatarUrl" type="hidden" />
-                                <small class="text-muted">Chọn ảnh định dạng JPG, PNG hoặc GIF</small>
+                                <small class="text-muted">Chọn ảnh định dạng JPG, JPEG, PNG. Dung lượng tối đa 2MB.</small>
                             </div>
                         </div>
                         <span asp-validation-for="AvatarUrl" class="text-danger"></span>

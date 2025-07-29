@@ -1,394 +1,199 @@
+@model Zela.ViewModels.WhiteboardIndexViewModel
 @{
-    ViewData["Title"] = "Whiteboard Management";
-    Layout = "_Layout";
+    ViewData["Title"] = "Bảng trắng";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link rel="stylesheet" href="~/css/components/whiteboard.css" />
+    <link href="~/css/pages/whiteboard/whiteboard-index.css" rel="stylesheet" />
 }
 
-<div class="whiteboard-management-container">
+<div class="whiteboard-container">
+    <!-- Header Section -->
     <div class="whiteboard-header">
-        <h1>Whiteboard Management</h1>
-        <p class="text-muted">Quản lý template và tạo whiteboard mới</p>
+        <h1>Bảng trắng</h1>
+        <p>Tạo, quản lý và chia sẻ bảng trắng của bạn</p>
     </div>
 
+    <!-- Main Content -->
     <div class="whiteboard-content">
-        <!-- Quick Actions -->
-        <div class="quick-actions-section">
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="action-card" id="createNewCard">
-                        <div class="action-icon">
-                            <i class="fas fa-plus-circle"></i>
-                        </div>
-                        <h4>Tạo Whiteboard Mới</h4>
-                        <p>Tạo whiteboard trống để bắt đầu vẽ</p>
-                        <button class="btn btn-primary btn-block">Bắt đầu</button>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="action-card" id="importCard">
-                        <div class="action-icon">
-                            <i class="fas fa-upload"></i>
-                        </div>
-                        <h4>Import Template</h4>
-                        <p>Import template từ file hoặc URL</p>
-                        <button class="btn btn-secondary btn-block">Import</button>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="action-card" id="joinMeetingCard">
-                        <div class="action-icon">
-                            <i class="fas fa-video"></i>
-                        </div>
-                        <h4>Join Meeting</h4>
-                        <p>Tham gia meeting để sử dụng whiteboard</p>
-                        <a href="/Meeting" class="btn btn-success btn-block">Join Meeting</a>
-                    </div>
-                </div>
+        <!-- Create New Section -->
+        <div class="whiteboard-section">
+            <div class="section-header">
+                <div class="section-icon">+</div>
+                <h2>Tạo mới</h2>
             </div>
+            <p class="section-description">Tạo một bảng trắng mới để bắt đầu vẽ và ghi chú</p>
+            <a href="@Url.Action("Create", "Whiteboard")" class="btn-whiteboard btn-primary">
+                <span>✨</span>
+                Tạo bảng trắng
+            </a>
         </div>
 
-        <!-- Recent Sessions -->
-        <div class="recent-sessions-section">
+        <!-- My Whiteboards Section -->
+        <div class="whiteboard-section">
             <div class="section-header">
-                <h3>Sessions Gần Đây</h3>
-                <div class="section-actions">
-                    <button class="btn btn-outline-primary" id="refreshSessionsBtn">
-                        <i class="fas fa-sync-alt"></i> Làm mới
-                    </button>
-                </div>
+                <div class="section-icon">📋</div>
+                <h2>Bảng trắng của tôi</h2>
             </div>
             
-            <div class="sessions-grid" id="sessionsGrid">
-                <div class="loading-sessions">
-                    <i class="fas fa-spinner fa-spin"></i> Đang tải sessions...
+            @if (Model.MyWhiteboards.Any())
+            {
+                foreach (var whiteboard in Model.MyWhiteboards)
+                {
+                    <div class="whiteboard-item">
+                        <div class="whiteboard-item-title">@whiteboard.Title</div>
+                        <div class="whiteboard-item-description">@whiteboard.Description</div>
+                        <div class="whiteboard-item-meta">
+                            @whiteboard.CreatedAt.ToString("dd/MM/yyyy") • @whiteboard.SessionCount phiên • 
+                            @(whiteboard.IsPublic ? "Công khai" : "Riêng tư")
+                        </div>
+                        <div class="whiteboard-actions">
+                            <a href="@Url.Action("Editor", "Whiteboard", new { id = whiteboard.WhiteboardId })" 
+                               class="btn-action btn-open">Mở</a>
+                            <a href="@Url.Action("TogglePublic", "Whiteboard", new { id = whiteboard.WhiteboardId })" 
+                               class="btn-action btn-hide">@(whiteboard.IsPublic ? "Ẩn" : "Công khai")</a>
+                            <a href="@Url.Action("Delete", "Whiteboard", new { id = whiteboard.WhiteboardId })" 
+                               class="btn-action btn-delete" 
+                               onclick="return confirm('Bạn có chắc muốn xóa bảng trắng này?')">Xóa</a>
+                        </div>
+                    </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <div class="empty-state-text">Chưa có bảng trắng nào được tạo</div>
                 </div>
-            </div>
+            }
         </div>
 
-        <!-- Template Library -->
-        <div class="template-library-section">
+        <!-- Templates Section -->
+        <div class="whiteboard-section">
             <div class="section-header">
-                <h3>Template Library</h3>
-                <div class="section-actions">
-                    <div class="search-box">
-                        <input type="text" id="templateSearch" placeholder="Tìm kiếm template..." class="form-control">
-                    </div>
-                    <div class="filter-dropdown">
-                        <select id="templateFilter" class="form-control">
-                            <option value="all">Tất cả</option>
-                            <option value="mine">Của tôi</option>
-                            <option value="public">Công khai</option>
-                            <option value="recent">Gần đây</option>
-                        </select>
-                    </div>
-                </div>
+                <div class="section-icon">📄</div>
+                <h2>Từ template</h2>
+            </div>
+            <p class="section-description">Sử dụng template có sẵn để bắt đầu nhanh chóng</p>
+            
+            <!-- Search and Filter -->
+            <div class="search-filter-container">
+                <input type="text" class="search-input" placeholder="Tìm kiếm bảng trắng..." id="searchInput">
+                <select class="filter-select" id="filterSelect">
+                    <option value="all">Tất cả</option>
+                    <option value="public">Công khai</option>
+                    <option value="private">Riêng tư</option>
+                    <option value="template">Template</option>
+                </select>
             </div>
 
-            <div class="template-grid" id="templateGrid">
-                @if (ViewBag.Templates != null && ViewBag.Templates.Count > 0)
+            @if (Model.PublicTemplates.Any())
+            {
+                foreach (var template in Model.PublicTemplates)
                 {
-                    foreach (var template in ViewBag.Templates)
-                    {
-                        <div class="template-card" data-template-id="@template.Id" data-template-name="@template.Name">
-                            <div class="template-thumbnail">
-                                @if (!string.IsNullOrEmpty(template.Thumbnail))
-                                {
-                                    <img src="data:image/png;base64,@template.Thumbnail" alt="@template.Name">
-                                }
-                                else
-                                {
-                                    <div class="template-placeholder">
-                                        <i class="fas fa-image"></i>
-                                    </div>
-                                }
-                                <div class="template-overlay">
-                                    <button class="btn btn-sm btn-primary preview-btn" title="Preview">
-                                        <i class="fas fa-eye"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-success edit-btn" title="Edit">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-danger delete-btn" title="Delete">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <div class="template-info">
-                                <h5>@template.Name</h5>
-                                <p>@template.Description</p>
-                                <div class="template-meta">
-                                    <span class="creator">
-                                        <i class="fas fa-user"></i> @template.CreatedByUser?.FullName
-                                    </span>
-                                    <span class="date">
-                                        <i class="fas fa-calendar"></i> @template.CreatedAt.ToString("MM/dd/yyyy")
-                                    </span>
-                                    @if (template.IsPublic)
-                                    {
-                                        <span class="public-badge">
-                                            <i class="fas fa-globe"></i> Public
-                                        </span>
-                                    }
-                                </div>
-                            </div>
+                    <div class="whiteboard-item">
+                        <div class="whiteboard-item-title">@template.Title</div>
+                        <div class="whiteboard-item-description">@template.Description</div>
+                        <div class="whiteboard-item-meta">
+                            @template.CreatedAt.ToString("dd/MM/yyyy") • @template.SessionCount phiên • Template
                         </div>
-                    }
-                }
-                else
-                {
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <i class="fas fa-layer-group"></i>
+                        <div class="whiteboard-actions">
+                            <a href="@Url.Action("Editor", "Whiteboard", new { id = template.WhiteboardId })" 
+                               class="btn-action btn-open">Mở</a>
+                            <a href="@Url.Action("Clone", "Whiteboard", new { id = template.WhiteboardId })" 
+                               class="btn-action btn-hide">Sao chép</a>
                         </div>
-                        <h4>Chưa có template nào</h4>
-                        <p>Bắt đầu tạo template đầu tiên của bạn</p>
-                        <button class="btn btn-primary" id="createFirstTemplate">
-                            <i class="fas fa-plus"></i> Tạo Template Đầu Tiên
-                        </button>
                     </div>
                 }
-            </div>
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">📄</div>
+                    <div class="empty-state-text">Chưa có template công khai nào được tạo</div>
+                </div>
+            }
         </div>
-    </div>
-</div>
 
-<!-- Template Preview Modal -->
-<div class="modal fade" id="templatePreviewModal" tabindex="-1">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Template Preview</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <!-- Recent Sessions Section -->
+        <div class="whiteboard-section">
+            <div class="section-header">
+                <div class="section-icon">🔄</div>
+                <h2>Phiên gần đây</h2>
             </div>
-            <div class="modal-body">
-                <div class="preview-content">
-                    <div class="preview-image">
-                        <img id="previewImage" src="" alt="Template Preview">
-                    </div>
-                    <div class="preview-info">
-                        <h4 id="previewTitle"></h4>
-                        <p id="previewDescription"></p>
-                        <div class="preview-meta">
-                            <p><strong>Creator:</strong> <span id="previewCreator"></span></p>
-                            <p><strong>Created:</strong> <span id="previewDate"></span></p>
-                            <p><strong>Status:</strong> <span id="previewStatus"></span></p>
+            <p class="section-description">Tiếp tục làm việc với các phiên đã tạo trước đó</p>
+            
+            @if (Model.RecentSessions.Any())
+            {
+                foreach (var session in Model.RecentSessions)
+                {
+                    <div class="whiteboard-item">
+                        <div class="whiteboard-item-title">@session.Title</div>
+                        <div class="whiteboard-item-description">@session.Description</div>
+                        <div class="whiteboard-item-meta">
+                            @(session.LastModifiedAt?.ToString("dd/MM/yyyy HH:mm") ?? session.CreatedAt.ToString("dd/MM/yyyy HH:mm"))
+                        </div>
+                        <div class="whiteboard-actions">
+                            <a href="@Url.Action("Editor", "Whiteboard", new { id = session.WhiteboardId })" 
+                               class="btn-action btn-open">Tiếp tục</a>
                         </div>
                     </div>
+                }
+            }
+            else
+            {
+                <div class="empty-state">
+                    <div class="empty-state-icon">⏰</div>
+                    <div class="empty-state-text">Chưa có phiên làm việc nào</div>
                 </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary" id="editTemplateBtn">
-                    <i class="fas fa-edit"></i> Edit Template
-                </button>
-                <button type="button" class="btn btn-success" id="useInMeetingBtn">
-                    <i class="fas fa-video"></i> Use in Meeting
-                </button>
-            </div>
+            }
         </div>
     </div>
 </div>
 
 @section Scripts {
     <script>
-        $(document).ready(function() {
-            // Load sessions on page load
-            loadUserSessions();
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const items = document.querySelectorAll('.whiteboard-item');
             
-            // Create new whiteboard (redirect to editor)
-            $('#createNewCard, #createFirstTemplate').on('click', function() {
-                window.location.href = '/Whiteboard/Editor';
-            });
-            
-            // Refresh sessions button
-            $('#refreshSessionsBtn').on('click', function() {
-                loadUserSessions();
-            });
-
-            // Preview template
-            $(document).on('click', '.preview-btn', function() {
-                const templateId = $(this).closest('.template-card').data('template-id');
-                showTemplatePreview(templateId);
-            });
-
-            // Edit template (redirect to editor with template)
-            $(document).on('click', '.edit-btn', function() {
-                const templateId = $(this).closest('.template-card').data('template-id');
-                window.location.href = `/Whiteboard/Editor?templateId=${templateId}`;
-            });
-
-            // Load user sessions
-            async function loadUserSessions() {
-                try {
-                    const response = await fetch('/Whiteboard/GetUserSessions');
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        displaySessions(result.sessions);
-                    } else {
-                        console.error('Error loading sessions:', result.error);
-                        $('#sessionsGrid').html('<div class="error-message">Lỗi tải sessions</div>');
-                    }
-                } catch (error) {
-                    console.error('Error loading sessions:', error);
-                    $('#sessionsGrid').html('<div class="error-message">Lỗi tải sessions</div>');
-                }
-            }
-            
-            function displaySessions(sessions) {
-                if (sessions.length === 0) {
-                    $('#sessionsGrid').html(`
-                        <div class="empty-state">
-                            <div class="empty-icon">
-                                <i class="fas fa-easel"></i>
-                            </div>
-                            <h4>Chưa có session nào</h4>
-                            <p>Tạo whiteboard đầu tiên để bắt đầu</p>
-                        </div>
-                    `);
-                    return;
-                }
+            items.forEach(item => {
+                const title = item.querySelector('.whiteboard-item-title').textContent.toLowerCase();
+                const description = item.querySelector('.whiteboard-item-description').textContent.toLowerCase();
                 
-                const sessionsHtml = sessions.map(session => `
-                    <div class="session-card" data-session-id="${session.sessionId}">
-                        <div class="session-info">
-                            <h5>${session.sessionName}</h5>
-                            <div class="session-meta">
-                                <span><i class="fas fa-calendar"></i> ${new Date(session.createdAt).toLocaleDateString()}</span>
-                                <span><i class="fas fa-pen"></i> ${session.actionCount} actions</span>
-                            </div>
-                            <div class="session-actions">
-                                <button class="btn btn-primary continue-btn" title="Tiếp tục vẽ">
-                                    <i class="fas fa-edit"></i> Tiếp tục
-                                </button>
-                                <button class="btn btn-secondary template-btn" title="Tạo template">
-                                    <i class="fas fa-layer-group"></i> Template
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `).join('');
+                if (title.includes(searchTerm) || description.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+
+        // Filter functionality
+        document.getElementById('filterSelect').addEventListener('change', function() {
+            const filterValue = this.value;
+            const items = document.querySelectorAll('.whiteboard-item');
+            
+            items.forEach(item => {
+                const meta = item.querySelector('.whiteboard-item-meta').textContent.toLowerCase();
                 
-                $('#sessionsGrid').html(sessionsHtml);
-            }
-            
-            // Continue session
-            $(document).on('click', '.continue-btn', function() {
-                const sessionId = $(this).closest('.session-card').data('session-id');
-                window.location.href = `/Whiteboard/Editor?sessionId=${sessionId}`;
-            });
-            
-            // Create template from session
-            $(document).on('click', '.template-btn', function() {
-                const sessionId = $(this).closest('.session-card').data('session-id');
-                window.location.href = `/Whiteboard/Editor?sessionId=${sessionId}&createTemplate=true`;
-            });
-            
-            // Delete template
-            $(document).on('click', '.delete-btn', function() {
-                const templateId = $(this).closest('.template-card').data('template-id');
-                const templateName = $(this).closest('.template-card').data('template-name');
-                deleteTemplate(templateId, templateName);
-            });
-
-            // Search templates
-            $('#templateSearch').on('input', function() {
-                filterTemplates();
-            });
-
-            // Filter templates
-            $('#templateFilter').on('change', function() {
-                filterTemplates();
-            });
-
-            // Functions
-            async function showTemplatePreview(templateId) {
-                try {
-                    const response = await fetch(`/Whiteboard/GetTemplate/${templateId}`);
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        const template = result.template;
-                        $('#previewTitle').text(template.name);
-                        $('#previewDescription').text(template.description || 'No description');
-                        $('#previewCreator').text(template.createdByUserName || 'Unknown');
-                        $('#previewDate').text(new Date(template.createdAt).toLocaleDateString());
-                        $('#previewStatus').text(template.isPublic ? 'Public' : 'Private');
-                        
-                        if (template.thumbnail) {
-                            $('#previewImage').attr('src', `data:image/png;base64,${template.thumbnail}`);
-                        } else {
-                            $('#previewImage').attr('src', '/images/default-template.png');
-                        }
-                        
-                        // Store template ID for modal actions
-                        $('#templatePreviewModal').data('template-id', templateId);
-                        $('#templatePreviewModal').modal('show');
-                    } else {
-                        alert('Lỗi: ' + result.error);
-                    }
-                } catch (error) {
-                    console.error('Error showing template preview:', error);
-                    alert('Có lỗi xảy ra khi xem preview');
+                if (filterValue === 'all' || 
+                    (filterValue === 'public' && meta.includes('công khai')) ||
+                    (filterValue === 'private' && meta.includes('riêng tư')) ||
+                    (filterValue === 'template' && meta.includes('template'))) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
                 }
-            }
-
-            async function deleteTemplate(templateId, templateName) {
-                if (!confirm(`Bạn có chắc muốn xóa template "${templateName}"?`)) {
-                    return;
-                }
-
-                try {
-                    const response = await fetch(`/Whiteboard/DeleteTemplate/${templateId}`, {
-                        method: 'DELETE'
-                    });
-
-                    const result = await response.json();
-                    if (result.success) {
-                        location.reload();
-                    } else {
-                        alert('Lỗi: ' + result.error);
-                    }
-                } catch (error) {
-                    console.error('Error deleting template:', error);
-                    alert('Có lỗi xảy ra khi xóa template');
-                }
-            }
-
-            function filterTemplates() {
-                const searchTerm = $('#templateSearch').val().toLowerCase();
-                const filterType = $('#templateFilter').val();
-                
-                $('.template-card').each(function() {
-                    const card = $(this);
-                    const name = card.data('template-name').toLowerCase();
-                    const isVisible = name.includes(searchTerm);
-                    
-                    if (isVisible) {
-                        card.show();
-                    } else {
-                        card.hide();
-                    }
-                });
-            }
-
-            // Modal actions
-            $('#editTemplateBtn').on('click', function() {
-                const templateId = $('#templatePreviewModal').data('template-id');
-                const modal = bootstrap.Modal.getInstance(document.getElementById('templatePreviewModal'));
-                modal.hide();
-                window.location.href = `/Whiteboard/Editor?templateId=${templateId}`;
             });
+        });
 
-            $('#useInMeetingBtn').on('click', function() {
-                const templateId = $('#templatePreviewModal').data('template-id');
-                const modal = bootstrap.Modal.getInstance(document.getElementById('templatePreviewModal'));
-                modal.hide();
-                window.location.href = `/Meeting?templateId=${templateId}`;
+        // Add smooth animations on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const sections = document.querySelectorAll('.whiteboard-section');
+            sections.forEach((section, index) => {
+                section.style.animationDelay = `${index * 0.1}s`;
             });
         });
     </script>

@@ -61,16 +61,15 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
     
     public DbSet<QuizAttemptDetail> QuizAttemptDetail { get; set; }
 
-    // ------------ Collaboration & Whiteboard ------------
-    public DbSet<WhiteboardSession> WhiteboardSessions { get; set; }
-    public DbSet<DrawAction> DrawActions { get; set; }
-    public DbSet<WhiteboardTemplate> WhiteboardTemplates { get; set; }
-
     // ------------ Payment & Subscription ------------
     public DbSet<Subscription> Subscriptions { get; set; }
     public DbSet<PaymentTransaction> PaymentTransactions { get; set; }
 
     public DbSet<FileSummary> FileSummaries { get; set; }
+
+    // ------------ Whiteboard System ------------
+    public DbSet<Whiteboard> Whiteboards { get; set; }
+    public DbSet<WhiteboardSession> WhiteboardSessions { get; set; }
 
     // ------------ Real-time Subtitle System ------------
     public DbSet<RealTimeSubtitle> RealTimeSubtitles { get; set; }
@@ -345,28 +344,7 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
             .OnDelete(DeleteBehavior.Restrict);
 
         #endregion
-
-        // -------------------------
-        // 7. Collaboration & Whiteboard
-        // -------------------------
-
-        #region WhiteboardSession ↔ DrawAction
-
-        // Xóa cascade khi Session bị xóa
-        modelBuilder.Entity<DrawAction>()
-            .HasOne(da => da.WhiteboardSession)
-            .WithMany(ws => ws.DrawActions)
-            .HasForeignKey(da => da.WbSessionId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        // Restrict khi xóa User, để tránh multiple cascade paths
-        modelBuilder.Entity<DrawAction>()
-            .HasOne(da => da.User)
-            .WithMany(u => u.DrawActions)
-            .HasForeignKey(da => da.UserId)
-            .OnDelete(DeleteBehavior.Restrict);
-
-        #endregion
+        
         
         // -------------------------
         // 8. Sticker $ Message
@@ -747,6 +725,14 @@ public class ApplicationDbContext : Microsoft.EntityFrameworkCore.DbContext
             .Property(rts => rts.EndTime)
             .HasPrecision(18, 3);
         
+        #endregion
+        
+        #region Message Self-Reference (Reply)
+        modelBuilder.Entity<Message>()
+            .HasOne(m => m.ReplyToMessage)
+            .WithMany()
+            .HasForeignKey(m => m.ReplyToMessageId)
+            .OnDelete(DeleteBehavior.Restrict);
         #endregion
     }
 }

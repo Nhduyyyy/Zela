@@ -5,567 +5,376 @@ using Zela.Services.Interface;
 using Zela.ViewModels;
 using System.Text.Json;
 
-namespace Zela.Services
+namespace Zela.Services;
+
+public class WhiteboardService : IWhiteboardService
 {
-    public class WhiteboardService : IWhiteboardService
+    private readonly ApplicationDbContext _context;
+
+    public WhiteboardService(ApplicationDbContext context)
     {
-        private readonly ApplicationDbContext _db;
-        private readonly ILogger<WhiteboardService> _logger;
+        _context = context;
+    }
 
-        public WhiteboardService(ApplicationDbContext db, ILogger<WhiteboardService> logger)
+    public async Task<WhiteboardIndexViewModel> GetWhiteboardIndexAsync(int userId, string searchTerm = "", string filterType = "all")
+    {
+        var query = _context.Whiteboards
+            .Include(w => w.Creator)
+            .Include(w => w.Sessions)
+            .AsQueryable();
+
+        // Filter theo loại
+        switch (filterType.ToLower())
         {
-            _db = db;
-            _logger = logger;
+            case "my":
+                query = query.Where(w => w.CreatorId == userId);
+                break;
+            case "public":
+                query = query.Where(w => w.IsPublic);
+                break;
+            case "templates":
+                query = query.Where(w => w.IsTemplate);
+                break;
         }
 
-        // ======== SESSION MANAGEMENT ========
-        
-        public async Task<Guid> CreateWhiteboardSessionAsync(int roomId)
+        // Search
+        if (!string.IsNullOrEmpty(searchTerm))
         {
-            try
-            {
-                // Check if room exists
-                var room = await _db.VideoRooms.FindAsync(roomId);
-                if (room == null)
-                    throw new InvalidOperationException("Room not found");
-
-                // Check if there's already an active session
-                var existingSession = await _db.WhiteboardSessions
-                    .FirstOrDefaultAsync(wb => wb.RoomId == roomId && wb.CreatedAt > DateTime.UtcNow.AddHours(-24));
-                
-                if (existingSession != null)
-                    return existingSession.WbSessionId;
-
-                // Create new session
-                var session = new WhiteboardSession
-                {
-                    WbSessionId = Guid.NewGuid(),
-                    RoomId = roomId,
-                    CreatedByUserId = room.CreatorId, // Use room creator as session creator
-                    CreatedAt = DateTime.UtcNow
-                };
-
-                _db.WhiteboardSessions.Add(session);
-                await _db.SaveChangesAsync();
-
-                _logger.LogInformation("Created whiteboard session {SessionId} for room {RoomId}", 
-                    session.WbSessionId, roomId);
-
-                return session.WbSessionId;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating whiteboard session for room {RoomId}", roomId);
-                throw;
-            }
+            query = query.Where(w => w.Title.Contains(searchTerm) || w.Description.Contains(searchTerm));
         }
 
-        public async Task<Guid> CreateStandaloneSessionAsync(int userId)
+        var whiteboards = await query
+            .OrderByDescending(w => w.UpdatedAt ?? w.CreatedAt)
+            .ToListAsync();
+
+        var myWhiteboards = whiteboards
+            .Where(w => w.CreatorId == userId)
+            .Select(w => MapToCardViewModel(w, userId))
+            .ToList();
+
+        var publicTemplates = whiteboards
+            .Where(w => w.IsPublic && w.IsTemplate)
+            .Select(w => MapToCardViewModel(w, userId))
+            .ToList();
+
+        var recentSessions = await GetRecentSessionsAsync(userId, 10);
+
+        return new WhiteboardIndexViewModel
         {
-            try
+            MyWhiteboards = myWhiteboards,
+            PublicTemplates = publicTemplates,
+            RecentSessions = recentSessions,
+            SearchTerm = searchTerm,
+            FilterType = filterType
+        };
+    }
+
+    public async Task<WhiteboardCardViewModel> GetWhiteboardByIdAsync(int whiteboardId, int userId)
+    {
+        var whiteboard = await _context.Whiteboards
+            .Include(w => w.Creator)
+            .Include(w => w.Sessions)
+            .FirstOrDefaultAsync(w => w.WhiteboardId == whiteboardId);
+
+        if (whiteboard == null) return null;
+
+        return MapToCardViewModel(whiteboard, userId);
+    }
+
+    public async Task<int> CreateWhiteboardAsync(CreateWhiteboardViewModel model, int userId)
+    {
+        var whiteboard = new Whiteboard
+        {
+            Title = model.Title,
+            Description = model.Description ?? "",
+            CreatorId = userId,
+            CreatedAt = DateTime.UtcNow,
+            IsPublic = model.IsPublic,
+            IsTemplate = model.IsTemplate
+        };
+
+        _context.Whiteboards.Add(whiteboard);
+        await _context.SaveChangesAsync();
+
+        // Tạo session đầu tiên
+        await CreateSessionAsync(whiteboard.WhiteboardId, model.RoomId);
+
+        return whiteboard.WhiteboardId;
+    }
+
+    public async Task<bool> UpdateWhiteboardAsync(EditWhiteboardViewModel model, int userId)
+    {
+        var whiteboard = await _context.Whiteboards
+            .FirstOrDefaultAsync(w => w.WhiteboardId == model.WhiteboardId && w.CreatorId == userId);
+
+        if (whiteboard == null) return false;
+
+        whiteboard.Title = model.Title;
+        whiteboard.Description = model.Description ?? "";
+        whiteboard.IsPublic = model.IsPublic;
+        whiteboard.IsTemplate = model.IsTemplate;
+        whiteboard.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> DeleteWhiteboardAsync(int whiteboardId, int userId)
+    {
+        var whiteboard = await _context.Whiteboards
+            .FirstOrDefaultAsync(w => w.WhiteboardId == whiteboardId && w.CreatorId == userId);
+
+        if (whiteboard == null) return false;
+
+        _context.Whiteboards.Remove(whiteboard);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> TogglePublicAsync(int whiteboardId, int userId)
+    {
+        var whiteboard = await _context.Whiteboards
+            .FirstOrDefaultAsync(w => w.WhiteboardId == whiteboardId && w.CreatorId == userId);
+
+        if (whiteboard == null) return false;
+
+        whiteboard.IsPublic = !whiteboard.IsPublic;
+        whiteboard.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> ToggleTemplateAsync(int whiteboardId, int userId)
+    {
+        var whiteboard = await _context.Whiteboards
+            .FirstOrDefaultAsync(w => w.WhiteboardId == whiteboardId && w.CreatorId == userId);
+
+        if (whiteboard == null) return false;
+
+        whiteboard.IsTemplate = !whiteboard.IsTemplate;
+        whiteboard.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<WhiteboardSessionViewModel> GetSessionByIdAsync(int sessionId)
+    {
+        var session = await _context.WhiteboardSessions
+            .Include(s => s.Whiteboard)
+            .FirstOrDefaultAsync(s => s.SessionId == sessionId);
+
+        if (session == null) return null;
+
+        return new WhiteboardSessionViewModel
+        {
+            SessionId = session.SessionId,
+            WhiteboardId = session.WhiteboardId,
+            CanvasData = session.CanvasData,
+            CreatedAt = session.CreatedAt,
+            LastModifiedAt = session.LastModifiedAt,
+            ThumbnailUrl = session.ThumbnailUrl
+        };
+    }
+
+    public async Task<int> CreateSessionAsync(int whiteboardId, int? roomId = null)
+    {
+        var session = new WhiteboardSession
+        {
+            WhiteboardId = whiteboardId,
+            RoomId = roomId,
+            CreatedAt = DateTime.UtcNow,
+            CanvasData = "[]", // Empty canvas
+            ThumbnailUrl = string.Empty, // Set default empty string
+            IsActive = true
+        };
+
+        _context.WhiteboardSessions.Add(session);
+        await _context.SaveChangesAsync();
+
+        return session.SessionId;
+    }
+
+    public async Task<bool> UpdateSessionDataAsync(int sessionId, string canvasData)
+    {
+        var session = await _context.WhiteboardSessions
+            .FirstOrDefaultAsync(s => s.SessionId == sessionId);
+
+        if (session == null) return false;
+
+        session.CanvasData = canvasData;
+        session.LastModifiedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> SaveSessionThumbnailAsync(int sessionId, string thumbnailData)
+    {
+        var session = await _context.WhiteboardSessions
+            .FirstOrDefaultAsync(s => s.SessionId == sessionId);
+
+        if (session == null) return false;
+
+        // TODO: Upload thumbnail to Cloudinary and get URL
+        session.ThumbnailUrl = thumbnailData; // Temporary
+        session.LastModifiedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<List<WhiteboardSessionViewModel>> GetSessionsByWhiteboardAsync(int whiteboardId)
+    {
+        var sessions = await _context.WhiteboardSessions
+            .Where(s => s.WhiteboardId == whiteboardId)
+            .OrderByDescending(s => s.LastModifiedAt ?? s.CreatedAt)
+            .ToListAsync();
+
+        return sessions.Select(s => new WhiteboardSessionViewModel
+        {
+            SessionId = s.SessionId,
+            WhiteboardId = s.WhiteboardId,
+            CanvasData = s.CanvasData,
+            CreatedAt = s.CreatedAt,
+            LastModifiedAt = s.LastModifiedAt,
+            ThumbnailUrl = s.ThumbnailUrl
+        }).ToList();
+    }
+
+    public async Task<bool> DeleteSessionAsync(int sessionId, int userId)
+    {
+        var session = await _context.WhiteboardSessions
+            .Include(s => s.Whiteboard)
+            .FirstOrDefaultAsync(s => s.SessionId == sessionId && s.Whiteboard.CreatorId == userId);
+
+        if (session == null) return false;
+
+        _context.WhiteboardSessions.Remove(session);
+        await _context.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<List<WhiteboardCardViewModel>> GetPublicTemplatesAsync(int userId = 0)
+    {
+        var templates = await _context.Whiteboards
+            .Include(w => w.Creator)
+            .Include(w => w.Sessions)
+            .Where(w => w.IsPublic && w.IsTemplate)
+            .OrderByDescending(w => w.CreatedAt)
+            .ToListAsync();
+
+        return templates.Select(w => MapToCardViewModel(w, userId)).ToList();
+    }
+
+    public async Task<List<WhiteboardCardViewModel>> GetRecentSessionsAsync(int userId, int limit = 10)
+    {
+        var recentSessions = await _context.WhiteboardSessions
+            .Include(s => s.Whiteboard)
+            .ThenInclude(w => w.Creator)
+            .Where(s => s.Whiteboard.CreatorId == userId)
+            .OrderByDescending(s => s.LastModifiedAt ?? s.CreatedAt)
+            .Take(limit)
+            .ToListAsync();
+
+        return recentSessions.Select(s => new WhiteboardCardViewModel
+        {
+            WhiteboardId = s.Whiteboard.WhiteboardId,
+            Title = s.Whiteboard.Title,
+            Description = s.Whiteboard.Description,
+            CreatorName = s.Whiteboard.Creator.FullName,
+            CreatorAvatar = s.Whiteboard.Creator.AvatarUrl,
+            CreatedAt = s.CreatedAt,
+            LastModifiedAt = s.LastModifiedAt,
+            IsPublic = s.Whiteboard.IsPublic,
+            IsTemplate = s.Whiteboard.IsTemplate,
+            ThumbnailUrl = s.ThumbnailUrl,
+            SessionCount = 1,
+            IsOwner = true
+        }).ToList();
+    }
+
+    public async Task<bool> CloneWhiteboardAsync(int sourceWhiteboardId, int userId, string newTitle)
+    {
+        var sourceWhiteboard = await _context.Whiteboards
+            .Include(w => w.Sessions)
+            .FirstOrDefaultAsync(w => w.WhiteboardId == sourceWhiteboardId && w.IsPublic);
+
+        if (sourceWhiteboard == null) return false;
+
+        var newWhiteboard = new Whiteboard
+        {
+            Title = newTitle,
+            Description = sourceWhiteboard.Description,
+            CreatorId = userId,
+            CreatedAt = DateTime.UtcNow,
+            IsPublic = false,
+            IsTemplate = false
+        };
+
+        _context.Whiteboards.Add(newWhiteboard);
+        await _context.SaveChangesAsync();
+
+        // Clone session cuối cùng
+        var latestSession = sourceWhiteboard.Sessions
+            .OrderByDescending(s => s.LastModifiedAt ?? s.CreatedAt)
+            .FirstOrDefault();
+
+        if (latestSession != null)
+        {
+            var newSession = new WhiteboardSession
             {
-                // Create new standalone session (no room required)
-                var session = new WhiteboardSession
-                {
-                    WbSessionId = Guid.NewGuid(),
-                    RoomId = null, // Standalone sessions don't need a room
-                    CreatedByUserId = userId,
-                    CreatedAt = DateTime.UtcNow
-                };
+                WhiteboardId = newWhiteboard.WhiteboardId,
+                CreatedAt = DateTime.UtcNow,
+                CanvasData = latestSession.CanvasData,
+                ThumbnailUrl = latestSession.ThumbnailUrl,
+                IsActive = true
+            };
 
-                _db.WhiteboardSessions.Add(session);
-                await _db.SaveChangesAsync();
-
-                _logger.LogInformation("Created standalone whiteboard session {SessionId} for user {UserId}", 
-                    session.WbSessionId, userId);
-
-                return session.WbSessionId;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating standalone whiteboard session for user {UserId}", userId);
-                throw;
-            }
+            _context.WhiteboardSessions.Add(newSession);
+            await _context.SaveChangesAsync();
         }
 
-        public async Task<WhiteboardSession?> GetActiveSessionAsync(int roomId)
+        return true;
+    }
+
+    public async Task<bool> CanUserAccessWhiteboardAsync(int whiteboardId, int userId)
+    {
+        var whiteboard = await _context.Whiteboards
+            .FirstOrDefaultAsync(w => w.WhiteboardId == whiteboardId);
+
+        if (whiteboard == null) return false;
+
+        return whiteboard.CreatorId == userId || whiteboard.IsPublic;
+    }
+
+    public async Task<bool> CanUserEditWhiteboardAsync(int whiteboardId, int userId)
+    {
+        var whiteboard = await _context.Whiteboards
+            .FirstOrDefaultAsync(w => w.WhiteboardId == whiteboardId);
+
+        if (whiteboard == null) return false;
+
+        return whiteboard.CreatorId == userId;
+    }
+
+    private WhiteboardCardViewModel MapToCardViewModel(Whiteboard whiteboard, int userId = 0)
+    {
+        return new WhiteboardCardViewModel
         {
-            return await _db.WhiteboardSessions
-                .Include(wb => wb.DrawActions)
-                    .ThenInclude(da => da.User)
-                .Where(wb => wb.RoomId == roomId && wb.CreatedAt > DateTime.UtcNow.AddHours(-24))
-                .OrderByDescending(wb => wb.CreatedAt)
-                .FirstOrDefaultAsync();
-        }
-
-        public async Task<bool> EndSessionAsync(Guid sessionId)
-        {
-            try
-            {
-                var session = await _db.WhiteboardSessions.FindAsync(sessionId);
-                if (session == null) return false;
-
-                // Mark session as ended (soft delete)
-                session.CreatedAt = DateTime.UtcNow.AddHours(-25); // Make it inactive
-                await _db.SaveChangesAsync();
-
-                _logger.LogInformation("Ended whiteboard session {SessionId}", sessionId);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ending whiteboard session {SessionId}", sessionId);
-                return false;
-            }
-        }
-
-        // ======== DRAWING ACTIONS ========
-        
-        public async Task<DrawAction> AddDrawActionAsync(Guid sessionId, int userId, string actionType, string payload)
-        {
-            try
-            {
-                _logger.LogInformation("Adding draw action: Type={ActionType}, User={UserId}, Session={SessionId}", 
-                    actionType, userId, sessionId);
-                
-                // Check if session exists
-                var session = await _db.WhiteboardSessions.FindAsync(sessionId);
-                if (session == null)
-                {
-                    _logger.LogError("Session {SessionId} not found", sessionId);
-                    throw new InvalidOperationException($"Session {sessionId} not found");
-                }
-                
-                _logger.LogInformation("Session found: {SessionId}", sessionId);
-                
-                var action = new DrawAction
-                {
-                    WbSessionId = sessionId,
-                    UserId = userId,
-                    ActionType = actionType,
-                    Payload = payload,
-                    Timestamp = DateTime.UtcNow
-                };
-
-                _logger.LogInformation("Created DrawAction object: {ActionType}", actionType);
-                
-                _db.DrawActions.Add(action);
-                _logger.LogInformation("Added action to DbContext");
-                
-                await _db.SaveChangesAsync();
-                _logger.LogInformation("Saved changes successfully");
-
-                _logger.LogDebug("Added draw action {ActionType} for user {UserId} in session {SessionId}", 
-                    actionType, userId, sessionId);
-
-                return action;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error adding draw action for user {UserId} in session {SessionId}", 
-                    userId, sessionId);
-                throw;
-            }
-        }
-
-        public async Task<List<DrawAction>> GetDrawActionsAsync(Guid sessionId, DateTime? since = null)
-        {
-            var query = _db.DrawActions
-                .Include(da => da.User)
-                .Where(da => da.WbSessionId == sessionId);
-
-            if (since.HasValue)
-            {
-                query = query.Where(da => da.Timestamp > since.Value);
-            }
-
-            return await query
-                .OrderBy(da => da.Timestamp)
-                .ToListAsync();
-        }
-
-        public async Task<bool> ClearWhiteboardAsync(Guid sessionId, int userId)
-        {
-            try
-            {
-                // Add a clear action
-                var clearAction = new DrawAction
-                {
-                    WbSessionId = sessionId,
-                    UserId = userId,
-                    ActionType = "clear",
-                    Payload = JsonSerializer.Serialize(new { clearedBy = userId, timestamp = DateTime.UtcNow }),
-                    Timestamp = DateTime.UtcNow
-                };
-
-                _db.DrawActions.Add(clearAction);
-                await _db.SaveChangesAsync();
-
-                _logger.LogInformation("Whiteboard cleared by user {UserId} in session {SessionId}", 
-                    userId, sessionId);
-
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error clearing whiteboard for user {UserId} in session {SessionId}", 
-                    userId, sessionId);
-                return false;
-            }
-        }
-
-        // ======== COLLABORATION ========
-        
-        public async Task<bool> IsUserInSessionAsync(Guid sessionId, int userId)
-        {
-            return await _db.DrawActions
-                .AnyAsync(da => da.WbSessionId == sessionId && da.UserId == userId);
-        }
-
-        public async Task<List<int>> GetSessionParticipantsAsync(Guid sessionId)
-        {
-            return await _db.DrawActions
-                .Where(da => da.WbSessionId == sessionId)
-                .Select(da => da.UserId)
-                .Distinct()
-                .ToListAsync();
-        }
-
-        // ======== SESSION SAVING ========
-        
-        public async Task<bool> SaveSessionAsync(Guid sessionId, int userId, string? sessionName = null)
-        {
-            try
-            {
-                var session = await _db.WhiteboardSessions.FindAsync(sessionId);
-                if (session == null) return false;
-
-                // Update session with save info
-                session.UpdatedAt = DateTime.UtcNow;
-                session.LastSavedBy = userId;
-                if (!string.IsNullOrEmpty(sessionName))
-                {
-                    session.SessionName = sessionName;
-                }
-
-                await _db.SaveChangesAsync();
-
-                _logger.LogInformation("Session {SessionId} saved by user {UserId}", sessionId, userId);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving session {SessionId} for user {UserId}", sessionId, userId);
-                return false;
-            }
-        }
-
-        public async Task<List<WhiteboardSession>> GetUserSessionsAsync(int userId, int limit = 20)
-        {
-            try
-            {
-                return await _db.WhiteboardSessions
-                    .Include(wb => wb.DrawActions)
-                    .Where(wb => wb.CreatedByUserId == userId && wb.CreatedAt > DateTime.UtcNow.AddDays(-30))
-                    .OrderByDescending(wb => wb.UpdatedAt ?? wb.CreatedAt)
-                    .Take(limit)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting sessions for user {UserId}", userId);
-                return new List<WhiteboardSession>();
-            }
-        }
-
-        // ======== TEMPLATES & SAVING ========
-        
-        public async Task<string> SaveAsTemplateAsync(Guid sessionId, string templateName, int userId, string? description = null, bool isPublic = false)
-        {
-            try
-            {
-                var actions = await GetDrawActionsAsync(sessionId);
-                
-                // Create template data
-                var templateData = JsonSerializer.Serialize(new
-                {
-                    name = templateName,
-                    actions = actions.Select(a => new
-                    {
-                        actionType = a.ActionType,
-                        payload = a.Payload,
-                        timestamp = a.Timestamp
-                    }),
-                    createdBy = userId,
-                    createdAt = DateTime.UtcNow
-                });
-
-                // Generate thumbnail from current canvas state
-                var thumbnail = await GenerateThumbnailAsync(sessionId);
-
-                // Save to database
-                var template = new WhiteboardTemplate
-                {
-                    Name = templateName,
-                    Data = templateData,
-                    CreatedByUserId = userId,
-                    CreatedAt = DateTime.UtcNow,
-                    IsPublic = isPublic,
-                    Description = description,
-                    Thumbnail = thumbnail
-                };
-
-                _db.WhiteboardTemplates.Add(template);
-                await _db.SaveChangesAsync();
-
-                _logger.LogInformation("Template '{TemplateName}' saved by user {UserId} for session {SessionId}", 
-                    templateName, userId, sessionId);
-
-                return templateData;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving template '{TemplateName}' for user {UserId}", 
-                    templateName, userId);
-                throw;
-            }
-        }
-
-        public async Task<List<WhiteboardTemplate>> GetTemplatesAsync(int userId)
-        {
-            try
-            {
-                return await _db.WhiteboardTemplates
-                    .Include(t => t.CreatedByUser)
-                    .Where(t => t.CreatedByUserId == userId || t.IsPublic)
-                    .OrderByDescending(t => t.CreatedAt)
-                    .ToListAsync();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting templates for user {UserId}", userId);
-                return new List<WhiteboardTemplate>();
-            }
-        }
-
-        public async Task<WhiteboardTemplate?> GetTemplateByIdAsync(int templateId, int userId)
-        {
-            try
-            {
-                return await _db.WhiteboardTemplates
-                    .Include(t => t.CreatedByUser)
-                    .FirstOrDefaultAsync(t => t.Id == templateId && 
-                                            (t.CreatedByUserId == userId || t.IsPublic));
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting template {TemplateId} for user {UserId}", templateId, userId);
-                return null;
-            }
-        }
-
-        public async Task<bool> LoadTemplateAsync(Guid sessionId, int templateId, int userId)
-        {
-            try
-            {
-                var template = await _db.WhiteboardTemplates
-                    .FirstOrDefaultAsync(t => t.Id == templateId && 
-                                            (t.CreatedByUserId == userId || t.IsPublic));
-
-                if (template == null)
-                {
-                    _logger.LogWarning("Template {TemplateId} not found for user {UserId}", 
-                        templateId, userId);
-                    return false;
-                }
-
-                // Parse template data and replay actions
-                var templateData = JsonSerializer.Deserialize<dynamic>(template.Data);
-                var actions = templateData.GetProperty("actions");
-
-                foreach (var action in actions.EnumerateArray())
-                {
-                    var actionType = action.GetProperty("actionType").GetString();
-                    var payload = action.GetProperty("payload").GetString();
-                    
-                    await AddDrawActionAsync(sessionId, userId, actionType, payload);
-                }
-
-                _logger.LogInformation("Template {TemplateId} loaded by user {UserId} in session {SessionId}", 
-                    templateId, userId, sessionId);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading template {TemplateId} for user {UserId}", 
-                    templateId, userId);
-                return false;
-            }
-        }
-
-        public async Task<bool> LoadTemplateByNameAsync(Guid sessionId, string templateName, int userId)
-        {
-            try
-            {
-                var template = await _db.WhiteboardTemplates
-                    .FirstOrDefaultAsync(t => t.Name == templateName && 
-                                            (t.CreatedByUserId == userId || t.IsPublic));
-
-                if (template == null)
-                {
-                    _logger.LogWarning("Template '{TemplateName}' not found for user {UserId}", 
-                        templateName, userId);
-                    return false;
-                }
-
-                // Parse template data and replay actions
-                var templateData = JsonSerializer.Deserialize<dynamic>(template.Data);
-                var actions = templateData.GetProperty("actions");
-
-                foreach (var action in actions.EnumerateArray())
-                {
-                    var actionType = action.GetProperty("actionType").GetString();
-                    var payload = action.GetProperty("payload").GetString();
-                    
-                    await AddDrawActionAsync(sessionId, userId, actionType, payload);
-                }
-
-                _logger.LogInformation("Template '{TemplateName}' loaded by user {UserId} in session {SessionId}", 
-                    templateName, userId, sessionId);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading template '{TemplateName}' for user {UserId}", 
-                    templateName, userId);
-                return false;
-            }
-        }
-
-        private async Task<string> GenerateThumbnailAsync(Guid sessionId)
-        {
-            try
-            {
-                // In a real implementation, you'd render the canvas to a small image
-                // For now, return a placeholder
-                return "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==";
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error generating thumbnail for session {SessionId}", sessionId);
-                return string.Empty;
-            }
-        }
-
-        public async Task<bool> DeleteTemplateAsync(int templateId, int userId)
-        {
-            try
-            {
-                var template = await _db.WhiteboardTemplates
-                    .FirstOrDefaultAsync(t => t.Id == templateId && t.CreatedByUserId == userId);
-
-                if (template == null)
-                {
-                    _logger.LogWarning("Template {TemplateId} not found or user {UserId} not authorized to delete", 
-                        templateId, userId);
-                    return false;
-                }
-
-                _db.WhiteboardTemplates.Remove(template);
-                await _db.SaveChangesAsync();
-
-                _logger.LogInformation("Template {TemplateId} deleted by user {UserId}", templateId, userId);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting template {TemplateId} for user {UserId}", templateId, userId);
-                return false;
-            }
-        }
-
-        // ======== EXPORT ========
-        
-        public async Task<byte[]> ExportAsImageAsync(Guid sessionId, string format = "png")
-        {
-            try
-            {
-                // In a real implementation, you'd render the whiteboard to an image
-                // For now, return a placeholder
-                _logger.LogInformation("Exporting whiteboard session {SessionId} as {Format}", 
-                    sessionId, format);
-                
-                // Placeholder: return a simple PNG
-                return new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A }; // PNG header
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error exporting whiteboard session {SessionId} as image", sessionId);
-                throw;
-            }
-        }
-
-        public async Task<byte[]> ExportAsPDFAsync(Guid sessionId)
-        {
-            try
-            {
-                // In a real implementation, you'd render the whiteboard to PDF
-                _logger.LogInformation("Exporting whiteboard session {SessionId} as PDF", sessionId);
-                
-                // Placeholder: return a simple PDF
-                return new byte[] { 0x25, 0x50, 0x44, 0x46 }; // PDF header
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error exporting whiteboard session {SessionId} as PDF", sessionId);
-                throw;
-            }
-        }
-
-        // ======== STATISTICS ========
-        
-        public async Task<WhiteboardStats> GetSessionStatsAsync(Guid sessionId)
-        {
-            try
-            {
-                var actions = await _db.DrawActions
-                    .Include(da => da.User)
-                    .Where(da => da.WbSessionId == sessionId)
-                    .ToListAsync();
-
-                var session = await _db.WhiteboardSessions.FindAsync(sessionId);
-                var sessionDuration = session != null ? DateTime.UtcNow - session.CreatedAt : TimeSpan.Zero;
-
-                var actionTypes = actions
-                    .GroupBy(a => a.ActionType)
-                    .ToDictionary(g => g.Key, g => g.Count());
-
-                var userActivities = actions
-                    .GroupBy(a => new { a.UserId, a.User.FullName })
-                    .Select(g => new UserActivity
-                    {
-                        UserId = g.Key.UserId,
-                        UserName = g.Key.FullName ?? "Unknown",
-                        ActionCount = g.Count(),
-                        LastActivity = g.Max(a => a.Timestamp)
-                    })
-                    .OrderByDescending(ua => ua.ActionCount)
-                    .ToList();
-
-                return new WhiteboardStats
-                {
-                    TotalActions = actions.Count,
-                    ActiveUsers = userActivities.Count,
-                    SessionDuration = sessionDuration,
-                    ActionTypes = actionTypes,
-                    UserActivities = userActivities
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting stats for whiteboard session {SessionId}", sessionId);
-                throw;
-            }
-        }
+            WhiteboardId = whiteboard.WhiteboardId,
+            Title = whiteboard.Title,
+            Description = whiteboard.Description,
+            CreatorName = whiteboard.Creator?.FullName ?? "Unknown",
+            CreatorAvatar = whiteboard.Creator?.AvatarUrl,
+            CreatedAt = whiteboard.CreatedAt,
+            LastModifiedAt = whiteboard.UpdatedAt,
+            IsPublic = whiteboard.IsPublic,
+            IsTemplate = whiteboard.IsTemplate,
+            ThumbnailUrl = whiteboard.Sessions?.OrderByDescending(s => s.LastModifiedAt ?? s.CreatedAt).FirstOrDefault()?.ThumbnailUrl,
+            SessionCount = whiteboard.Sessions?.Count ?? 0,
+            IsOwner = userId > 0 && whiteboard.CreatorId == userId
+        };
     }
 } 

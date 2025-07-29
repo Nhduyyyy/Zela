@@ -1,0 +1,569 @@
+/* ===== WHITEBOARD INDEX PAGE STYLES ===== */
+
+/* Base Variables */
+:root {
+    --primary-bg: #0F1C33;
+    --secondary-bg: #1A2B4A;
+    --card-bg: #243B5A;
+    --card-hover: #2A4568;
+    --primary-text: #E8F4FD;
+    --secondary-text: #B8D4F0;
+    --muted-text: #8BA3C7;
+    --accent-blue: #4A9EFF;
+    --accent-green: #4ADE80;
+    --accent-red: #F87171;
+    --accent-orange: #FB923C;
+    --border-color: #334155;
+    --shadow-light: rgba(0, 0, 0, 0.1);
+    --shadow-medium: rgba(0, 0, 0, 0.2);
+    --shadow-heavy: rgba(0, 0, 0, 0.3);
+    --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --gradient-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --gradient-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+/* Page Container */
+.whiteboard-container {
+    min-height: 100vh;
+    background: var(--primary-bg);
+    background-image: 
+        radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
+    padding: 2rem;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Header Section */
+.whiteboard-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    animation: fadeInDown 0.8s ease-out;
+}
+
+.whiteboard-header h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    background: var(--gradient-primary);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.whiteboard-header p {
+    font-size: 1.1rem;
+    color: var(--secondary-text);
+    font-weight: 400;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Main Content Grid */
+.whiteboard-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Section Cards */
+.whiteboard-section {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: 0 8px 32px var(--shadow-medium);
+    border: 1px solid var(--border-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+    animation: fadeInUp 0.8s ease-out;
+}
+
+.whiteboard-section:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px var(--shadow-heavy);
+    border-color: var(--accent-blue);
+}
+
+.whiteboard-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--gradient-primary);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.whiteboard-section:hover::before {
+    opacity: 1;
+}
+
+/* Section Headers */
+.section-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    gap: 0.75rem;
+}
+
+.section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: var(--primary-text);
+    margin: 0;
+}
+
+.section-icon {
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--gradient-primary);
+    border-radius: 8px;
+    color: white;
+    font-size: 0.875rem;
+}
+
+/* Section Descriptions */
+.section-description {
+    color: var(--muted-text);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 1.5rem;
+}
+
+/* Buttons */
+.btn-whiteboard {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+    font-size: 0.95rem;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-whiteboard::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+.btn-whiteboard:hover::before {
+    left: 100%;
+}
+
+.btn-primary {
+    background: var(--gradient-primary);
+    color: white;
+    box-shadow: 0 4px 15px rgba(74, 158, 255, 0.3);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(74, 158, 255, 0.4);
+}
+
+.btn-secondary {
+    background: var(--secondary-bg);
+    color: var(--primary-text);
+    border: 1px solid var(--border-color);
+}
+
+.btn-secondary:hover {
+    background: var(--card-hover);
+    border-color: var(--accent-blue);
+    transform: translateY(-2px);
+}
+
+.btn-success {
+    background: var(--gradient-success);
+    color: white;
+    box-shadow: 0 4px 15px rgba(74, 222, 128, 0.3);
+}
+
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(74, 222, 128, 0.4);
+}
+
+.btn-danger {
+    background: var(--accent-red);
+    color: white;
+    box-shadow: 0 4px 15px rgba(248, 113, 113, 0.3);
+}
+
+.btn-danger:hover {
+    background: #ef4444;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(248, 113, 113, 0.4);
+}
+
+/* Whiteboard Items */
+.whiteboard-item {
+    background: var(--secondary-bg);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+}
+
+.whiteboard-item:hover {
+    transform: translateX(8px);
+    border-color: var(--accent-blue);
+    box-shadow: 0 8px 25px var(--shadow-medium);
+}
+
+.whiteboard-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--gradient-primary);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.whiteboard-item:hover::before {
+    transform: scaleY(1);
+}
+
+.whiteboard-item-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--primary-text);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.whiteboard-item-title::before {
+    content: '📋';
+    font-size: 1rem;
+}
+
+.whiteboard-item-description {
+    color: var(--secondary-text);
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+
+.whiteboard-item-meta {
+    color: var(--muted-text);
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.whiteboard-item-meta::before {
+    content: '📅';
+    font-size: 0.75rem;
+}
+
+/* Button Groups */
+.whiteboard-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 60px;
+    text-align: center;
+}
+
+.btn-open {
+    background: var(--accent-blue);
+    color: white;
+}
+
+.btn-open:hover {
+    background: #3b82f6;
+    transform: translateY(-1px);
+}
+
+.btn-hide {
+    background: var(--secondary-bg);
+    color: var(--primary-text);
+    border: 1px solid var(--border-color);
+}
+
+.btn-hide:hover {
+    background: var(--card-hover);
+    border-color: var(--accent-blue);
+}
+
+.btn-delete {
+    background: var(--accent-red);
+    color: white;
+}
+
+.btn-delete:hover {
+    background: #ef4444;
+    transform: translateY(-1px);
+}
+
+/* Search and Filter */
+.search-filter-container {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    border: 1px solid var(--border-color);
+    animation: fadeInUp 0.8s ease-out 0.2s both;
+}
+
+.search-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--secondary-bg);
+    color: var(--primary-text);
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    margin-bottom: 1rem;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+}
+
+.search-input::placeholder {
+    color: var(--muted-text);
+}
+
+.filter-select {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--secondary-bg);
+    color: var(--primary-text);
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--accent-blue);
+    box-shadow: 0 0 0 3px rgba(74, 158, 255, 0.1);
+}
+
+/* Empty States */
+.empty-state {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted-text);
+}
+
+.empty-state-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.empty-state-text {
+    font-size: 1rem;
+    line-height: 1.5;
+}
+
+/* Animations */
+@keyframes fadeInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideInLeft {
+    from {
+        opacity: 0;
+        transform: translateX(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .whiteboard-container {
+        padding: 1rem;
+    }
+    
+    .whiteboard-header h1 {
+        font-size: 2rem;
+    }
+    
+    .whiteboard-content {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+    
+    .whiteboard-section {
+        padding: 1.5rem;
+    }
+    
+    .whiteboard-actions {
+        flex-direction: column;
+    }
+    
+    .btn-action {
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    .whiteboard-header h1 {
+        font-size: 1.75rem;
+    }
+    
+    .whiteboard-header p {
+        font-size: 1rem;
+    }
+    
+    .section-header h2 {
+        font-size: 1.25rem;
+    }
+    
+    .whiteboard-item {
+        padding: 1rem;
+    }
+}
+
+/* Loading States */
+.loading-skeleton {
+    background: linear-gradient(90deg, var(--secondary-bg) 25%, var(--card-bg) 50%, var(--secondary-bg) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 8px;
+    height: 20px;
+    margin-bottom: 0.5rem;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Scrollbar Styling */
+.whiteboard-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.whiteboard-container::-webkit-scrollbar-track {
+    background: var(--secondary-bg);
+}
+
+.whiteboard-container::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 4px;
+}
+
+.whiteboard-container::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-blue);
+}
+
+/* Focus States for Accessibility */
+.btn-whiteboard:focus,
+.search-input:focus,
+.filter-select:focus {
+    outline: 2px solid var(--accent-blue);
+    outline-offset: 2px;
+}
+
+/* Hover Effects for Interactive Elements */
+.whiteboard-item:hover .whiteboard-item-title {
+    color: var(--accent-blue);
+}
+
+.section-header:hover .section-icon {
+    animation: pulse 0.6s ease-in-out;
+}
+
+/* Custom Scrollbar for Webkit Browsers */
+.whiteboard-section::-webkit-scrollbar {
+    width: 6px;
+}
+
+.whiteboard-section::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.whiteboard-section::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 3px;
+}
+
+.whiteboard-section::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-blue);
+} 

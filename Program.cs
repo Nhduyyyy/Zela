@@ -138,9 +138,6 @@ builder.Services.AddScoped<IStickerService, StickerService>();
 // add Recording
 builder.Services.AddScoped<IRecordingService, RecordingService>();
 
-// add Whiteboard
-builder.Services.AddScoped<IWhiteboardService, WhiteboardService>();
-
 //add Quiz
 builder.Services.AddScoped<IQuizService, QuizService>();
 
@@ -164,6 +161,9 @@ builder.Services.AddHttpClient<IAudioTranscriptionService, AudioTranscriptionSer
 
 // Đăng ký NotificationService
 builder.Services.AddScoped<INotificationService, NotificationService>();
+
+// Đăng ký WhiteboardService
+builder.Services.AddScoped<Zela.Services.Interface.IWhiteboardService, Zela.Services.WhiteboardService>();
 
 // Configure form options for file uploads
 builder.Services.Configure<FormOptions>(options =>
@@ -230,6 +230,9 @@ app.UseRouting();
 //      - Cho phép dùng HttpContext.Session trong controller/service.
 //      - Session lưu trên server hoặc lưu file tạm, key-value, được xác định bởi cookie session.
 app.UseSession();
+
+// Tự động cập nhật trạng thái Premium cho user mỗi request
+app.UseMiddleware<Zela.Middleware.PremiumStatusMiddleware>();
 
 // 7.6) Bật Authentication middleware
 //      - Đọc cookie (nếu có) để khôi phục ClaimsPrincipal vào HttpContext.User.

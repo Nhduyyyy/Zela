@@ -17,6 +17,7 @@ public class StickerService : IStickerService
     // Lấy lịch sử sticker giữa 2 user
     public async Task<List<MessageViewModel>> GetStickerAsync(int userId, int friendId)
     {
+        // Truy vấn các message giữa user và friendId có chứa sticker
         return await _dbContext.Messages
             .Include(m => m.Sender)
             .Include(m => m.Sticker)
@@ -43,9 +44,11 @@ public class StickerService : IStickerService
     }
     public async Task<List<StickerViewModel>> GetAvailableStickersAsync()
     {
+        // Xây dựng đường dẫn thư mục chứa sticker
         var stickerPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "sticker");
         var stickerFiles = new List<StickerViewModel>();
 
+        // Nếu thư mục tồn tại, lấy tất cả file sticker hợp lệ
         if (Directory.Exists(stickerPath))
         {
             var files = Directory.GetFiles(stickerPath, "*.*", SearchOption.AllDirectories)
@@ -58,6 +61,7 @@ public class StickerService : IStickerService
 
             for (int i = 0; i < files.Length; i++)
             {
+                // Lấy đường dẫn tương đối để sử dụng trên web
                 var relativePath = "/" + files[i]
                     .Replace(Path.Combine(Directory.GetCurrentDirectory(), "wwwroot"), "")
                     .Replace("\\", "/")
@@ -65,7 +69,7 @@ public class StickerService : IStickerService
 
                 var fileName = Path.GetFileNameWithoutExtension(files[i]);
 
-                // Lấy folder sau "sticker"
+                // Lấy loại sticker (folder sau "sticker")
                 var parts = relativePath.Split('/', StringSplitOptions.RemoveEmptyEntries);
                 var stickerType = (parts.Length >= 2) ? parts[1] : "Unknown";
 
@@ -79,15 +83,17 @@ public class StickerService : IStickerService
             }
         }
 
+        // Trả về danh sách sticker dạng view model
         return await Task.FromResult(stickerFiles);
     }
 
     public async Task<MessageViewModel> SendStickerAsync(int senderId, int recipientId, string stickerUrl)
     {
+        // Kiểm tra đầu vào hợp lệ
         if (string.IsNullOrEmpty(stickerUrl))
             throw new ArgumentException("Sticker URL cannot be empty");
 
-        // VD: /sticker/stickerType_1/sticker1.gif
+        // Phân tích loại sticker từ đường dẫn
         var parts = stickerUrl.Split('/', StringSplitOptions.RemoveEmptyEntries);
         var stickerIndex = Array.IndexOf(parts, "sticker");
 
@@ -97,6 +103,7 @@ public class StickerService : IStickerService
             stickerType = parts[stickerIndex + 1]; // lấy folder sau "sticker"
         }
 
+        // Tạo message mới với nội dung là sticker
         var message = new Message
         {
             SenderId = senderId,
@@ -108,6 +115,7 @@ public class StickerService : IStickerService
         _dbContext.Messages.Add(message);
         await _dbContext.SaveChangesAsync();
 
+        // Tạo entity Sticker gắn với message vừa tạo
         var sticker = new Sticker
         {
             MessageId = message.MessageId,
@@ -118,6 +126,7 @@ public class StickerService : IStickerService
         _dbContext.Stickers.Add(sticker);
         await _dbContext.SaveChangesAsync();
 
+        // Lấy thông tin người gửi để trả về view model
         var sender = await _dbContext.Users.FindAsync(senderId);
 
         return new MessageViewModel

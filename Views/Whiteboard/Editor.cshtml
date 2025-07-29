@@ -1,375 +1,328 @@
+@model Zela.ViewModels.WhiteboardEditorViewModel
 @{
     ViewData["Title"] = "Whiteboard Editor";
-    Layout = "_Layout";
 }
 
 @section Styles {
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <link rel="stylesheet" href="~/css/components/whiteboard.css" />
+    <link href="~/css/pages/whiteboard/whiteboard-editor.css" rel="stylesheet" />
 }
 
-<div class="whiteboard-editor-container">
-    <div class="whiteboard-header">
-        <div class="header-left">
-            <a href="@Url.Action("Index")" class="btn btn-outline-secondary">
-                <i class="fas fa-arrow-left"></i> Quay lại
-            </a>
-            <h3 id="whiteboardTitle">Whiteboard Editor</h3>
+<div class="whiteboard-editor">
+    <!-- Top Toolbar -->
+    <div class="editor-toolbar">
+        <div class="toolbar-left">
+            <div class="toolbar-title">@Model.WhiteboardTitle</div>
         </div>
-        <div class="header-right">
-            <button id="saveSessionBtn" class="btn btn-success">
-                <i class="fas fa-save"></i> Lưu Session
+        <div class="toolbar-actions">
+            <button id="saveBtn" class="btn-toolbar btn-save">
+                <span>💾</span>
+                Lưu
             </button>
-            <button id="saveTemplateBtn" class="btn btn-primary">
-                <i class="fas fa-layer-group"></i> Tạo Template
-            </button>
-            <button id="exportBtn" class="btn btn-secondary">
-                <i class="fas fa-download"></i> Export
-            </button>
+            <a href="@Url.Action("Index", "Whiteboard")" class="btn-toolbar btn-back">
+                <span>←</span>
+                Quay lại
+            </a>
         </div>
     </div>
 
-    <div class="whiteboard-main">
-        <div class="whiteboard-canvas-container">
+    <!-- Main Editor Area -->
+    <div class="editor-main">
+        <!-- Left Sidebar - Tools -->
+        <div class="editor-sidebar">
+            <!-- Drawing Tools -->
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <span>🖌️</span>
+                    Công cụ vẽ
+                </div>
+                <div class="tools-grid">
+                    <button class="tool-btn active" data-tool="pen" title="Bút vẽ">
+                        ✏️
+                    </button>
+                    <button class="tool-btn" data-tool="eraser" title="Tẩy">
+                        🧽
+                    </button>
+                    <button class="tool-btn" data-tool="text" title="Văn bản">
+                        T
+                    </button>
+                    <button class="tool-btn" data-tool="rectangle" title="Hình chữ nhật">
+                        ⬜
+                    </button>
+                    <button class="tool-btn" data-tool="circle" title="Hình tròn">
+                        ⭕
+                    </button>
+                    <button class="tool-btn" data-tool="line" title="Đường thẳng">
+                        ➖
+                    </button>
+                </div>
+            </div>
+
+            <!-- Color Palette -->
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <span>🎨</span>
+                    Màu sắc
+                </div>
+                <div class="color-palette">
+                    <div class="color-btn active" data-color="#000000" style="background-color: #000000;"></div>
+                    <div class="color-btn" data-color="#ff0000" style="background-color: #ff0000;"></div>
+                    <div class="color-btn" data-color="#00ff00" style="background-color: #00ff00;"></div>
+                    <div class="color-btn" data-color="#0000ff" style="background-color: #0000ff;"></div>
+                    <div class="color-btn" data-color="#ffff00" style="background-color: #ffff00;"></div>
+                    <div class="color-btn" data-color="#ff00ff" style="background-color: #ff00ff;"></div>
+                    <div class="color-btn" data-color="#00ffff" style="background-color: #00ffff;"></div>
+                    <div class="color-btn" data-color="#ffa500" style="background-color: #ffa500;"></div>
+                    <div class="color-btn" data-color="#800080" style="background-color: #800080;"></div>
+                    <div class="color-btn" data-color="#008000" style="background-color: #008000;"></div>
+                    <div class="color-btn" data-color="#ffc0cb" style="background-color: #ffc0cb;"></div>
+                    <div class="color-btn" data-color="#a52a2a" style="background-color: #a52a2a;"></div>
+                </div>
+            </div>
+
+            <!-- Brush Sizes -->
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <span>📏</span>
+                    Độ dày
+                </div>
+                <div class="brush-sizes">
+                    <button class="size-btn active" data-size="2" title="Mỏng"></button>
+                    <button class="size-btn" data-size="5" title="Trung bình"></button>
+                    <button class="size-btn" data-size="10" title="Dày"></button>
+                    <button class="size-btn" data-size="20" title="Rất dày"></button>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="sidebar-section">
+                <div class="section-title">
+                    <span>⚙️</span>
+                    Thao tác
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+                    <button id="clearBtn" class="btn-toolbar btn-secondary" style="width: 100%;">
+                        <span>🗑️</span>
+                        Xóa tất cả
+                    </button>
+                    <button id="undoBtn" class="btn-toolbar btn-secondary" style="width: 100%;">
+                        <span>↶</span>
+                        Hoàn tác
+                    </button>
+                    <button id="redoBtn" class="btn-toolbar btn-secondary" style="width: 100%;">
+                        <span>↷</span>
+                        Làm lại
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Canvas Container -->
+        <div class="canvas-container">
             <canvas id="whiteboardCanvas" width="1200" height="800"></canvas>
             
-            <div class="whiteboard-toolbar">
-                <div class="tool-group">
-                    <button class="tool-btn active" data-tool="pen" title="Pen">
-                        <i class="fas fa-pen"></i>
-                    </button>
-                    <button class="tool-btn" data-tool="brush" title="Brush">
-                        <i class="fas fa-paint-brush"></i>
-                    </button>
-                    <button class="tool-btn" data-tool="eraser" title="Eraser">
-                        <i class="fas fa-eraser"></i>
-                    </button>
-                </div>
-
-                <div class="tool-group">
-                    <button class="tool-btn" data-tool="line" title="Line">
-                        <i class="fas fa-minus"></i>
-                    </button>
-                    <button class="tool-btn" data-tool="rectangle" title="Rectangle">
-                        <i class="fas fa-square"></i>
-                    </button>
-                    <button class="tool-btn" data-tool="circle" title="Circle">
-                        <i class="fas fa-circle"></i>
-                    </button>
-                </div>
-
-                <div class="tool-group">
-                    <button class="tool-btn" data-tool="text" title="Text">
-                        <i class="fas fa-font"></i>
-                    </button>
-                    <button class="tool-btn" data-tool="select" title="Select">
-                        <i class="fas fa-mouse-pointer"></i>
-                    </button>
-                </div>
-
-                <div class="tool-group">
-                    <button class="tool-btn" id="undoBtn" title="Undo">
-                        <i class="fas fa-undo"></i>
-                    </button>
-                    <button class="tool-btn" id="redoBtn" title="Redo">
-                        <i class="fas fa-redo"></i>
-                    </button>
-                </div>
-
-                <div class="tool-group">
-                    <button class="tool-btn" id="clearBtn" title="Clear">
-                        <i class="fas fa-trash"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="whiteboard-properties">
-                <div class="color-palette">
-                    <input type="color" id="colorPicker" value="#000000" title="Color">
-                    <div class="color-presets">
-                        <div class="color-preset" data-color="#000000" style="background-color: #000000;"></div>
-                        <div class="color-preset" data-color="#ff0000" style="background-color: #ff0000;"></div>
-                        <div class="color-preset" data-color="#00ff00" style="background-color: #00ff00;"></div>
-                        <div class="color-preset" data-color="#0000ff" style="background-color: #0000ff;"></div>
-                        <div class="color-preset" data-color="#ffff00" style="background-color: #ffff00;"></div>
-                        <div class="color-preset" data-color="#ff00ff" style="background-color: #ff00ff;"></div>
-                        <div class="color-preset" data-color="#00ffff" style="background-color: #00ffff;"></div>
-                        <div class="color-preset" data-color="#ffffff" style="background-color: #ffffff; border: 1px solid #ccc;"></div>
-                    </div>
-                </div>
-
-                <div class="size-control">
-                    <label for="sizeSlider">Size:</label>
-                    <input type="range" id="sizeSlider" min="1" max="50" value="5">
-                    <span id="sizeValue">5</span>
-                </div>
+            <!-- Loading Overlay -->
+            <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+                <div class="loading-spinner"></div>
             </div>
         </div>
 
-        <div class="whiteboard-sidebar">
-            <div class="sidebar-section">
-                <h4>Session Info</h4>
-                <div class="session-info">
-                    <p><strong>Session ID:</strong> <span id="sessionId">Not started</span></p>
-                    <p><strong>Status:</strong> <span id="sessionStatus">Disconnected</span></p>
-                    <p><strong>Actions:</strong> <span id="actionCount">0</span></p>
-                </div>
+        <!-- Right Sidebar - Session History -->
+        <div class="session-sidebar">
+            <div class="session-header">
+                <div class="session-title">Lịch sử phiên</div>
+                <div class="session-info">@Model.SessionCount phiên làm việc</div>
             </div>
-
-            <div class="sidebar-section">
-                <h4>Template Info</h4>
-                <div class="template-info">
-                    <p><strong>Name:</strong> <span id="templateName">-</span></p>
-                    <p><strong>Description:</strong> <span id="templateDescription">-</span></p>
-                    <p><strong>Created:</strong> <span id="templateCreated">-</span></p>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Save Template Modal -->
-<div class="modal fade" id="saveTemplateModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title">Lưu Template</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="saveTemplateForm">
-                    <div class="form-group">
-                        <label for="saveTemplateName">Tên Template</label>
-                        <input type="text" class="form-control" id="saveTemplateName" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="saveTemplateDescription">Mô tả</label>
-                        <textarea class="form-control" id="saveTemplateDescription" rows="3"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <div class="custom-control custom-checkbox">
-                            <input type="checkbox" class="custom-control-input" id="saveIsPublic">
-                            <label class="custom-control-label" for="saveIsPublic">
-                                Template công khai (ai cũng có thể sử dụng)
-                            </label>
+            
+            <div class="session-list" id="sessionList">
+                @if (Model.Sessions != null && Model.Sessions.Any())
+                {
+                    foreach (var session in Model.Sessions.OrderByDescending(s => s.LastModifiedAt))
+                    {
+                        <div class="session-item @(session.SessionId == Model.SessionId ? "active" : "")" 
+                             data-session-id="@session.SessionId">
+                            <div class="session-item-title">Phiên @session.SessionId</div>
+                            <div class="session-item-date">@(session.LastModifiedAt?.ToString("dd/MM/yyyy HH:mm") ?? session.CreatedAt.ToString("dd/MM/yyyy HH:mm"))</div>
                         </div>
+                    }
+                }
+                else
+                {
+                    <div style="text-align: center; color: var(--muted-text); padding: 2rem;">
+                        <div style="font-size: 2rem; margin-bottom: 0.5rem;">📝</div>
+                        <div>Chưa có phiên nào</div>
                     </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" id="confirmSaveBtn">
-                    <i class="fas fa-save"></i> Lưu Template
-                </button>
+                }
             </div>
         </div>
     </div>
+
+    <!-- Status Bar -->
+    <div class="status-bar">
+        <div class="status-left">
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="connectionStatus">Đang kết nối...</span>
+            </div>
+            <div id="userCount">0 người dùng</div>
+        </div>
+        <div id="currentTool">Công cụ: Bút vẽ</div>
+    </div>
 </div>
+
+<!-- Notification Container -->
+<div id="notificationContainer"></div>
 
 @section Scripts {
-    <script src="~/lib/microsoft-signalr/signalr.min.js"></script>
-    <script src="~/js/whiteboard-editor.js"></script>
-    <input type="hidden" id="currentUserId" value="@User.FindFirst("UserId")?.Value" />
+    <script src="~/js/whiteboard.js"></script>
     <script>
-        $(document).ready(function() {
-            const whiteboard = new WhiteboardEditor();
-            
-            // Get URL parameters
-            const urlParams = new URLSearchParams(window.location.search);
-            const sessionId = urlParams.get('sessionId');
-            const templateId = urlParams.get('templateId');
-            
-            // Initialize whiteboard
-            if (sessionId) {
-                // Load existing session
-                console.log('Loading existing session:', sessionId);
-                whiteboard.sessionId = sessionId;
-                whiteboard.init();
-                updateSessionInfo(sessionId);
-                $('#whiteboardTitle').text('Whiteboard Editor');
-            } else if (templateId) {
-                // Load template for editing
-                console.log('Loading template for editing:', templateId);
-                loadTemplateForEditing(templateId);
-            } else {
-                // Create new session
-                console.log('Creating new session...');
-                createNewSession();
-            }
-            
-            // Save session button
-            $('#saveSessionBtn').on('click', function() {
-                saveSession();
+        // Initialize whiteboard with session data
+        document.addEventListener('DOMContentLoaded', function() {
+            const whiteboard = new Whiteboard('whiteboardCanvas', {
+                sessionId: @Model.SessionId,
+                whiteboardId: @Model.WhiteboardId,
+                canEdit: @Model.CanEdit.ToString().ToLower()
             });
-            
-            // Save template button
-            $('#saveTemplateBtn').on('click', function() {
-                const modal = new bootstrap.Modal(document.getElementById('saveTemplateModal'));
-                modal.show();
-            });
-            
-            // Confirm save template
-            $('#confirmSaveBtn').on('click', function() {
-                saveTemplate();
-            });
-            
-            // Export button
-            $('#exportBtn').on('click', function() {
-                whiteboard.exportWhiteboard();
-            });
-            
-            // Functions
-            async function saveSession() {
-                if (!whiteboard.sessionId) {
-                    alert('Không có session nào để lưu');
-                    return;
-                }
 
-                const sessionName = prompt('Nhập tên cho session (để trống để dùng tên mặc định):');
+            // Load session data if available
+            @if (!string.IsNullOrEmpty(Model.CanvasData))
+            {
+                <text>
+                whiteboard.loadCanvasData('@Html.Raw(Model.CanvasData)');
+                </text>
+            }
+
+            // Tool selection
+            document.querySelectorAll('.tool-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    whiteboard.setTool(this.dataset.tool);
+                    updateCurrentTool();
+                });
+            });
+
+            // Color selection
+            document.querySelectorAll('.color-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    whiteboard.setColor(this.dataset.color);
+                });
+            });
+
+            // Size selection
+            document.querySelectorAll('.size-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.size-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    whiteboard.setSize(parseInt(this.dataset.size));
+                });
+            });
+
+            // Action buttons
+            document.getElementById('clearBtn').addEventListener('click', function() {
+                if (confirm('Bạn có chắc muốn xóa tất cả?')) {
+                    whiteboard.clearCanvas();
+                }
+            });
+
+            document.getElementById('undoBtn').addEventListener('click', function() {
+                whiteboard.undo();
+            });
+
+            document.getElementById('redoBtn').addEventListener('click', function() {
+                whiteboard.redo();
+            });
+
+            // Save button
+            document.getElementById('saveBtn').addEventListener('click', function() {
+                whiteboard.saveCanvasData();
+                showNotification('Đã lưu thành công!', 'success');
+            });
+
+            // Session selection
+            document.querySelectorAll('.session-item').forEach(item => {
+                item.addEventListener('click', function() {
+                    const sessionId = this.dataset.sessionId;
+                    if (sessionId != @Model.SessionId) {
+                        window.location.href = `/Whiteboard/Editor/@Model.WhiteboardId?sessionId=${sessionId}`;
+                    }
+                });
+            });
+
+            // Update current tool display
+            function updateCurrentTool() {
+                const activeTool = document.querySelector('.tool-btn.active');
+                const toolNames = {
+                    'pen': 'Bút vẽ',
+                    'eraser': 'Tẩy',
+                    'text': 'Văn bản',
+                    'rectangle': 'Hình chữ nhật',
+                    'circle': 'Hình tròn',
+                    'line': 'Đường thẳng'
+                };
+                document.getElementById('currentTool').textContent = `Công cụ: ${toolNames[activeTool.dataset.tool]}`;
+            }
+
+            // Show notification
+            function showNotification(message, type = 'info') {
+                const notification = document.createElement('div');
+                notification.className = `notification ${type}`;
+                notification.textContent = message;
                 
-                try {
-                    const response = await fetch(`/Whiteboard/SaveSession/${whiteboard.sessionId}`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ 
-                            sessionName: sessionName || null
-                        })
-                    });
+                document.getElementById('notificationContainer').appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
 
-                    const result = await response.json();
-                    if (result.success) {
-                        alert('Session đã được lưu thành công!');
-                        updateSessionInfo(whiteboard.sessionId);
-                    } else {
-                        alert('Lỗi: ' + result.error);
-                    }
-                } catch (error) {
-                    console.error('Error saving session:', error);
-                    alert('Có lỗi xảy ra khi lưu session');
+            // Update connection status
+            function updateConnectionStatus(status, userCount = 0) {
+                const statusElement = document.getElementById('connectionStatus');
+                const userCountElement = document.getElementById('userCount');
+                
+                if (status === 'connected') {
+                    statusElement.textContent = 'Đã kết nối';
+                    userCountElement.textContent = `${userCount} người dùng`;
+                } else if (status === 'connecting') {
+                    statusElement.textContent = 'Đang kết nối...';
+                    userCountElement.textContent = '0 người dùng';
+                } else {
+                    statusElement.textContent = 'Mất kết nối';
+                    userCountElement.textContent = '0 người dùng';
                 }
             }
-            
-            async function createNewSession() {
-                try {
-                    console.log('Creating new whiteboard session...');
-                    const response = await fetch('/Whiteboard/CreateStandaloneSession', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        }
-                    });
 
-                    const result = await response.json();
-                    if (result.success) {
-                        console.log('Session created successfully:', result.sessionId);
-                        whiteboard.sessionId = result.sessionId;
-                        whiteboard.init();
-                        updateSessionInfo(result.sessionId);
-                        $('#whiteboardTitle').text('Whiteboard Editor');
-                    } else {
-                        console.error('Failed to create session:', result.error);
-                        alert('Lỗi: ' + result.error);
-                    }
-                } catch (error) {
-                    console.error('Error creating session:', error);
-                    alert('Có lỗi xảy ra khi tạo session');
-                }
-            }
-            
-            async function loadTemplateForEditing(templateId) {
-                try {
-                    const response = await fetch(`/Whiteboard/GetTemplate/${templateId}`);
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        const template = result.template;
-                        $('#templateName').text(template.name);
-                        $('#templateDescription').text(template.description || 'No description');
-                        $('#templateCreated').text(new Date(template.createdAt).toLocaleDateString());
-                        $('#whiteboardTitle').text(`Editing: ${template.name}`);
-                        
-                        // Create session and load template
-                        const sessionResponse = await fetch('/Whiteboard/CreateStandaloneSession', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function(e) {
+                if (e.ctrlKey || e.metaKey) {
+                    switch(e.key) {
+                        case 's':
+                            e.preventDefault();
+                            whiteboard.saveCanvasData();
+                            showNotification('Đã lưu thành công!', 'success');
+                            break;
+                        case 'z':
+                            e.preventDefault();
+                            if (e.shiftKey) {
+                                whiteboard.redo();
+                            } else {
+                                whiteboard.undo();
                             }
-                        });
-
-                        const sessionResult = await sessionResponse.json();
-                        if (sessionResult.success) {
-                            whiteboard.sessionId = sessionResult.sessionId;
-                            whiteboard.init();
-                            updateSessionInfo(sessionResult.sessionId);
-                            
-                            // Load template data into session
-                            await loadTemplateToSession(sessionResult.sessionId, templateId);
-                        }
-                    } else {
-                        alert('Lỗi: ' + result.error);
+                            break;
+                        case 'Delete':
+                        case 'Backspace':
+                            e.preventDefault();
+                            whiteboard.clearCanvas();
+                            break;
                     }
-                } catch (error) {
-                    console.error('Error loading template:', error);
-                    alert('Có lỗi xảy ra khi load template');
                 }
-            }
-            
-            async function loadTemplateToSession(sessionId, templateId) {
-                try {
-                    const response = await fetch('/Whiteboard/LoadTemplateToSession', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ 
-                            sessionId: sessionId,
-                            templateId: parseInt(templateId)
-                        })
-                    });
+            });
 
-                    const result = await response.json();
-                    if (result.success) {
-                        // Reload actions to display template content
-                        await whiteboard.loadExistingActions();
-                    } else {
-                        alert('Lỗi: ' + result.error);
-                    }
-                } catch (error) {
-                    console.error('Error loading template to session:', error);
-                    alert('Có lỗi xảy ra khi load template vào session');
-                }
-            }
-            
-            function updateSessionInfo(sessionId) {
-                $('#sessionId').text(sessionId);
-                $('#sessionStatus').text('Connected');
-            }
-            
-            async function saveTemplate() {
-                const name = $('#saveTemplateName').val();
-                const description = $('#saveTemplateDescription').val();
-                const isPublic = $('#saveIsPublic').is(':checked');
-
-                if (!name) {
-                    alert('Vui lòng nhập tên template');
-                    return;
-                }
-
-                try {
-                    const result = await whiteboard.saveAsTemplate(name, description, isPublic);
-                    if (result) {
-                        const modal = bootstrap.Modal.getInstance(document.getElementById('saveTemplateModal'));
-                        modal.hide();
-                        // Redirect back to management page
-                        window.location.href = '/Whiteboard';
-                    }
-                } catch (error) {
-                    console.error('Error saving template:', error);
-                    alert('Có lỗi xảy ra khi lưu template');
-                }
-            }
+            // Initialize
+            updateCurrentTool();
+            updateConnectionStatus('connecting');
         });
     </script>
 } 

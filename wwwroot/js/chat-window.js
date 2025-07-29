@@ -1,11 +1,19 @@
 (() => {
+    // ========================
+    // Biến trạng thái toàn cục
+    // ========================
     // ID của friend đang chat
     currentFriendId = null;
-    let stickerPanelVisible = false;
-    let availableStickers = [];
-    let selectedFiles = []; // Array để lưu nhiều file
+    let stickerPanelVisible = false; // Trạng thái hiển thị panel sticker
+    let availableStickers = [];      // Danh sách sticker đã load
+    let selectedFiles = [];          // Danh sách file đang chọn để gửi
+    let replyToMessageId = null;     // ID tin nhắn đang reply (nếu có)
+    let replyToMessageContent = null;
+    let replyToMessageSenderName = null;
 
+    // ========================
     // Tham chiếu các phần tử DOM
+    // ========================
     const chatContentEl = document.querySelector('.chat-content');
     const chatInputEl = document.querySelector('.chat-input-bar input[type="text"]');
     const chatUserInfoEl = document.querySelector('.chat-user-info');
@@ -13,13 +21,19 @@
     const sendBtn = document.querySelector('.btn-send');
     const previewEl = document.getElementById('chat-preview');
     const chatFriendNameEl = document.getElementById('chat-friend-name');
+    const replyPreviewEl = document.getElementById('reply-preview'); // <--- Thêm phần tử hiển thị reply (nếu có)
 
-    // Khởi tạo kết nối SignalR (signalR đã được load trước qua CDN hoặc script tag)
+    // ========================
+    // Khởi tạo kết nối SignalR
+    // ========================
+    // Kết nối tới hub chat để nhận/gửi tin nhắn realtime
     const connection = new signalR.HubConnectionBuilder()
         .withUrl('/chathub')
         .build();
 
-    // Xử lý khi nhận message mới
+    // ========================
+    // Xử lý sự kiện nhận message mới từ SignalR
+    // ========================
     connection.on('ReceiveMessage', msg => {
         console.log('SignalR nhận được:', msg);
         const cid = Number(currentFriendId);
@@ -42,10 +56,13 @@
                 connection.invoke("MarkAsSeen", msg.messageId)
                     .catch(err => console.error('MarkAsSeen error:', err));
             }
+            addReplyButtons(); // Gọi lại sau mỗi lần render message
         }
     });
 
-    // MessageStatus update
+    // ========================
+    // Xử lý cập nhật trạng thái message (đã nhận, đã xem)
+    // ========================
     connection.on("MessageStatusUpdated", function (info) {
         console.log("Cập nhật trạng thái:", info);
 
@@ -56,7 +73,9 @@
         }
     });
 
-    // Nhận sticker mới
+    // ========================
+    // Nhận sticker mới từ SignalR
+    // ========================
     connection.on("ReceiveSticker", function (msg) {
         console.log("SignalR nhận được sticker:", msg);
 
@@ -68,15 +87,18 @@
         }
     });
 
-    // Only start if not already connected or connecting
+    // ========================
+    // Khởi động kết nối SignalR nếu chưa kết nối
+    // ========================
     if (connection.state === signalR.HubConnectionState.Disconnected) {
         connection.start().catch(err => console.error('Chat SignalR error:', err));
     } else {
         console.log('Chat SignalR already connected or connecting');
     }
 
-    // Gửi tin nhắn
-    // Show loading state
+    // ========================
+    // Hàm hiển thị trạng thái loading khi gửi tin nhắn
+    // ========================
     function showLoadingState() {
         const sendBtn = document.querySelector('.btn-send');
         const chatInput = chatInputEl;
@@ -120,7 +142,9 @@
         }
     }
 
-    // Show success toast
+    // ========================
+    // Hàm hiển thị toast thành công
+    // ========================
     function showSuccessToast(message) {
         const toast = document.createElement('div');
         toast.className = 'success-toast';
@@ -149,7 +173,9 @@
         }, 3000);
     }
 
-    // Hide loading state
+    // ========================
+    // Hàm ẩn trạng thái loading
+    // ========================
     function hideLoadingState() {
         const sendBtn = document.querySelector('.btn-send');
         const chatInput = chatInputEl;
@@ -172,6 +198,9 @@
         }
     }
 
+    // ========================
+    // Hàm gửi tin nhắn (text hoặc file), xử lý đồng bộ với server
+    // ========================
     async function sendMessage() {
         const content = chatInputEl.value.trim();
         const files = selectedFiles.length > 0 ? selectedFiles : null;
@@ -186,12 +215,16 @@
                 // Gửi nhiều file qua HTTP POST
                 const formData = new FormData();
                 formData.append('content', content);
-                formData.append('friendId', friendId);
+                formData.append('recipientId', friendId);
 
                 // Thêm tất cả file vào FormData
                 files.forEach(file => {
                     formData.append('files', file);
                 });
+                // Sửa: chỉ gửi replyToMessageId nếu là số hợp lệ
+                if (replyToMessageId != null && replyToMessageId !== '' && replyToMessageId !== 'null' && replyToMessageId !== 'undefined' && !isNaN(Number(replyToMessageId))) {
+                    formData.append('replyToMessageId', Number(replyToMessageId));
+                }
 
                 const res = await fetch('/Chat/SendMessage', {
                     method: 'POST',
@@ -212,15 +245,33 @@
                     const fileCount = files.length;
                     showSuccessToast(`${fileCount} file${fileCount > 1 ? 's' : ''} đã được gửi thành công!`);
                     console.log(`${fileCount} file(s) đã được gửi thành công!`);
+                    // Reset reply state
+                    clearReplyState();
                 } else {
                     console.error('Lỗi khi gửi file:', res.status);
                     alert('Có lỗi xảy ra khi gửi file. Vui lòng thử lại!');
                 }
             } else {
-                // Gửi text qua SignalR
-                await connection.invoke('SendMessage', friendId, content);
-                chatInputEl.value = '';
-                console.log("Tin nhắn đã gửi thành công");
+                // Gửi text qua HTTP POST để đồng bộ với file
+                const formData = new FormData();
+                formData.append('content', content);
+                formData.append('recipientId', friendId);
+                // Sửa: chỉ gửi replyToMessageId nếu là số hợp lệ
+                if (replyToMessageId != null && replyToMessageId !== '' && replyToMessageId !== 'null' && replyToMessageId !== 'undefined' && !isNaN(Number(replyToMessageId))) {
+                    formData.append('replyToMessageId', Number(replyToMessageId));
+                }
+                const res = await fetch('/Chat/SendMessage', {
+                    method: 'POST',
+                    body: formData
+                });
+                if (res.ok) {
+                    chatInputEl.value = '';
+                    updateInputPlaceholder();
+                    // Reset reply state
+                    clearReplyState();
+                } else {
+                    alert('Có lỗi xảy ra khi gửi tin nhắn. Vui lòng thử lại!');
+                }
             }
         } catch (error) {
             console.error('SendMessage error:', error);
@@ -231,11 +282,24 @@
         }
     }
 
-    // Render 1 tin nhắn
+    // ========================
+    // Hàm render 1 tin nhắn ra HTML để hiển thị lên giao diện
+    // ========================
     function renderMessage(msg) {
         const isMine = msg.senderId === currentUserId;
         const side = isMine ? 'right' : 'left';
         const time = msg.sentAt.substring(11, 16);
+
+        // Render phần reply nếu có
+        let replyHtml = '';
+        if (msg.replyToMessageId) {
+            replyHtml = `
+                <div class="reply-preview-in-bubble">
+                    <span class="reply-preview-sender">${msg.replyToMessageSenderName || ''}</span>
+                    <span class="reply-preview-content">${msg.replyToMessageContent || ''}</span>
+                </div>
+            `;
+        }
 
         // Render media nếu có
         let mediaHtml = '';
@@ -295,6 +359,7 @@
         <div class="message ${side}" data-id="${msg.messageId}">
           <div class="message-content">
             <span class="message-time">${time}</span>
+            ${replyHtml}
             ${mediaHtml}
             ${stickerHtml}
             ${textHtml}
@@ -307,6 +372,7 @@
           <img src="${msg.avatarUrl}" class="message-avatar" />
           <div class="message-content">
             <span class="message-time">${time}</span>
+            ${replyHtml}
             ${mediaHtml}
             ${stickerHtml}
             ${textHtml}
@@ -316,12 +382,16 @@
         }
     }
 
-    // Cuộn xuống cuối chat
+    // ========================
+    // Cuộn xuống cuối chat khi có tin nhắn mới
+    // ========================
     function scrollToBottom() {
         chatContentEl.scrollTop = chatContentEl.scrollHeight;
     }
 
-    // Load danh sách sticker từ server
+    // ========================
+    // Load danh sách sticker từ server và render panel sticker
+    // ========================
     async function loadStickers() {
         try {
             const response = await fetch('/Chat/GetStickers');
@@ -333,8 +403,6 @@
             console.error('Failed to load stickers:', error);
         }
     }
-
-    // Render sticker panel
     function renderStickerPanel(stickers) {
         const grid = document.querySelector('.sticker-grid');
         if (!grid) return;
@@ -356,8 +424,6 @@
             grid.appendChild(img);
         });
     }
-
-    // Khởi tạo sticker panel khi DOM ready
     function initializeStickerPanel() {
         const stickerPanelHtml = `
             <div class="sticker-panel">
@@ -379,7 +445,9 @@
         loadStickers();
     }
 
-    // Event delegation cho click
+    // ========================
+    // Event delegation cho click các nút, sticker, reply, ...
+    // ========================
     document.addEventListener('click', e => {
         // Chọn friend
         const friendItem = e.target.closest('.friend-item');
@@ -427,6 +495,7 @@
                             : html;
                     bindFileSummaryButtons();
                     scrollToBottom();
+                    addReplyButtons(); // Gọi lại sau mỗi lần render message
                 })
                 .catch(err => console.error('Load history error:', err));
             return;
@@ -488,6 +557,25 @@
             return;
         }
 
+        // Thêm nút reply cho mỗi message
+        const replyBtn = e.target.closest('.btn-reply-message');
+        if (replyBtn) {
+            const messageId = replyBtn.dataset.messageId;
+            const messageContent = replyBtn.dataset.messageContent;
+            const messageSender = replyBtn.dataset.messageSender;
+            replyToMessageId = messageId;
+            replyToMessageContent = messageContent;
+            replyToMessageSenderName = messageSender;
+            showReplyPreview();
+            chatInputEl.focus();
+            return;
+        }
+        // Nút hủy reply
+        if (e.target.classList.contains('btn-cancel-reply')) {
+            clearReplyState();
+            return;
+        }
+
         const stickerPanel = document.querySelector('.sticker-panel');
         if (stickerPanel && !stickerPanel.contains(e.target) && !e.target.closest('.sticker-btn')) {
             stickerPanel.style.display = 'none';
@@ -495,7 +583,9 @@
         }
     });
 
-    // Gửi khi Enter
+    // ========================
+    // Gửi tin nhắn khi nhấn Enter
+    // ========================
     chatInputEl.addEventListener('keypress', function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -503,7 +593,9 @@
         }
     });
 
+    // ========================
     // Thêm event listener cho Enter trên toàn bộ chat input area
+    // ========================
     document.addEventListener('keydown', function (e) {
         // Chỉ xử lý khi đang focus vào chat input hoặc preview area
         const isInChatInput = e.target.closest('.chat-input-container') ||
@@ -538,16 +630,9 @@
         });
     }
 
-    // Load messages function (from jQuery version)
-    async function loadMessages(friendId) {
-        const res = await fetch(`/Chat/GetMessages?friendId=${friendId}`);
-        const html = await res.text();
-        chatContentEl.innerHTML = html;
-        bindFileSummaryButtons();
-        scrollToBottom();
-    }
-
-    // File input change handler - Hỗ trợ nhiều file với tính năng tích lũy
+    // ========================
+    // Xử lý chọn file, preview file, xóa file, thêm file vào danh sách gửi
+    // ========================
     if (fileInputEl) {
         fileInputEl.addEventListener('change', function () {
             if (this.files && this.files.length > 0) {
@@ -841,13 +926,30 @@
         });
     }
 
-    // Khởi tạo khi DOM đã sẵn sàng
+    // ========================
+    // Hàm load lại lịch sử tin nhắn với bạn bè
+    // ========================
+    async function loadMessages(friendId) {
+        const res = await fetch(`/Chat/GetMessages?friendId=${friendId}`);
+        const html = await res.text();
+        chatContentEl.innerHTML = html;
+        bindFileSummaryButtons();
+        scrollToBottom();
+        addReplyButtons(); // Gọi lại sau mỗi lần render message
+    }
+
+    // ========================
+    // Khởi tạo sticker panel khi DOM ready
+    // ========================
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeStickerPanel);
     } else {
         initializeStickerPanel();
     }
 
+    // ========================
+    // Ngăn kéo sticker không bị kéo ra khỏi chat
+    // ========================
     document.addEventListener('DOMContentLoaded', function () {
         document.querySelector('.chat-content').addEventListener('dragstart', function (e) {
             if (e.target.classList.contains('sticker-message')) {
@@ -856,7 +958,9 @@
         });
     });
 
-    // Update input placeholder based on preview state
+    // ========================
+    // Cập nhật placeholder input dựa trên trạng thái file
+    // ========================
     function updateInputPlaceholder() {
         const fileCount = selectedFiles.length;
 
@@ -869,7 +973,9 @@
         }
     }
 
-    // Load thông tin sidebar cho friend
+    // ========================
+    // Load thông tin sidebar cho friend (thông tin phải, media)
+    // ========================
     async function loadFriendSidebar(friendId) {
         try {
             const response = await fetch(`/Chat/GetFriendSidebar?friendId=${friendId}`);
@@ -888,12 +994,58 @@
         } catch (error) {
             console.error('Error loading friend sidebar:', error);
         }
+
+        // Load sidebar media
+        try {
+            const response = await fetch(`/Chat/GetFriendSidebarMedia?friendId=${friendId}`);
+            if (response.ok) {
+                const html = await response.text();
+                const sidebarMediaContainer = document.getElementById('sidebar-media-container');
+                if (sidebarMediaContainer) {
+                    sidebarMediaContainer.innerHTML = html;
+                }
+            } else {
+                console.error('Failed to load group sidebar media');
+            }
+        } catch (error) {
+            console.error('Error loading group sidebar media:', error);
+        }
     }
 
-    //=======================================================================================
-    //                              DRAG & DROP FUNCTIONALITY
-    //=======================================================================================
+    // ========================
+    // Hàm ẩn sidebar media
+    // ========================
+    function hideSidebarMedia() {
+        const sidebarRight = document.querySelector('.chat-info-panel:not(.sidebar-media)');
+        const sidebarMedia = document.querySelector('.sidebar-media');
+        const sidebarMediaContainer = document.getElementById('sidebar-media-container');
 
+        if (!sidebarMedia) {
+            return;
+        }
+
+        // Thêm animation slide out
+        sidebarMedia.classList.add('slide-out');
+
+        // Sau khi animation hoàn thành, ẩn sidebar media và hiển thị sidebar right
+        setTimeout(() => {
+            sidebarMedia.style.display = 'none';
+            sidebarMedia.classList.remove('slide-out');
+
+            // Ẩn sidebar media container
+            if (sidebarMediaContainer) {
+                sidebarMediaContainer.classList.add('d-none');
+            }
+
+            if (sidebarRight) {
+                sidebarRight.style.display = 'block';
+            }
+        }, 300);
+    }
+
+    // ========================
+    // DRAG & DROP FUNCTIONALITY: Kéo thả file vào khung chat
+    // ========================
     function initializeDragAndDrop() {
         const dragDropOverlay = document.getElementById('drag-drop-overlay');
         const chatContent = document.querySelector('.chat-content');
@@ -1141,7 +1293,9 @@
         }
     }
 
+    // ========================
     // Trigger existing file preview system
+    // ========================
     function triggerFilePreviewUpdate() {
         console.log('Triggering file preview update for', selectedFiles.length, 'files');
 
@@ -1179,7 +1333,9 @@
         }
     }
 
+    // ========================
     // Create a beautiful preview matching the app's design
+    // ========================
     function createSimplePreview() {
         console.log('Creating beautiful preview for', selectedFiles.length, 'files');
 
@@ -1495,57 +1651,46 @@
         console.log('✅ Beautiful preview created');
     }
 
-    // Event delegation cho preview/tóm tắt file
-    document.addEventListener('click', function(e) {
-        // Preview
-        if (e.target.classList.contains('btn-preview-file')) {
-            e.preventDefault();
-            e.stopPropagation();
-            const btn = e.target;
-            const block = btn.closest('.file-summary-block');
-            const url = btn.getAttribute('data-media-url');
-            const filename = btn.getAttribute('data-filename');
-            const previewDiv = block.querySelector('.file-preview-content');
-            const summaryDiv = block.querySelector('.file-summary-content');
-            if (summaryDiv) summaryDiv.style.display = 'none';
-            if (getComputedStyle(previewDiv).display === 'block') {
-                previewDiv.style.display = 'none';
-            } else {
+    // ========================
+    // Xử lý preview và tóm tắt file văn bản
+    // ========================
+    function bindFileSummaryButtons() {
+        // Xem trước file
+        document.querySelectorAll('.btn-preview-file').forEach(btn => {
+            btn.onclick = function () {
+                const block = btn.closest('.file-summary-block');
+                const url = btn.getAttribute('data-media-url');
+                const filename = btn.getAttribute('data-filename');
+                const previewDiv = block.querySelector('.file-preview-content');
                 previewDiv.innerHTML = '<em>Đang tải xem trước...</em>';
-                previewDiv.style.display = 'block';
                 fetch(`/File/Preview?url=${encodeURIComponent(url)}&filename=${encodeURIComponent(filename)}`)
                     .then(res => res.text())
                     .then(html => {
                         previewDiv.innerHTML = html;
                         previewDiv.style.display = 'block';
                     })
-                    .catch(() => {
-                        previewDiv.innerHTML = '<div class="file-preview-box"><div class="text-danger">Không thể xem trước.</div></div>';
-                        previewDiv.style.display = 'block';
-                    });
-            }
-        }
-        // Summarize
-        if (e.target.classList.contains('btn-summarize-file')) {
-            e.preventDefault();
-            e.stopPropagation();
-            const btn = e.target;
-            const block = btn.closest('.file-summary-block');
-            const url = btn.getAttribute('data-media-url');
-            const filename = btn.getAttribute('data-filename');
-            const summaryDiv = block.querySelector('.file-summary-content');
-            const previewDiv = block.querySelector('.file-preview-content');
-            const btnText = btn.querySelector('.btn-summarize-text');
-            const btnLoading = btn.querySelector('.btn-summarize-loading');
-            if (previewDiv) previewDiv.style.display = 'none';
-            if (getComputedStyle(summaryDiv).display === 'block') {
-                summaryDiv.style.display = 'none';
-            } else {
+                    .catch(() => { previewDiv.innerHTML = 'Không thể xem trước.'; });
+            };
+        });
+
+        // Tóm tắt file
+        document.querySelectorAll('.btn-summarize-file').forEach(btn => {
+            btn.onclick = function () {
+                const block = btn.closest('.file-summary-block');
+                const url = btn.getAttribute('data-media-url');
+                const filename = btn.getAttribute('data-filename');
+                const summaryDiv = block.querySelector('.file-summary-content');
+                const btnText = btn.querySelector('.btn-summarize-text');
+                const btnLoading = btn.querySelector('.btn-summarize-loading');
+
+                // Hiệu ứng loading
                 btn.disabled = true;
                 btnText.style.display = 'none';
                 btnLoading.style.display = 'inline-block';
+
                 summaryDiv.innerHTML = '';
-                summaryDiv.style.display = 'block';
+                summaryDiv.style.display = 'none';
+
                 const formData = new FormData();
                 formData.append('url', url);
                 formData.append('filename', filename);
@@ -1567,11 +1712,22 @@
                         btnText.style.display = 'inline';
                         btnLoading.style.display = 'none';
                     });
-            }
-        }
-    });
+            };
+        });
+    }
 
-    // Gán 1 lần duy nhất khi trang load
+    // ========================
+    // Khởi tạo drag & drop khi DOM ready
+    // ========================
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeDragAndDrop);
+    } else {
+        initializeDragAndDrop();
+    }
+
+    // ========================
+    // Đóng preview/summary khi click nút đóng
+    // ========================
     document.addEventListener('click', function(e) {
         // Đóng preview
         if (e.target.classList.contains('close-preview-btn')) {
@@ -1605,7 +1761,9 @@
         }
     });
 
+    // ========================
     // Đóng preview
+    // ========================
     document.querySelectorAll('.close-preview-btn').forEach(btn => {
         btn.onclick = function () {
             const box = btn.closest('.file-preview-box');
@@ -1618,7 +1776,9 @@
         };
     });
 
+    // ========================
     // Đóng summary
+    // ========================
     document.querySelectorAll('.close-summary-btn').forEach(btn => {
         btn.onclick = function () {
             const box = btn.closest('.file-summary-box');
@@ -1630,5 +1790,57 @@
             }
         };
     });
+
+    // ========================
+    // Hiển thị UI reply phía trên input
+    // ========================
+    function showReplyPreview() {
+        let el = document.getElementById('reply-preview');
+        if (!el) {
+            el = document.createElement('div');
+            el.id = 'reply-preview';
+            el.className = 'reply-preview-bar';
+            chatInputEl.parentElement.insertBefore(el, chatInputEl);
+        }
+        el.innerHTML = `
+            <div class="reply-preview-content">
+                <span class="reply-sender">${replyToMessageSenderName || ''}:</span>
+                <span class="reply-content">${replyToMessageContent || ''}</span>
+                <button type="button" class="btn-cancel-reply" title="Hủy trả lời">&times;</button>
+            </div>
+        `;
+        el.style.display = 'block';
+    }
+    function clearReplyState() {
+        replyToMessageId = null;
+        replyToMessageContent = null;
+        replyToMessageSenderName = null;
+        const el = document.getElementById('reply-preview');
+        if (el) el.style.display = 'none';
+    }
+
+    // ========================
+    // Thêm nút reply vào mỗi message khi render xong
+    // ========================
+    function addReplyButtons() {
+        document.querySelectorAll('.message .message-content').forEach(function(contentEl) {
+            const msgEl = contentEl.closest('.message');
+            if (!msgEl) return;
+            const messageId = msgEl.getAttribute('data-id');
+            // Tránh thêm trùng
+            if (contentEl.querySelector('.btn-reply-message')) return;
+            // Lấy nội dung và tên người gửi
+            const replyContent = contentEl.querySelector('.message-bubble')?.textContent || '';
+            const replySender = msgEl.classList.contains('right') ? 'Bạn' : (msgEl.querySelector('.message-avatar')?.alt || 'Người dùng');
+            const btn = document.createElement('button');
+            btn.className = 'btn-reply-message';
+            btn.title = 'Trả lời tin nhắn này';
+            btn.dataset.messageId = messageId;
+            btn.dataset.messageContent = replyContent;
+            btn.dataset.messageSender = replySender;
+            btn.innerHTML = '<i class="bi bi-reply"></i>';
+            contentEl.appendChild(btn);
+        });
+    }
 })();
         

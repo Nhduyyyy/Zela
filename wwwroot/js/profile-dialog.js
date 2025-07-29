@@ -161,17 +161,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const file = e.target.files[0];
             if (file) {
                 // Validate file type
-                if (!file.type.startsWith('image/')) {
-                    alert('Vui lòng chọn file ảnh hợp lệ');
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Chỉ cho phép ảnh JPG, JPEG, PNG');
+                    avatarFileInput.value = '';
                     return;
                 }
-
-                // Validate file size (max 5MB)
-                if (file.size > 5 * 1024 * 1024) {
-                    alert('Kích thước ảnh không được vượt quá 5MB');
+                // Validate file size (max 2MB)
+                if (file.size > 2 * 1024 * 1024) {
+                    alert('Kích thước ảnh không được vượt quá 2MB');
+                    avatarFileInput.value = '';
                     return;
                 }
-
                 // Preview image
                 const reader = new FileReader();
                 reader.onload = function(e) {

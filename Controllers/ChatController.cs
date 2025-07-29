@@ -75,22 +75,22 @@ namespace Zela.Controllers
         /// <returns>Ok 200 hoặc lỗi 500</returns>
         [HttpPost]
         [RequestSizeLimit(50 * 1024 * 1024)] // 50MB limit
-        public async Task<IActionResult> SendMessage(int friendId, string content, List<IFormFile> files)
+        public async Task<IActionResult> SendMessage(int recipientId, string content, List<IFormFile> files, long? replyToMessageId = null)
         {
             try
             {
                 // Lấy userId
-                int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
+                int senderId = HttpContext.Session.GetInt32("UserId") ?? 0;
                 // Gọi service lưu tin nhắn với nhiều file, nhận về MessageViewModel
-                var msgVm = await _chatService.SendMessageAsync(userId, friendId, content, files);
+                var message = await _chatService.SendMessageAsync(senderId, recipientId, content, files, replyToMessageId);
 
                 // Gửi tin nhắn về phía sender để cập nhật UI
-                await _hubContext.Clients.User(userId.ToString()).SendAsync("ReceiveMessage", msgVm);
+                await _hubContext.Clients.User(senderId.ToString()).SendAsync("ReceiveMessage", message);
                 // Nếu không tự chat với chính mình, gửi cho bạn chat
-                if (userId != friendId)
-                    await _hubContext.Clients.User(friendId.ToString()).SendAsync("ReceiveMessage", msgVm);
+                if (senderId != recipientId)
+                    await _hubContext.Clients.User(recipientId.ToString()).SendAsync("ReceiveMessage", message);
                 // Trả về 200 OK
-                return Ok();
+                return Ok(new { success = true, message });
             }
             catch (Exception ex)
             {
@@ -139,33 +139,35 @@ namespace Zela.Controllers
             }
             
             // Map dữ liệu sang ViewModel
-            var friendViewModel = new FriendViewModel()
-            {
-                UserId = friend.UserId,
-                FullName = friend.FullName,
-                AvatarUrl = friend.AvatarUrl,
-                Email = friend.Email,
-                // Xác định online nếu hoạt động trong 5 phút qua
-                IsOnline = friend.LastLoginAt > DateTime.UtcNow.AddMinutes(-5),
-                // Placeholder, có thể lấy tin nhắn gần nhất
-                LastMessage = "", // Có thể lấy từ service
-                // Format giờ phút
-                LastTime = friend.LastLoginAt.ToString("HH:mm")
-            };
+            var friendViewModel = await _chatService.BuildFriendSidebarViewModelAsync(friendId, 12);
             
             // Trả về partial view sidebar
             return PartialView("_SidebarRight", friendViewModel);
         }
         
+        // Trả về HTML cho sidebar media (dùng service dựng view model)
+        [HttpGet]
+        public async Task<IActionResult> GetFriendSidebarMedia(int friendId)
+        {
+            // Gọi service để lấy view model media của bạn chat
+            var friendViewModel = await _chatService.BuildFriendSidebarMediaViewModelAsync(friendId, 100);
+            // Trả về partial view hiển thị media sidebar
+            return PartialView("_SidebarMedia", friendViewModel);
+        }
+        
         [HttpGet]
         public async Task<IActionResult> SearchMessages(int friendId, string keyword)
         {
+            // Lấy userId hiện tại từ session, kiểm tra điều kiện đầu vào
             {
                 int userId = HttpContext.Session.GetInt32("UserId") ?? 0;
                 if (userId == 0 || friendId == 0 || string.IsNullOrWhiteSpace(keyword))
+                    // Nếu thiếu thông tin, trả về danh sách rỗng
                     return Json(new List<MessageViewModel>());
 
+                // Gọi service tìm kiếm tin nhắn theo từ khóa giữa user và friendId
                 var messages = await _chatService.SearchMessagesAsync(userId, friendId, keyword);
+                // Trả về kết quả dạng JSON
                 return Json (messages);
             }
         }

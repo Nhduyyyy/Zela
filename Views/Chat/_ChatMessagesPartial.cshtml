@@ -4,9 +4,29 @@
     <div class="message @(msg.IsMine ? "right" : "left")" data-message-id="@msg.MessageId">
         @if (msg.IsMine)
         {
-            <!-- Người GỬI: thời gian -> media -> tin nhắn -> avatar -->
+            <!-- Người GỬI: thời gian -> reply -> media -> nút reply (trái) + bubble (phải) -->
             <div class="message-content">
                 <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
+                @if (msg.ReplyToMessageId != null)
+                {
+                    <div class="reply-preview-in-bubble">
+                        <span class="reply-preview-sender">@msg.ReplyToMessageSenderName</span>
+                        <span class="reply-preview-content">@msg.ReplyToMessageContent</span>
+                    </div>
+                }
+                <div style="display: flex; align-items: flex-start; gap: 6px;">
+                    <button class="btn-reply-message" data-message-id="@msg.MessageId" data-message-content="@msg.Content" data-message-sender="@msg.SenderName" title="Trả lời">
+                        <i class="bi bi-reply"></i>
+                    </button>
+                    @if (!string.IsNullOrEmpty(msg.StickerUrl))
+                    {
+                        <img src="@msg.StickerUrl" class="sticker-message" alt="Sticker"/>
+                    }
+                    else if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
+                    {
+                        <span class="message-bubble">@msg.Content</span>
+                    }
+                </div>
                 @if (msg.Media != null && msg.Media.Count > 0)
                 {
                     foreach (var media in msg.Media)
@@ -59,23 +79,35 @@
                         }
                     }
                 }
-                @if (!string.IsNullOrEmpty(msg.StickerUrl))
-                {
-                    <img src="@msg.StickerUrl" class="sticker-message" alt="Sticker"/>
-                }
-                else if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
-                {
-                    <span class="message-bubble">@msg.Content</span>
-                }
                 <span class="messsage-status">@msg.StatusText</span>
             </div>
         }
         else
         {
-            <!-- Người NHẬN: avatar -> media -> tin nhắn -> thời gian -->
+            <!-- Người NHẬN: avatar -> media -> bubble (trái) + nút reply (phải) -> thời gian -->
             <img src="@msg.AvatarUrl" class="message-avatar" />
             <div class="message-content">
                 <span class="message-time">@msg.SentAt.ToString("HH:mm")</span>
+                @if (msg.ReplyToMessageId != null)
+                {
+                    <div class="reply-preview-in-bubble">
+                        <span class="reply-preview-sender">@msg.ReplyToMessageSenderName</span>
+                        <span class="reply-preview-content">@msg.ReplyToMessageContent</span>
+                    </div>
+                }
+                <div style="display: flex; align-items: flex-start; gap: 6px;">
+                    @if (!string.IsNullOrEmpty(msg.StickerUrl))
+                    {
+                        <img src="@msg.StickerUrl" class="sticker-message" alt="Sticker" draggable="false" />
+                    }
+                    else if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
+                    {
+                        <span class="message-bubble">@msg.Content</span>
+                    }
+                    <button class="btn-reply-message" data-message-id="@msg.MessageId" data-message-content="@msg.Content" data-message-sender="@msg.SenderName" title="Trả lời">
+                        <i class="bi bi-reply"></i>
+                    </button>
+                </div>
                 @if (msg.Media != null && msg.Media.Count > 0)
                 {
                     foreach (var media in msg.Media)
@@ -127,14 +159,6 @@
                             </div>
                         }
                     }
-                }
-                @if (!string.IsNullOrEmpty(msg.StickerUrl))
-                {
-                    <img src="@msg.StickerUrl" class="sticker-message" alt="Sticker" draggable="false" />
-                }
-                else if (!string.IsNullOrWhiteSpace(msg.Content) && msg.Content != "[Đã gửi file]")
-                {
-                    <span class="message-bubble">@msg.Content</span>
                 }
             </div>
         }

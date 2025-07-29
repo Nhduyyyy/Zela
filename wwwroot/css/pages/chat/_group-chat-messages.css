@@ -20,6 +20,11 @@
     padding: 4px 8px;
     margin-bottom: 2px;
     border-radius: 6px 6px 0 0;
+    color: black;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    font-size: 13px;
 }
 
 .reply-preview-in-bubble .reply-preview-sender {

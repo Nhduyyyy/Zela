@@ -8,7 +8,7 @@ public interface IChatService
 {
     Task<List<FriendViewModel>> GetFriendListAsync(int userId);
     Task<List<MessageViewModel>> GetMessagesAsync(int userId, int friendId);
-    Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content, List<IFormFile>? files = null);
+    Task<MessageViewModel> SendMessageAsync(int senderId, int recipientId, string content, List<IFormFile>? files = null, long? replyToMessageId = null);
     Task<MessageViewModel> SaveMessageAsync(int senderId, int recipientId, string content);
     
     Task<User> FindUserByIdAsync(int userId);
@@ -33,6 +33,12 @@ public interface IChatService
     Task<bool> HasUserReactionAsync(long messageId, int userId, string reactionType);
 
     Task<GroupMessageViewModel> SendGroupStickerAsync(int senderId, int groupId, string stickerUrl);
+    
+    Task<FriendViewModel> BuildFriendSidebarViewModelAsync(int friendId, int mediaLimit);
+    
+    Task<FriendViewModel> BuildFriendSidebarMediaViewModelAsync(int friendId, int mediaLimit);
+
+    Task<(List<MediaViewModel> Images, List<MediaViewModel> Videos, List<MediaViewModel> Files)> GetFriendMediaAsync(int friendId, int limit = 20);
     
     // Group media methods
     Task<(List<MediaViewModel> Images, List<MediaViewModel> Videos, List<MediaViewModel> Files)> GetGroupMediaAsync(int groupId, int limit = 20);

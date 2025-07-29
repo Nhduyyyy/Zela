@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="~/css/components/sidebar-media.css"/>
     <link rel="stylesheet" href="~/css/video-call-popup.css"/>
     <link rel="stylesheet" href="~/css/pages/chat/_reactions.css"/>
+    <link rel="stylesheet" href="~/css/components/notification.css" asp-append-version="true" />
 
     @RenderSection("Styles", required: false)
 
@@ -131,18 +132,6 @@
                     </a>
                 </li>
                 <li>
-                    <a class="nav-link" asp-controller="AI" asp-action="Index">
-                        <i class="bi bi-stars"></i>
-                        <span class="nav-label">AI Assistant</span>
-                    </a>
-                </li>
-                <li>
-                    <a class="nav-link" asp-controller="Admin" asp-action="Index">
-                        <i class="bi bi-graph-up"></i>
-                        <span class="nav-label">Analytics</span>
-                    </a>
-                </li>
-                <li>
                     <a class="nav-link" asp-controller="Notification" asp-action="Index">
                         <i class="bi bi-bell"></i>
                         <span class="nav-label">Thông báo</span>
@@ -171,6 +160,7 @@
 <script src="~/js/profile-dialog.js"></script>
 <script src="~/js/message-reactions.js"></script>
 <script src="~/js/group-sidebar.js"></script>
+<script src="~/js/notification.js" asp-append-version="true"></script>
 
 @await RenderSectionAsync("Scripts", required: false)
 <script>

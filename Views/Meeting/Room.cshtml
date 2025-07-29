@@ -9,6 +9,8 @@ ViewData["Title"] = "Video Call Room";
 <link href="~/css/pages/room-videocall.css" rel="stylesheet" />
 <!-- Load CSS cho chat panel -->
 <link href="~/css/components/meeting-chat-panel.css" rel="stylesheet" />
+<!-- Load CSS cho whiteboard -->
+<link href="~/css/components/whiteboard.css" rel="stylesheet" />
 <style>
     /* Định dạng cho badge "Host" (người chủ phòng) */
     .host-badge {
@@ -119,7 +121,6 @@ ViewData["Title"] = "Video Call Room";
         <button id="toggle-subtitles" class="btn btn-secondary">📝 Phụ đề</button>
         <button id="toggle-quality" class="btn btn-info">⚙️ Chất lượng</button>
         <button id="toggle-recording" class="btn btn-success">🎥 Ghi hình</button>
-        <button id="toggle-whiteboard" class="btn btn-warning">🎨 Whiteboard</button>
         @if (ViewBag.IsHost == true)
         {
         <button id="toggle-stats" class="btn btn-info">📊 Xem thống kê</button>
@@ -356,8 +357,18 @@ ViewData["Title"] = "Video Call Room";
 <script src="~/js/chat-sidebar.js"></script>
 
 <!-- Whiteboard System -->
-<link href="~/css/components/whiteboard.css" rel="stylesheet" />
 <script src="~/js/whiteboard.js"></script>
+
+<script>
+    // Create whiteboard from meeting
+    $('#create-whiteboard').click(function() {
+        const title = prompt('Nhập tên bảng trắng:');
+        if (title) {
+            const roomId = @(ViewBag.RoomId ?? 0);
+            window.open(`/Whiteboard/Create?roomId=${roomId}`, '_blank');
+        }
+    });
+</script>
 
 <!-- Real-time Subtitle System -->
 <script src="~/js/subtitle-system.js"></script>

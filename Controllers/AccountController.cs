@@ -273,6 +273,27 @@ namespace Zela.Controllers
             // xem database đã có user với email này chưa.
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Email == email);
 
+            string finalFullName = !string.IsNullOrWhiteSpace(user?.FullName)
+                ? user.FullName
+                : (result.Principal.FindFirst(ClaimTypes.Name)?.Value ?? email ?? "");
+
+            string finalAvatarUrl = null;
+            if (user != null && !string.IsNullOrEmpty(user.AvatarUrl) && user.AvatarUrl.Contains("res.cloudinary.com"))
+            {
+                // Ưu tiên avatar Cloudinary nếu có
+                finalAvatarUrl = user.AvatarUrl;
+            }
+            else if (!string.IsNullOrEmpty(avatarUrl))
+            {
+                // Nếu Google trả về avatar, dùng nó
+                finalAvatarUrl = avatarUrl;
+            }
+            else
+            {
+                // Nếu không có gì, dùng default
+                finalAvatarUrl = "/images/default-avatar.jpeg";
+            }
+            
             if (user == null)
             {
                 // -------------------------------------------------------------------
@@ -282,8 +303,8 @@ namespace Zela.Controllers
                 user = new User
                 {
                     Email = email, // Lưu địa chỉ email do Google cung cấp
-                    FullName = fullName, // Lưu tên đầy đủ (hoặc email thay thế)
-                    AvatarUrl = avatarUrl, // Lưu link avatar (hoặc avatar mặc định)
+                    FullName = finalFullName, // Lưu tên đầy đủ (hoặc email thay thế)
+                    AvatarUrl = finalAvatarUrl, // Lưu link avatar (hoặc avatar mặc định)
                     CreatedAt = DateTime.Now, // Lưu thời điểm tạo (ngày giờ hiện tại)
                     LastLoginAt = DateTime.Now, // Lưu thời điểm lần đăng nhập cuối (chính là lúc này)
                     IsPremium = false // Mặc định user chưa nâng cấp tài khoản (ví dụ)
@@ -300,12 +321,12 @@ namespace Zela.Controllers
                 //         và có thể cập nhật avatar, tên nếu phía Google có thay đổi.
                 // -------------------------------------------------------------------
                 user.LastLoginAt = DateTime.Now;
-                // Cập nhật tên nếu Google có gửi fullName mới (không rỗng)
-                if (!string.IsNullOrEmpty(fullName))
-                    user.FullName = fullName;
-                // Cập nhật avatar nếu Google có gửi avatar mới (không rỗng)
-                if (!string.IsNullOrEmpty(avatarUrl))
-                    user.AvatarUrl = avatarUrl;
+                // Chỉ cập nhật tên nếu DB chưa có tên (null hoặc rỗng)
+                if (string.IsNullOrEmpty(user.FullName) && !string.IsNullOrEmpty(finalFullName))
+                    user.FullName = finalFullName;
+                // Chỉ cập nhật avatar nếu không phải Cloudinary (giữ avatar upload thủ công)
+                if (!(user.AvatarUrl != null && user.AvatarUrl.Contains("res.cloudinary.com")))
+                    user.AvatarUrl = finalAvatarUrl;
             }
 
             // -------------------------------------------------------------------
@@ -358,6 +379,7 @@ namespace Zela.Controllers
             HttpContext.Session.SetInt32("UserId", user.UserId);
             HttpContext.Session.SetString("FullName", user.FullName ?? "");
             HttpContext.Session.SetString("AvatarUrl", user.AvatarUrl ?? "");
+            HttpContext.Session.SetString("GoogleFullName", fullName ?? "");
             
             var claims = result.Principal.Claims.ToList();
             claims.Add(new Claim("UserId", user.UserId.ToString()));

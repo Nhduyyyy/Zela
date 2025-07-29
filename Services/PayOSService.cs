@@ -1,12 +1,14 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Net.payOS;
 using Net.payOS.Types;
 using Zela.DbContext;
 using Zela.Models;
 using Zela.Services.Interface;
+using Zela.ViewModels;
 
 namespace Zela.Services;
 
@@ -36,6 +38,71 @@ public class PayOSService : IPayOSService
             checksumKey: _payOSConfig.Checksum,
             partnerCode: _payOSConfig.PartnerCode
         );
+    }
+
+    public async Task<PayOSCreateOrderResult> CreatePaymentOrderAsync(int userId, string planId)
+    {
+        var plan = PaymentPlans.Get(planId);
+        if (plan == null)
+            return new PayOSCreateOrderResult { Success = false, ErrorMessage = "Gói không hợp lệ" };
+        var description = $"Thanh toán gói {plan.Name} - Zela Premium";
+        return await CreatePaymentOrderAsync(userId, plan.Name, plan.Price, description);
+    }
+
+    public async Task<IActionResult> HandleCallbackAsync(HttpRequest request)
+    {
+        try
+        {
+            using var reader = new StreamReader(request.Body);
+            var body = await reader.ReadToEndAsync();
+            _logger.LogInformation("PayOS callback received: {Body}", body);
+            var callbackData = JsonSerializer.Deserialize<PayOSCallbackData>(body);
+            if (callbackData == null)
+                return new BadRequestObjectResult("Invalid callback data");
+            var isValid = await VerifyCallbackAsync(
+                callbackData.OrderCode,
+                callbackData.TransactionId,
+                callbackData.Amount,
+                callbackData.Signature);
+            if (!isValid)
+                return new BadRequestObjectResult("Invalid signature");
+            var updateResult = await UpdatePaymentStatusAsync(
+                callbackData.OrderCode,
+                callbackData.TransactionId,
+                callbackData.Status);
+            if (callbackData.Status == PaymentStatus.Paid)
+            {
+                var planInfo = GetPlanInfoByOrderCode(callbackData.OrderCode);
+                var transaction = await GetPaymentTransactionByOrderCodeAsync(callbackData.OrderCode);
+                if (planInfo != null && transaction != null)
+                {
+                    await ActivatePremiumAsync(
+                        transaction.UserId,
+                        planInfo.Name,
+                        planInfo.Duration,
+                        callbackData.Amount,
+                        callbackData.OrderCode,
+                        callbackData.TransactionId);
+                }
+            }
+            return new OkObjectResult(new { success = true });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing PayOS callback");
+            return new StatusCodeResult(500);
+        }
+    }
+
+    public async Task<PaymentHistoryViewModel> GetPaymentHistoryViewModelAsync(int userId)
+    {
+        var transactions = await GetPaymentHistoryAsync(userId);
+        var currentSubscription = await GetCurrentSubscriptionAsync(userId);
+        return new PaymentHistoryViewModel
+        {
+            Transactions = transactions,
+            CurrentSubscription = currentSubscription
+        };
     }
 
     public async Task<PayOSCreateOrderResult> CreatePaymentOrderAsync(int userId, string planType, decimal amount, string description)
@@ -170,23 +237,24 @@ public class PayOSService : IPayOSService
     public async Task<Subscription?> GetCurrentSubscriptionAsync(int userId)
     {
         return await _context.Subscriptions
-            .Where(s => s.UserId == userId && s.Status == "Active" && s.EndDate > DateTime.Now)
+            .Where(s => s.UserId == userId && s.Status == SubscriptionStatus.Active && s.EndDate > DateTime.Now)
             .OrderByDescending(s => s.EndDate)
             .FirstOrDefaultAsync();
     }
 
     public async Task<bool> ActivatePremiumAsync(int userId, string planType, int durationDays, decimal amount, string payOSOrderCode, string payOSTransactionId)
     {
+        using var transaction = await _context.Database.BeginTransactionAsync();
         try
         {
             // Deactivate any existing active subscriptions
             var existingSubscriptions = await _context.Subscriptions
-                .Where(s => s.UserId == userId && s.Status == "Active")
+                .Where(s => s.UserId == userId && s.Status == SubscriptionStatus.Active)
                 .ToListAsync();
 
             foreach (var subscription in existingSubscriptions)
             {
-                subscription.Status = "Expired";
+                subscription.Status = SubscriptionStatus.Expired;
                 subscription.UpdatedAt = DateTime.Now;
             }
 
@@ -198,7 +266,7 @@ public class PayOSService : IPayOSService
                 StartDate = DateTime.Now,
                 EndDate = DateTime.Now.AddDays(durationDays),
                 Amount = amount,
-                Status = "Active",
+                Status = SubscriptionStatus.Active,
                 PayOSOrderCode = payOSOrderCode,
                 PayOSTransactionId = payOSTransactionId
             };
@@ -213,17 +281,32 @@ public class PayOSService : IPayOSService
             }
 
             await _context.SaveChangesAsync();
-            
+            await transaction.CommitAsync();
             _logger.LogInformation("Premium activated for user {UserId}, plan {PlanType}, duration {DurationDays} days", 
                 userId, planType, durationDays);
-            
             return true;
         }
         catch (Exception ex)
         {
+            await transaction.RollbackAsync();
             _logger.LogError(ex, "Error activating premium for user {UserId}", userId);
             return false;
         }
+    }
+
+    public async Task<bool> UpdateUserPremiumStatusAsync(int userId)
+    {
+        var user = await _context.Users.FindAsync(userId);
+        if (user == null) return false;
+
+        // Kiểm tra subscription active
+        var activeSubscription = await _context.Subscriptions
+            .Where(s => s.UserId == userId && s.Status == SubscriptionStatus.Active && s.EndDate > DateTime.Now)
+            .FirstOrDefaultAsync();
+
+        user.IsPremium = activeSubscription != null;
+        await _context.SaveChangesAsync();
+        return true;
     }
 
     #region Private Methods
@@ -264,13 +347,26 @@ public class PayOSService : IPayOSService
             PayOSTransactionId = transactionId,
             Amount = amount,
             Currency = "VND",
-            Status = "Pending",
+            Status = PaymentStatus.Pending,
             Description = description,
             PayOSResponse = JsonSerializer.Serialize(payOSResponse)
         };
 
         _context.PaymentTransactions.Add(transaction);
         await _context.SaveChangesAsync();
+    }
+
+    // Thêm hàm private cho GetPlanInfoByOrderCode nếu chưa có
+    private PremiumPlanInfo? GetPlanInfoByOrderCode(string orderCode)
+    {
+        var transaction = GetPaymentTransactionByOrderCodeAsync(orderCode).GetAwaiter().GetResult();
+        if (transaction != null)
+        {
+            var planVm = PaymentPlans.All.FirstOrDefault(p => p.Price == transaction.Amount);
+            if (planVm != null)
+                return new PremiumPlanInfo { Name = planVm.Name, Price = planVm.Price, Duration = planVm.Duration };
+        }
+        return null;
     }
 
     #endregion

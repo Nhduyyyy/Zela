@@ -1,665 +1,309 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Zela.Services.Interface;
-using Zela.Models;
+using Zela.ViewModels;
 using System.Security.Claims;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using Zela.DbContext;
 
-namespace Zela.Controllers
+namespace Zela.Controllers;
+
+[Authorize]
+public class WhiteboardController : Controller
 {
-    public class WhiteboardController : Controller
-    {
-        private readonly IWhiteboardService _whiteboardService;
-        private readonly ILogger<WhiteboardController> _logger;
-        private readonly ApplicationDbContext _db;
+    private readonly IWhiteboardService _whiteboardService;
 
-        public WhiteboardController(IWhiteboardService whiteboardService, ILogger<WhiteboardController> logger, ApplicationDbContext db)
+    public WhiteboardController(IWhiteboardService whiteboardService)
+    {
+        _whiteboardService = whiteboardService;
+    }
+
+    /// <summary>
+    /// Trang chính quản lý Whiteboard
+    /// </summary>
+    public async Task<IActionResult> Index(string searchTerm = "", string filterType = "all")
+    {
+        var userId = GetCurrentUserId();
+        var viewModel = await _whiteboardService.GetWhiteboardIndexAsync(userId, searchTerm, filterType);
+        return View(viewModel);
+    }
+
+    /// <summary>
+    /// Trang tạo Whiteboard mới
+    /// </summary>
+    public IActionResult Create(int? roomId = null)
+    {
+        var viewModel = new CreateWhiteboardViewModel
         {
-            _whiteboardService = whiteboardService;
-            _logger = logger;
-            _db = db;
+            RoomId = roomId
+        };
+        return View(viewModel);
+    }
+
+    /// <summary>
+    /// Xử lý tạo Whiteboard mới
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Create(CreateWhiteboardViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(model);
         }
 
-        // ======== PREMIUM CHECK HELPER ========
+        var userId = GetCurrentUserId();
+        var whiteboardId = await _whiteboardService.CreateWhiteboardAsync(model, userId);
+
+        TempData["SuccessMessage"] = "Tạo bảng trắng thành công!";
+        return RedirectToAction(nameof(Editor), new { id = whiteboardId });
+    }
+
+    /// <summary>
+    /// Trang chỉnh sửa Whiteboard
+    /// </summary>
+    public async Task<IActionResult> Editor(int id, int? sessionId = null)
+    {
+        var userId = GetCurrentUserId();
+        var whiteboard = await _whiteboardService.GetWhiteboardByIdAsync(id, userId);
+
+        if (whiteboard == null)
+        {
+            return NotFound();
+        }
+
+        if (!await _whiteboardService.CanUserAccessWhiteboardAsync(id, userId))
+        {
+            return Forbid();
+        }
+
+        var sessions = await _whiteboardService.GetSessionsByWhiteboardAsync(id);
+        var currentSession = sessionId.HasValue 
+            ? sessions.FirstOrDefault(s => s.SessionId == sessionId.Value)
+            : sessions.FirstOrDefault();
+
+        if (currentSession == null)
+        {
+            return NotFound("Session không tồn tại");
+        }
+
+        var viewModel = new WhiteboardEditorViewModel
+        {
+            // Whiteboard information
+            WhiteboardId = id,
+            WhiteboardTitle = whiteboard.Title,
+            WhiteboardDescription = whiteboard.Description,
+            IsPublic = whiteboard.IsPublic,
+            IsTemplate = whiteboard.IsTemplate,
+            
+            // Current session information
+            SessionId = currentSession.SessionId,
+            CanvasData = currentSession.CanvasData,
+            SessionCreatedAt = currentSession.CreatedAt,
+            SessionLastModifiedAt = currentSession.LastModifiedAt,
+            
+            // Session list for sidebar
+            Sessions = sessions,
+            SessionCount = sessions.Count,
+            
+            // User permissions
+            CanEdit = await _whiteboardService.CanUserEditWhiteboardAsync(id, userId),
+            IsOwner = whiteboard.IsOwner
+        };
+
+        return View(viewModel);
+    }
+
+    /// <summary>
+    /// Cập nhật thông tin Whiteboard
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Update(EditWhiteboardViewModel model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return RedirectToAction(nameof(Editor), new { id = model.WhiteboardId });
+        }
+
+        var userId = GetCurrentUserId();
+        var success = await _whiteboardService.UpdateWhiteboardAsync(model, userId);
+
+        if (success)
+        {
+            TempData["SuccessMessage"] = "Cập nhật thành công!";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Không thể cập nhật bảng trắng.";
+        }
+
+        return RedirectToAction(nameof(Editor), new { id = model.WhiteboardId });
+    }
+
+    /// <summary>
+    /// Xóa Whiteboard
+    /// </summary>
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(int id)
+    {
+        var userId = GetCurrentUserId();
+        var success = await _whiteboardService.DeleteWhiteboardAsync(id, userId);
+
+        if (success)
+        {
+            TempData["SuccessMessage"] = "Xóa bảng trắng thành công!";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Không thể xóa bảng trắng.";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    /// <summary>
+    /// Toggle trạng thái public
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> TogglePublic(int id)
+    {
+        var userId = GetCurrentUserId();
+        var success = await _whiteboardService.TogglePublicAsync(id, userId);
+
+        return Json(new { success });
+    }
+
+    /// <summary>
+    /// Toggle trạng thái template
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> ToggleTemplate(int id)
+    {
+        var userId = GetCurrentUserId();
+        var success = await _whiteboardService.ToggleTemplateAsync(id, userId);
+
+        return Json(new { success });
+    }
+
+    /// <summary>
+    /// Clone Whiteboard
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> Clone(int id, string title)
+    {
+        var userId = GetCurrentUserId();
+        var success = await _whiteboardService.CloneWhiteboardAsync(id, userId, title);
+
+        if (success)
+        {
+            TempData["SuccessMessage"] = "Sao chép bảng trắng thành công!";
+        }
+        else
+        {
+            TempData["ErrorMessage"] = "Không thể sao chép bảng trắng.";
+        }
+
+        return RedirectToAction(nameof(Index));
+    }
+
+    #region API Endpoints
+
+    /// <summary>
+    /// API: Lấy dữ liệu session
+    /// </summary>
+    [HttpGet]
+    public async Task<IActionResult> GetSession(int sessionId)
+    {
+        var session = await _whiteboardService.GetSessionByIdAsync(sessionId);
         
-        /// <summary>
-        /// Kiểm tra user có Premium không
-        /// </summary>
-        private async Task<bool> IsUserPremiumAsync(int userId)
+        if (session == null)
         {
-            var user = await _db.Users.FindAsync(userId);
-            return user?.IsPremium ?? false;
+            return NotFound();
         }
 
-        /// <summary>
-        /// Trả về response lỗi khi user không có Premium
-        /// </summary>
-        private IActionResult PremiumRequiredResponse()
+        return Json(new WhiteboardApiResponse
         {
-            return Json(new { 
-                success = false, 
-                error = "Premium required", 
-                message = "Tính năng này yêu cầu tài khoản Premium. Vui lòng nâng cấp để sử dụng.",
-                redirectUrl = "/Payment/Plans"
-            });
-        }
+            Success = true,
+            Data = session
+        });
+    }
 
-        // ======== MVC ACTIONS ========
+    /// <summary>
+    /// API: Cập nhật dữ liệu canvas
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> UpdateSessionData([FromBody] UpdateSessionDataRequest request)
+    {
+        var success = await _whiteboardService.UpdateSessionDataAsync(request.SessionId, request.CanvasData);
 
-        /// <summary>
-        /// Trang chính whiteboard - quản lý template và tạo whiteboard mới
-        /// </summary>
-        public async Task<IActionResult> Index()
+        return Json(new WhiteboardApiResponse
         {
-            var userId = GetCurrentUserId();
-            if (userId == 0) return RedirectToAction("Login", "Account");
+            Success = success,
+            Message = success ? "Cập nhật thành công" : "Không thể cập nhật"
+        });
+    }
 
-            // Kiểm tra Premium cho trang chính
-            var isPremium = await IsUserPremiumAsync(userId);
-            if (!isPremium)
+    /// <summary>
+    /// API: Lưu thumbnail
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> SaveThumbnail(int sessionId, [FromBody] string thumbnailData)
+    {
+        var success = await _whiteboardService.SaveSessionThumbnailAsync(sessionId, thumbnailData);
+
+        return Json(new WhiteboardApiResponse
+        {
+            Success = success,
+            Message = success ? "Lưu thumbnail thành công" : "Không thể lưu thumbnail"
+        });
+    }
+
+    /// <summary>
+    /// API: Tạo session mới
+    /// </summary>
+    [HttpPost]
+    public async Task<IActionResult> CreateSession(int whiteboardId, int? roomId = null)
+    {
+        var sessionId = await _whiteboardService.CreateSessionAsync(whiteboardId, roomId);
+
+        return Json(new WhiteboardApiResponse
+        {
+            Success = sessionId > 0,
+            Data = new { sessionId },
+            Message = sessionId > 0 ? "Tạo session thành công" : "Không thể tạo session"
+        });
+    }
+
+    #endregion
+
+    private int GetCurrentUserId()
+    {
+        try
+        {
+            var userIdClaim = User.FindFirst("UserId");
+            if (userIdClaim?.Value != null)
             {
-                TempData["PremiumMessage"] = "Whiteboard yêu cầu tài khoản Premium. Vui lòng nâng cấp để sử dụng.";
-                return RedirectToAction("Plans", "Payment");
+                if (int.TryParse(userIdClaim.Value, out int userId))
+                {
+                    return userId;
+                }
             }
-
-            var templates = await _whiteboardService.GetTemplatesAsync(userId);
-            ViewBag.Templates = templates;
-            ViewBag.UserId = userId;
-            ViewBag.IsPremium = isPremium;
             
-            return View();
-        }
-
-        /// <summary>
-        /// Trang editor whiteboard - vẽ và chỉnh sửa
-        /// </summary>
-        public async Task<IActionResult> Editor(string? sessionId = null, int? templateId = null)
-        {
-            var userId = GetCurrentUserId();
-            if (userId == 0) return RedirectToAction("Login", "Account");
-
-            // Kiểm tra Premium cho editor
-            var isPremium = await IsUserPremiumAsync(userId);
-            if (!isPremium)
+            // Fallback: try to get from NameIdentifier claim
+            var nameIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
+            if (nameIdClaim?.Value != null)
             {
-                TempData["PremiumMessage"] = "Whiteboard Editor yêu cầu tài khoản Premium. Vui lòng nâng cấp để sử dụng.";
-                return RedirectToAction("Plans", "Payment");
-            }
-
-            // Nếu có templateId, load template
-            if (templateId.HasValue)
-            {
-                var template = await _whiteboardService.GetTemplateByIdAsync(templateId.Value, userId);
-                if (template != null)
+                if (int.TryParse(nameIdClaim.Value, out int nameId))
                 {
-                    ViewBag.Template = template;
-                    ViewBag.TemplateId = templateId.Value;
+                    return nameId;
                 }
             }
-
-            // Nếu có sessionId, load session
-            if (!string.IsNullOrEmpty(sessionId) && Guid.TryParse(sessionId, out Guid sessionGuid))
-            {
-                ViewBag.SessionId = sessionId;
-            }
-
-            ViewBag.UserId = userId;
-            ViewBag.IsPremium = isPremium;
-            return View();
-        }
-
-        // ======== API ACTIONS (JSON responses) ========
-
-        /// <summary>
-        /// Tạo session whiteboard mới
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> CreateSession([FromBody] CreateSessionRequest request)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                // Kiểm tra Premium
-                var isPremium = await IsUserPremiumAsync(userId);
-                if (!isPremium)
-                {
-                    return PremiumRequiredResponse();
-                }
-
-                var sessionId = await _whiteboardService.CreateWhiteboardSessionAsync(request.RoomId);
-                
-                // Nếu có template name, tạo template ngay
-                if (!string.IsNullOrEmpty(request.TemplateName))
-                {
-                    await _whiteboardService.SaveAsTemplateAsync(
-                        sessionId, 
-                        request.TemplateName, 
-                        userId, 
-                        request.Description, 
-                        request.IsPublic);
-                }
-                
-                return Json(new { 
-                    success = true, 
-                    sessionId = sessionId,
-                    message = "Whiteboard session created successfully" 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating whiteboard session for room {RoomId}", request.RoomId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Tạo session whiteboard độc lập (không cần video room)
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> CreateStandaloneSession()
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                // Kiểm tra Premium
-                var isPremium = await IsUserPremiumAsync(userId);
-                if (!isPremium)
-                {
-                    return PremiumRequiredResponse();
-                }
-
-                var sessionId = await _whiteboardService.CreateStandaloneSessionAsync(userId);
-                
-                return Json(new { 
-                    success = true, 
-                    sessionId = sessionId,
-                    message = "Standalone whiteboard session created successfully" 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating standalone whiteboard session");
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Lưu session hiện tại
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> SaveSession(Guid sessionId, [FromBody] SaveSessionRequest request)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                // Kiểm tra Premium
-                var isPremium = await IsUserPremiumAsync(userId);
-                if (!isPremium)
-                {
-                    return PremiumRequiredResponse();
-                }
-
-                var success = await _whiteboardService.SaveSessionAsync(sessionId, userId, request.SessionName);
-                
-                return Json(new { 
-                    success = success, 
-                    message = success ? "Session saved successfully" : "Failed to save session" 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving session {SessionId}", sessionId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Lấy danh sách sessions của user
-        /// </summary>
-        [HttpGet]
-        public async Task<IActionResult> GetUserSessions()
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                // Kiểm tra Premium
-                var isPremium = await IsUserPremiumAsync(userId);
-                if (!isPremium)
-                {
-                    return PremiumRequiredResponse();
-                }
-
-                var sessions = await _whiteboardService.GetUserSessionsAsync(userId);
-                
-                return Json(new { 
-                    success = true, 
-                    sessions = sessions.Select(s => new
-                    {
-                        sessionId = s.WbSessionId,
-                        sessionName = s.SessionName ?? $"Session {s.WbSessionId.ToString().Substring(0, 8)}",
-                        createdAt = s.CreatedAt,
-                        updatedAt = s.UpdatedAt,
-                        actionCount = s.DrawActions?.Count ?? 0,
-                        isActive = s.CreatedAt > DateTime.UtcNow.AddHours(-24)
-                    })
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting user sessions");
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        /// <summary>
-        /// Load template vào session hiện tại
-        /// </summary>
-        [HttpPost]
-        public async Task<IActionResult> LoadTemplateToSession([FromBody] LoadTemplateToSessionRequest request)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                // Kiểm tra Premium
-                var isPremium = await IsUserPremiumAsync(userId);
-                if (!isPremium)
-                {
-                    return PremiumRequiredResponse();
-                }
-
-                if (!Guid.TryParse(request.SessionId, out Guid sessionGuid))
-                    return Json(new { success = false, error = "Invalid session ID" });
-
-                var success = await _whiteboardService.LoadTemplateAsync(sessionGuid, request.TemplateId, userId);
-
-                return Json(new { 
-                    success = success, 
-                    message = success ? "Template loaded successfully" : "Failed to load template" 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error loading template {TemplateId} to session {SessionId}", request.TemplateId, request.SessionId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetActiveSession(int roomId)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                // Kiểm tra Premium
-                var isPremium = await IsUserPremiumAsync(userId);
-                if (!isPremium)
-                {
-                    return PremiumRequiredResponse();
-                }
-
-                var session = await _whiteboardService.GetActiveSessionAsync(roomId);
-                
-                return Json(new { 
-                    success = true, 
-                    session = session != null ? new
-                    {
-                        sessionId = session.WbSessionId,
-                        roomId = session.RoomId,
-                        createdAt = session.CreatedAt,
-                        actionCount = session.DrawActions?.Count ?? 0
-                    } : null
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting active session for room {RoomId}", roomId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> EndSession(Guid sessionId)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                // Kiểm tra Premium
-                var isPremium = await IsUserPremiumAsync(userId);
-                if (!isPremium)
-                {
-                    return PremiumRequiredResponse();
-                }
-
-                var success = await _whiteboardService.EndSessionAsync(sessionId);
-                
-                return Json(new { 
-                    success = success, 
-                    message = success ? "Session ended successfully" : "Failed to end session" 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error ending whiteboard session {SessionId}", sessionId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> AddDrawAction(Guid sessionId, [FromBody] DrawActionRequest request)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                // Kiểm tra Premium
-                var isPremium = await IsUserPremiumAsync(userId);
-                if (!isPremium)
-                {
-                    return PremiumRequiredResponse();
-                }
-
-                var action = await _whiteboardService.AddDrawActionAsync(
-                    sessionId, userId, request.ActionType, request.Payload);
-
-                return Json(new { 
-                    success = true, 
-                    actionId = action.ActionId,
-                    message = "Draw action added successfully" 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error adding draw action for session {SessionId}", sessionId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetDrawActions(Guid sessionId, DateTime? since)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                var actions = await _whiteboardService.GetDrawActionsAsync(sessionId, since);
-                
-                return Json(new { 
-                    success = true, 
-                    actions = actions.Select(a => new
-                    {
-                        actionId = a.ActionId,
-                        actionType = a.ActionType,
-                        payload = a.Payload,
-                        timestamp = a.Timestamp,
-                        userId = a.UserId,
-                        userName = a.User?.FullName
-                    })
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting draw actions for session {SessionId}", sessionId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> ClearWhiteboard(Guid sessionId)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                var success = await _whiteboardService.ClearWhiteboardAsync(sessionId, userId);
-                
-                return Json(new { 
-                    success = success, 
-                    message = success ? "Whiteboard cleared successfully" : "Failed to clear whiteboard" 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error clearing whiteboard for session {SessionId}", sessionId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpPost]
-        public async Task<IActionResult> SaveTemplate(Guid sessionId, [FromBody] SaveTemplateRequest request)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                var templateData = await _whiteboardService.SaveAsTemplateAsync(
-                    sessionId, request.TemplateName, userId, request.Description, request.IsPublic);
-
-                return Json(new { 
-                    success = true, 
-                    templateData = templateData,
-                    message = "Template saved successfully" 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error saving template for session {SessionId}", sessionId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetTemplates()
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                var templates = await _whiteboardService.GetTemplatesAsync(userId);
-                
-                return Json(new { 
-                    success = true, 
-                    templates = templates.Select(t => new
-                    {
-                        id = t.Id,
-                        name = t.Name,
-                        description = t.Description,
-                        thumbnail = t.Thumbnail,
-                        createdAt = t.CreatedAt,
-                        createdByUserId = t.CreatedByUserId,
-                        createdByUserName = t.CreatedByUser?.FullName,
-                        isPublic = t.IsPublic
-                    })
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting templates for user {UserId}", GetCurrentUserId());
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetTemplate(int id)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                var template = await _whiteboardService.GetTemplateByIdAsync(id, userId);
-                if (template == null)
-                    return Json(new { success = false, error = "Template not found or access denied" });
-
-                return Json(new { 
-                    success = true, 
-                    template = new
-                    {
-                        id = template.Id,
-                        name = template.Name,
-                        description = template.Description,
-                        thumbnail = template.Thumbnail,
-                        createdAt = template.CreatedAt,
-                        createdByUserId = template.CreatedByUserId,
-                        createdByUserName = template.CreatedByUser?.FullName,
-                        isPublic = template.IsPublic,
-                        data = template.Data
-                    }
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting template {TemplateId} for user {UserId}", id, GetCurrentUserId());
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpDelete]
-        public async Task<IActionResult> DeleteTemplate(int templateId)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                var success = await _whiteboardService.DeleteTemplateAsync(templateId, userId);
-                
-                return Json(new { 
-                    success = success, 
-                    message = success ? "Template deleted successfully" : "Failed to delete template" 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error deleting template {TemplateId} for user {UserId}", templateId, GetCurrentUserId());
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> ExportImage(Guid sessionId, string format = "png")
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                var imageData = await _whiteboardService.ExportAsImageAsync(sessionId, format);
-                
-                return File(imageData, $"image/{format}", $"whiteboard-{sessionId}.{format}");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error exporting whiteboard session {SessionId} as image", sessionId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> ExportPDF(Guid sessionId)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                var pdfData = await _whiteboardService.ExportAsPDFAsync(sessionId);
-                
-                return File(pdfData, "application/pdf", $"whiteboard-{sessionId}.pdf");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error exporting whiteboard session {SessionId} as PDF", sessionId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        [HttpGet]
-        public async Task<IActionResult> GetSessionStats(Guid sessionId)
-        {
-            try
-            {
-                var userId = GetCurrentUserId();
-                if (userId == 0) return Json(new { success = false, error = "Unauthorized" });
-
-                var stats = await _whiteboardService.GetSessionStatsAsync(sessionId);
-                
-                return Json(new { 
-                    success = true, 
-                    stats = stats 
-                });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting stats for whiteboard session {SessionId}", sessionId);
-                return Json(new { success = false, error = ex.Message });
-            }
-        }
-
-        // ======== HELPER METHODS ========
-
-        private int GetCurrentUserId()
-        {
-            // Try to get from claims first (for API calls)
-            var userIdClaim = User.FindFirst("UserId")?.Value;
-            if (int.TryParse(userIdClaim, out int userId))
-                return userId;
             
-            // Fallback to session (for MVC actions)
-            return HttpContext.Session.GetInt32("UserId") ?? 0;
+            return 0;
         }
-    }
-
-    // ======== REQUEST MODELS ========
-
-    public class CreateSessionRequest
-    {
-        public int RoomId { get; set; }
-        public string? TemplateName { get; set; }
-        public string? Description { get; set; }
-        public bool IsPublic { get; set; } = false;
-    }
-
-    public class DrawActionRequest
-    {
-        public string ActionType { get; set; } = string.Empty;
-        public string Payload { get; set; } = string.Empty;
-    }
-
-    public class SaveTemplateRequest
-    {
-        public string TemplateName { get; set; } = string.Empty;
-        public string? Description { get; set; }
-        public bool IsPublic { get; set; } = false;
-    }
-
-    public class SaveSessionRequest
-    {
-        public string? SessionName { get; set; }
-    }
-
-    public class LoadTemplateToSessionRequest
-    {
-        public string SessionId { get; set; } = string.Empty;
-        public int TemplateId { get; set; }
+        catch (Exception)
+        {
+            return 0;
+        }
     }
 } 

@@ -45,4 +45,11 @@ public class Subscription
     
     // Navigation property
     public User User { get; set; }
+}
+
+public static class SubscriptionStatus
+{
+    public const string Active = "Active";
+    public const string Expired = "Expired";
+    public const string Cancelled = "Cancelled";
 } 

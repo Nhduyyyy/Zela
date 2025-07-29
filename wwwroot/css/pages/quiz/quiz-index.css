@@ -25,6 +25,14 @@
     box-shadow: 0 4px 20px var(--quiz-shadow-primary);
 }
 
+.form-check-label{
+    color: white !important;
+}
+
+.form-label{
+    color: white !important;
+}
+
 .quiz-header-left {
     display: flex;
     align-items: center;

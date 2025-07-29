@@ -1,5 +1,6 @@
 using Zela.Models;
 using Zela.ViewModels;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Zela.Services.Interface;
 
@@ -16,7 +17,7 @@ public interface IPayOSService
     /// <param name="amount">Payment amount in VND</param>
     /// <param name="description">Payment description</param>
     /// <returns>Payment order creation result</returns>
-    Task<PayOSCreateOrderResult> CreatePaymentOrderAsync(int userId, string planType, decimal amount, string description);
+    Task<PayOSCreateOrderResult> CreatePaymentOrderAsync(int userId, string planId);
     
     /// <summary>
     /// Verifies PayOS callback signature
@@ -64,11 +65,21 @@ public interface IPayOSService
     Task<bool> ActivatePremiumAsync(int userId, string planType, int durationDays, decimal amount, string payOSOrderCode, string payOSTransactionId);
 
     /// <summary>
+    /// Updates user premium status
+    /// </summary>
+    /// <param name="userId">User ID</param>
+    /// <returns>True if update successful</returns>
+    Task<bool> UpdateUserPremiumStatusAsync(int userId);
+
+    /// <summary>
     /// Gets a payment transaction by order code
     /// </summary>
     /// <param name="orderCode">Order code</param>
     /// <returns>PaymentTransaction or null</returns>
     Task<PaymentTransaction?> GetPaymentTransactionByOrderCodeAsync(string orderCode);
+
+    Task<IActionResult> HandleCallbackAsync(HttpRequest request);
+    Task<PaymentHistoryViewModel> GetPaymentHistoryViewModelAsync(int userId);
 }
 
 /// <summary>

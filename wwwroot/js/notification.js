@@ -1,15 +1,27 @@
 document.addEventListener('DOMContentLoaded', function () {
+    // ========================
+    // Tham chiếu các phần tử DOM
+    // ========================
     const bell = document.getElementById('notification-bell');
     const dropdown = document.getElementById('notification-dropdown');
     const list = document.getElementById('notification-list');
     const countBadge = document.getElementById('notification-count');
     const markAllReadBtn = document.getElementById('mark-all-as-read');
 
-    // --- State ---
+    // Kiểm tra xem có phải trang có notification không
+    if (!bell || !dropdown || !list || !countBadge || !markAllReadBtn) {
+        return; // Thoát nếu không phải trang notification
+    }
+
+    // ========================
+    // State lưu trữ thông báo và trạng thái dropdown
+    // ========================
     let notifications = [];
     let isDropdownOpen = false;
 
-    // --- API Calls ---
+    // ========================
+    // Các hàm gọi API lấy/thay đổi trạng thái thông báo
+    // ========================
     const api = {
         async getNotifications() {
             try {
@@ -29,7 +41,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     };
 
-    // --- Rendering ---
+    // ========================
+    // Hàm render danh sách thông báo ra dropdown
+    // ========================
     function renderNotifications() {
         if (notifications.length === 0) {
             list.innerHTML = '<div style="text-align:center; padding: 20px;">Không có thông báo mới.</div>';
@@ -56,7 +70,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // --- Event Handlers ---
+    // ========================
+    // Event: Click vào chuông để mở/đóng dropdown và load thông báo
+    // ========================
     bell.addEventListener('click', async (e) => {
         e.stopPropagation();
         isDropdownOpen = !isDropdownOpen;
@@ -69,6 +85,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // ========================
+    // Event: Click ra ngoài để đóng dropdown
+    // ========================
     document.addEventListener('click', (e) => {
         if (!dropdown.contains(e.target)) {
             isDropdownOpen = false;
@@ -76,6 +95,9 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // ========================
+    // Event: Click vào 1 thông báo để đánh dấu đã đọc và chuyển trang (nếu có url)
+    // ========================
     list.addEventListener('click', async (e) => {
         const item = e.target.closest('.notification-item');
         if (item) {
@@ -88,13 +110,18 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     });
 
+    // ========================
+    // Event: Click "Đánh dấu tất cả đã đọc"
+    // ========================
     markAllReadBtn.addEventListener('click', async () => {
         await api.markAllAsRead();
         notifications.forEach(n => n.isRead = true);
         renderNotifications();
     });
 
-    // --- Utility ---
+    // ========================
+    // Utility: Định dạng thời gian kiểu "x phút trước"
+    // ========================
     function formatTimeAgo(dateString) {
         const date = new Date(dateString);
         const now = new Date();
@@ -112,7 +139,9 @@ document.addEventListener('DOMContentLoaded', function () {
         return "Vài giây trước";
     }
 
-    // --- SignalR (Optional) ---
+    // ========================
+    // (Optional) Kết nối SignalR để nhận thông báo realtime
+    // ========================
     // const connection = new signalR.HubConnectionBuilder().withUrl("/notificationHub").build();
     // connection.on("ReceiveNotification", (notification) => {
     //     notifications.unshift(notification);

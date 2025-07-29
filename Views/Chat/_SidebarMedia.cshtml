@@ -1,0 +1,135 @@
+@model Zela.ViewModels.FriendViewModel
+<div class="chat-info-panel sidebar-media" data-friend-id="@Model.UserId" style="display: none;">
+    <div class="info-header">
+        <div class="d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center">
+                <i class="bi bi-images me-2" aria-hidden="true" style="color: var(--theme-accent-green); font-size: 1.5rem;"></i>
+                <h4 class="mb-0">Media</h4>
+            </div>
+            <button type="button" class="sidebar-media-close" aria-label="Đóng">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        </div>
+        <div class="mt-2">
+            <small class="text-muted">
+                <i class="bi bi-info-circle me-1"></i>
+                Tổng cộng @(Model.Images.Count + Model.Videos.Count + Model.Files.Count) items
+            </small>
+        </div>
+    </div>
+
+    <div class="media-filter">
+        <div class="btn-group w-100" role="group">
+            <input type="radio" class="btn-check" name="mediaFilter" id="filterAll" value="all" checked>
+            <label class="btn" for="filterAll">
+                <i class="bi bi-collection me-1"></i>Tất cả
+            </label>
+            
+            <input type="radio" class="btn-check" name="mediaFilter" id="filterImages" value="images">
+            <label class="btn" for="filterImages">
+                <i class="bi bi-image me-1"></i>Ảnh
+            </label>
+            
+            <input type="radio" class="btn-check" name="mediaFilter" id="filterVideos" value="videos">
+            <label class="btn" for="filterVideos">
+                <i class="bi bi-play-circle me-1"></i>Video
+            </label>
+
+            <input type="radio" class="btn-check" name="mediaFilter" id="filterFiles" value="files">
+            <label class="btn" for="filterFiles">
+                <i class="bi bi-file-earmark me-1"></i>Files
+            </label>
+        </div>
+    </div>
+
+    <div class="media-content">
+        @if (Model.Images.Count > 0 || Model.Videos.Count > 0 || Model.Files.Count > 0)
+        {
+            <div class="media-grid-full" id="mediaGridFull">
+                @foreach (var image in Model.Images)
+                {
+                    <div class="media-item" data-type="image">
+                        <img src="@image.Url" alt="Ảnh chia sẻ trong cuộc hội thoại" 
+                             class="media-thumbnail" 
+                             data-url="@image.Url"
+                             data-type="image">
+                        <div class="media-overlay">
+                            <i class="bi bi-image"></i>
+                        </div>
+                    </div>
+                }
+                
+                @foreach (var video in Model.Videos)
+                {
+                    <div class="media-item" data-type="video">
+                        <video src="@video.Url" 
+                               class="media-thumbnail" 
+                               data-url="@video.Url"
+                               data-type="video"
+                               muted>
+                            <source src="@video.Url" type="@video.MediaType">
+                        </video>
+                        <div class="media-overlay">
+                            <i class="bi bi-play-circle"></i>
+                        </div>
+                    </div>
+                }
+
+                @foreach (var file in Model.Files)
+                {
+                    <div class="media-item" data-type="file">
+                        <div class="file-thumbnail" 
+                             data-url="@file.Url"
+                             data-type="file"
+                             data-filename="@(file.FileName ?? System.IO.Path.GetFileName(file.Url))">
+                            @{
+                                var fileExtension = System.IO.Path.GetExtension(file.FileName ?? file.Url)?.ToLower();
+                                var iconClass = fileExtension switch
+                                {
+                                    ".doc" or ".docx" => "bi-file-earmark-word-fill",
+                                    ".xls" or ".xlsx" => "bi-file-earmark-excel-fill text-success",
+                                    ".ppt" or ".pptx" => "bi-file-earmark-ppt-fill text-warning",
+                                    ".pdf" => "bi-file-earmark-pdf-fill text-danger",
+                                    ".txt" => "bi-file-earmark-text-fill",
+                                    _ => "bi-file-earmark-fill"
+                                };
+                            }
+                            <i class="bi @iconClass file-icon"></i>
+                            <div class="file-name">@(file.FileName ?? System.IO.Path.GetFileName(file.Url))</div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="text-center text-muted py-5">
+                <div class="empty-state">
+                    <i class="bi bi-images" style="font-size: 4rem; color: var(--theme-text-muted); margin-bottom: 1rem;"></i>
+                    <h5 class="mb-2">Chưa có media nào</h5>
+                    <p class="mb-0">Chưa có ảnh, video hoặc file nào được chia sẻ trong cuộc hội thoại này.</p>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<!-- Modal để xem media full size -->
+<div class="modal fade" id="mediaModal" tabindex="-1" aria-labelledby="mediaModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="mediaModalLabel">
+                    <i class="bi bi-eye me-2"></i>Xem media
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="modalImage" src="" alt="" style="max-width: 100%; max-height: 70vh; display: none;">
+                <video id="modalVideo" controls style="max-width: 100%; max-height: 70vh; display: none;">
+                    <source src="" type="">
+                </video>
+            </div>
+        </div>
+    </div>
+</div> 

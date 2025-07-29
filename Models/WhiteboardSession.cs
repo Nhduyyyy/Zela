@@ -4,28 +4,31 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Zela.Models;
 
 /// <summary>
-/// Phiên whiteboard hợp tác.
+/// Phiên làm việc trên bảng trắng - lưu trữ dữ liệu vẽ và thao tác
 /// </summary>
 public class WhiteboardSession
 {
     [Key]
-    public Guid WbSessionId { get; set; }          // PK: UNIQUEIDENTIFIER
+    public int SessionId { get; set; }
 
-    public int? RoomId { get; set; }               // FK -> VideoRoom (nullable for standalone sessions)
-    public int? CreatedByUserId { get; set; }      // FK -> User (who created the session)
-    public string? SessionName { get; set; }       // Optional session name
-    public DateTime CreatedAt { get; set; }        // DATETIME
-    public DateTime? UpdatedAt { get; set; }       // Last save time
-    public int? LastSavedBy { get; set; }          // FK -> User (who last saved)
+    public int WhiteboardId { get; set; }
+    public int? RoomId { get; set; } // Nếu được tạo từ video room
+    public DateTime CreatedAt { get; set; }
+    public DateTime? LastModifiedAt { get; set; }
+    public bool IsActive { get; set; } = true;
+
+    // Dữ liệu canvas (JSON format)
+    [Column(TypeName = "nvarchar(max)")]
+    public string CanvasData { get; set; } // Lưu trữ tất cả các đối tượng vẽ
+
+    // Thumbnail preview
+    [MaxLength(500)]
+    public string ThumbnailUrl { get; set; } = string.Empty;
+
+    // Navigation properties
+    [ForeignKey(nameof(WhiteboardId))]
+    public virtual Whiteboard Whiteboard { get; set; }
 
     [ForeignKey(nameof(RoomId))]
-    public VideoRoom? VideoRoom { get; set; }
-    
-    [ForeignKey(nameof(CreatedByUserId))]
-    public User? CreatedByUser { get; set; }
-    
-    [ForeignKey(nameof(LastSavedBy))]
-    public User? LastSavedByUser { get; set; }
-    
-    public ICollection<DrawAction> DrawActions { get; set; }
-}
+    public virtual VideoRoom Room { get; set; }
+} 
