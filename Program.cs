@@ -95,12 +95,9 @@ builder.Services.AddAuthentication(options =>
         options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP
         options.Cookie.HttpOnly = true;
         options.Cookie.Name = ".AspNetCore.Cookies";
-        // Quan trọng: Đảm bảo cookie được lưu giữa các request
-        options.Events.OnRedirectToLogin = context =>
-        {
-            context.Response.StatusCode = 401;
-            return Task.CompletedTask;
-        };
+        // Đảm bảo cookie được lưu giữa các request
+        options.ExpireTimeSpan = TimeSpan.FromDays(30);
+        options.SlidingExpiration = true;
     })
     // 4.4) Thêm Google OAuth Authentication
     //    - Thiết lập ClientId và ClientSecret lấy từ cấu hình (appsettings.json hoặc environment).
@@ -129,6 +126,8 @@ builder.Services.AddAuthentication(options =>
         options.CorrelationCookie.SameSite = SameSiteMode.Lax;
         options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP
         options.CorrelationCookie.HttpOnly = true;
+        // Tăng thời gian sống của correlation cookie
+        options.CorrelationCookie.Expiration = TimeSpan.FromMinutes(15);
     })
     // 4.5) Thêm Facebook OAuth Authentication
     .AddFacebook(options =>
