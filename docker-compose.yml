@@ -32,9 +32,9 @@ services:
       - PayOS__ClientId=f53a4fe9-338b-4040-b228-9329d85fee29
       - PayOS__ApiKey=22d0e505-cdb0-4233-b190-9dc5f68a5db8
       - PayOS__Checksum=b6911d00cd425ed894e78bd680cae70f9dfa14734cdf1bb77f44f9a835d0f744
-      - AppSettings__BaseUrl=http://34.124.228.222
+      - AppSettings__BaseUrl=http://zelahahaha.site
       - Authentication__Google__ClientId=869228240475-lvt9jbd8fkrhjdt6tp6ktq305g218urv.apps.googleusercontent.com
-      - Authentication__Google__ClientSecret=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
+      - Authentication__Google__ClientSecret=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
       - Authentication__Facebook__AppId=1647959242568460
       - Authentication__Facebook__AppSecret=a92cf82c6cc834ddda945f412d426da5
       - Cloudinary__CloudName=da7a0c23y
