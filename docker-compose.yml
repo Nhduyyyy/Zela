@@ -44,6 +44,7 @@ services:
     volumes:
       - ./wwwroot/uploads:/app/wwwroot/uploads
       - ./wwwroot/sticker:/app/wwwroot/sticker
+      - dataprotection_keys:/root/.aspnet/DataProtection-Keys
     depends_on:
       - sqlserver
     networks:
@@ -52,6 +53,8 @@ services:
 
 volumes:
   sqlserver_data:
+    driver: local
+  dataprotection_keys:
     driver: local
 
 networks:
