@@ -146,8 +146,11 @@ builder.Services.AddAuthentication(options =>
         options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP - QUAN TRỌNG!
         options.CorrelationCookie.HttpOnly = true;
         options.CorrelationCookie.IsEssential = true; // Đảm bảo cookie luôn được gửi
+        options.CorrelationCookie.Name = ".AspNetCore.Correlation.Google"; // Tên cookie rõ ràng
         // Tăng thời gian sống của correlation cookie
         options.CorrelationCookie.Expiration = TimeSpan.FromMinutes(15);
+        // Đảm bảo correlation cookie được lưu
+        options.SaveTokens = true; // Lưu tokens để debug
     })
     // 4.5) Thêm Facebook OAuth Authentication
     .AddFacebook(options =>
