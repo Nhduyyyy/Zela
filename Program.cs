@@ -16,6 +16,7 @@ using Zela.Services; // Namespace chứa ApplicationDbContext của bạn
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Server.IIS;
 using Zela.Services.Interface;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -28,6 +29,21 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddHttpContextAccessor();
 
 // ---------------------------------------------
+// 1.5) Cấu hình DataProtection để persist keys (quan trọng cho OAuth)
+//    - DataProtection keys dùng để mã hóa cookies và session
+//    - Nếu không persist, mỗi lần restart container sẽ tạo keys mới
+//    - Dẫn đến lỗi "Correlation failed" khi đăng nhập OAuth
+// ---------------------------------------------
+var keysDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".aspnet", "DataProtection-Keys");
+if (!Directory.Exists(keysDirectory))
+{
+    Directory.CreateDirectory(keysDirectory);
+}
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(keysDirectory))
+    .SetApplicationName("Zela");
+
+// ---------------------------------------------
 // 2) Đăng ký MVC (Controllers + Views)
 //    - Cho phép ứng dụng sử dụng pattern MVC, dùng Controllers và Views để render HTML.
 // ---------------------------------------------
@@ -38,7 +54,13 @@ builder.Services.AddControllersWithViews();
 //    - Cho phép sử dụng HttpContext.Session để lưu trữ dữ liệu tạm thời (key-value).
 //    - Phải gọi app.UseSession() trong pipeline để kích hoạt middleware.
 // ---------------------------------------------
-builder.Services.AddSession();
+builder.Services.AddSession(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Cho phép HTTP
+    options.Cookie.HttpOnly = true;
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+});
 
 // ---------------------------------------------
 // 4) Cấu hình Authentication: Cookie + Google OAuth
@@ -65,7 +87,13 @@ builder.Services.AddAuthentication(options =>
     // 4.3) Thêm Cookie Authentication
     //    - Khi đã thiết lập DefaultScheme = "Cookies", ta cần gọi AddCookie()
     //      để ASP.NET Core biết cách tạo và quản lý cookie cho user.
-    .AddCookie()
+    .AddCookie(options =>
+    {
+        // Cấu hình cookie để hoạt động với HTTP (không phải HTTPS)
+        options.Cookie.SameSite = SameSiteMode.Lax;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Cho phép HTTP
+        options.Cookie.HttpOnly = true;
+    })
     // 4.4) Thêm Google OAuth Authentication
     //    - Thiết lập ClientId và ClientSecret lấy từ cấu hình (appsettings.json hoặc environment).
     .AddGoogle(options =>
@@ -218,7 +246,8 @@ else
 }
 
 // 7.2) Tự động redirect HTTP sang HTTPS
-app.UseHttpsRedirection();
+// Tạm thời comment vì đang dùng HTTP, không phải HTTPS
+// app.UseHttpsRedirection();
 
 // 7.3) Phục vụ file tĩnh từ wwwroot (CSS, JS, hình ảnh,…)
 app.UseStaticFiles();
