@@ -331,12 +331,16 @@ namespace Zela.Controllers
         {
             try
             {
-                // Try both claim and session approaches
+                // Try both claim and session approaches to get userId (consistent with Recordings action)
                 var currentUserId = int.Parse(User.FindFirst("UserId")?.Value ?? "0");
                 if (currentUserId == 0)
                 {
                     currentUserId = HttpContext.Session.GetInt32("UserId") ?? 0;
                 }
+
+                Console.WriteLine($"[GetRecordingHistory] Requested userId: {userId}, Current userId: {currentUserId}");
+                Console.WriteLine($"[GetRecordingHistory] User.FindFirst('UserId'): {User.FindFirst("UserId")?.Value}");
+                Console.WriteLine($"[GetRecordingHistory] Session UserId: {HttpContext.Session.GetInt32("UserId")}");
 
                 if (currentUserId == 0)
                     return Unauthorized();

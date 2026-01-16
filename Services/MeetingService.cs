@@ -143,7 +143,6 @@ namespace Zela.Services
 
             if (room == null) return;
 
-            // Find active session
             var session = await _db.CallSessions
                 .FirstOrDefaultAsync(cs => cs.RoomId == room.RoomId && cs.EndedAt == null);
 
@@ -151,7 +150,6 @@ namespace Zela.Services
             {
                 session.EndedAt = DateTime.UtcNow;
 
-                // Also update any attendances that haven't left yet
                 var activeAttendances = await _db.Attendances
                     .Where(a => a.SessionId == session.SessionId && a.LeaveTime == null)
                     .ToListAsync();

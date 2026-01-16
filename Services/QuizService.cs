@@ -301,52 +301,67 @@ public class QuizService : IQuizService
     }
 
     private void ValidateQuestion(QuizQuestion question)
-    {
-        _logger.LogInformation("Validating question: Type='{Type}', Content='{Content}', Choices='{Choices}', Answer='{Answer}'", 
-            question.QuestionType, question.Content, question.Choices, question.AnswerKey);
-            
-        if (string.IsNullOrWhiteSpace(question.Content))
-            throw new ArgumentException("Nội dung câu hỏi không được để trống");
-        if (string.IsNullOrWhiteSpace(question.QuestionType))
-            throw new ArgumentException("Loại câu hỏi không được để trống");
+{
+    _logger.LogInformation("Validating question: Type='{Type}', Content='{Content}', Choices='{Choices}', Answer='{Answer}'", 
+        question.QuestionType, question.Content, question.Choices, question.AnswerKey);
         
-        // QuestionType đã được chuẩn hóa từ trước, không cần chuẩn hóa lại
-        switch (question.QuestionType)
-        {
-            case "MultipleChoice":
-                if (string.IsNullOrWhiteSpace(question.Choices))
-                    throw new ArgumentException("Bạn phải nhập các lựa chọn cho câu hỏi trắc nghiệm");
-                if (string.IsNullOrWhiteSpace(question.AnswerKey))
-                    throw new ArgumentException("Bạn phải nhập đáp án cho câu hỏi trắc nghiệm");
-                // Bổ sung: Đáp án đúng phải nằm trong các lựa chọn
-                var choicesList = question.Choices.Split(new[] { '\n', '\r', ',' }, StringSplitOptions.RemoveEmptyEntries)
-                    .Select(c => c.Trim()).ToList();
-                if (!choicesList.Any(c => string.Equals(c, question.AnswerKey.Trim(), StringComparison.OrdinalIgnoreCase)))
-                    throw new ArgumentException("Đáp án đúng phải nằm trong các lựa chọn của câu hỏi trắc nghiệm");
-                _logger.LogInformation("MultipleChoice question validated successfully");
-                break;
-            case "TrueFalse":
-                if (string.IsNullOrWhiteSpace(question.AnswerKey))
-                    throw new ArgumentException("Bạn phải nhập đáp án cho câu hỏi đúng/sai");
-                // Chấp nhận cả "Đúng"/"Sai" và "true"/"false"
-                var answer = question.AnswerKey.Trim().ToLower();
-                if (answer != "đúng" && answer != "sai" && answer != "true" && answer != "false")
-                    throw new ArgumentException("Đáp án Đúng/Sai chỉ được là 'Đúng', 'Sai', 'true' hoặc 'false'");
-                _logger.LogInformation("TrueFalse question validated successfully");
-                break;
-            case "ShortAnswer":
-                if (string.IsNullOrWhiteSpace(question.AnswerKey))
-                    throw new ArgumentException("Bạn phải nhập đáp án cho câu hỏi điền từ");
-                _logger.LogInformation("ShortAnswer question validated successfully");
-                break;
-            case "Essay":
-                // Không cần answerKey
-                _logger.LogInformation("Essay question validated successfully");
-                break;
-            default:
-                throw new ArgumentException($"Loại câu hỏi '{question.QuestionType}' không hợp lệ");
-        }
+    if (string.IsNullOrWhiteSpace(question.Content))
+        throw new ArgumentException("Nội dung câu hỏi không được để trống");
+    if (string.IsNullOrWhiteSpace(question.QuestionType))
+        throw new ArgumentException("Loại câu hỏi không được để trống");
+    
+    // QuestionType đã được chuẩn hóa từ trước, không cần chuẩn hóa lại
+    switch (question.QuestionType)
+    {
+        case "MultipleChoice":
+            if (string.IsNullOrWhiteSpace(question.Choices))
+                throw new ArgumentException("Bạn phải nhập các lựa chọn cho câu hỏi trắc nghiệm");
+            if (string.IsNullOrWhiteSpace(question.AnswerKey))
+                throw new ArgumentException("Bạn phải nhập đáp án cho câu hỏi trắc nghiệm");
+
+            // Tách các lựa chọn thành danh sách
+            var choicesList = question.Choices
+                .Split(new[] { '\n', '\r', ',' }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(c => c.Trim())
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .ToList();
+
+            // Kiểm tra trùng lặp đáp án (thêm vào đây)
+            var distinctChoices = choicesList.Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            if (distinctChoices.Count < choicesList.Count)
+            {
+                throw new ArgumentException("Các lựa chọn không được trùng lặp");
+            }
+
+            // Kiểm tra đáp án đúng có nằm trong danh sách lựa chọn không
+            if (!choicesList.Any(c => string.Equals(c, question.AnswerKey.Trim(), StringComparison.OrdinalIgnoreCase)))
+                throw new ArgumentException("Đáp án đúng phải nằm trong các lựa chọn của câu hỏi trắc nghiệm");
+
+            _logger.LogInformation("MultipleChoice question validated successfully");
+            break;
+        case "TrueFalse":
+            if (string.IsNullOrWhiteSpace(question.AnswerKey))
+                throw new ArgumentException("Bạn phải nhập đáp án cho câu hỏi đúng/sai");
+            // Chấp nhận cả "Đúng"/"Sai" và "true"/"false"
+            var answer = question.AnswerKey.Trim().ToLower();
+            if (answer != "đúng" && answer != "sai" && answer != "true" && answer != "false")
+                throw new ArgumentException("Đáp án Đúng/Sai chỉ được là 'Đúng', 'Sai', 'true' hoặc 'false'");
+            _logger.LogInformation("TrueFalse question validated successfully");
+            break;
+        case "ShortAnswer":
+            if (string.IsNullOrWhiteSpace(question.AnswerKey))
+                throw new ArgumentException("Bạn phải nhập đáp án cho câu hỏi điền từ");
+            _logger.LogInformation("ShortAnswer question validated successfully");
+            break;
+        case "Essay":
+            // Không cần answerKey
+            _logger.LogInformation("Essay question validated successfully");
+            break;
+        default:
+            throw new ArgumentException($"Loại câu hỏi '{question.QuestionType}' không hợp lệ");
     }
+}
+
 
     public void AddQuestion(QuizQuestion question)
     {

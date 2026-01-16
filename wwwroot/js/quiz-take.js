@@ -176,38 +176,52 @@ class QuizTakeManager {
     renderMultipleChoice(question) {
         const contentContainer = document.getElementById('questionContent');
         let choices = [];
-        
+
+        // Lấy danh sách lựa chọn từ question.choices
         if (question.choices) {
-            // Xử lý cả trường hợp \n là chuỗi ký tự và ký tự xuống dòng thực sự
             if (question.choices.includes('\\n')) {
-                // Nếu có chuỗi \n, tách theo chuỗi đó
                 choices = question.choices.split('\\n').map(c => c.trim()).filter(c => c);
             } else {
-                // Nếu không có, tách theo ký tự xuống dòng thực sự
                 choices = question.choices.split(/\r?\n/).map(c => c.trim()).filter(c => c);
             }
         }
-        
+
+        // Lưu đáp án đúng
+        const correctAnswer = question.answerKey?.trim() || '';
+
+        // Tạo mảng các chỉ số để xáo trộn
+        const indices = Array.from({length: choices.length}, (_, i) => i);
+
+        // Hàm xáo trộn mảng (Fisher-Yates shuffle)
+        for (let i = indices.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [indices[i], indices[j]] = [indices[j], indices[i]]; // Hoán đổi
+        }
+
+        // Sử dụng mảng đã xáo trộn để hiển thị
         let html = '';
         const letters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
-        
-        choices.forEach((choice, index) => {
-            const letter = letters[index] || (index + 1);
-            const choiceId = `choice_${this.currentQuestionIndex}_${index}`;
-            const isSelected = this.answers[this.currentQuestionIndex] === choice.trim();
-            
+
+        indices.forEach((originalIndex, displayIndex) => {
+            const choice = choices[originalIndex];
+            const choiceId = `choice_${this.currentQuestionIndex}_${displayIndex}`;
+            const isSelected = this.answers[this.currentQuestionIndex] === choice;
+
             html += `
-                <div class="choice-item ${isSelected ? 'selected' : ''}" onclick="quizTakeManager.selectChoice('${choiceId}', '${choice.trim()}')">
-                    <input type="radio" class="choice-radio" id="${choiceId}" name="question_${this.currentQuestionIndex}" 
-                           ${isSelected ? 'checked' : ''} style="display: none;">
-                    <span class="choice-letter">${letter}</span>
-                    <label class="choice-label" for="${choiceId}">${choice.trim()}</label>
-                </div>
-            `;
+        <div class="choice-item ${isSelected ? 'selected' : ''}" 
+              onclick="quizTakeManager.selectChoice('${choiceId}', '${choice.replace(/'/g, "\\'")}')">
+            <input type="radio" class="choice-radio" id="${choiceId}" 
+                   name="question_${this.currentQuestionIndex}" 
+                   ${isSelected ? 'checked' : ''} style="display: none;">
+            <span class="choice-letter">${letters[displayIndex]}</span>
+            <label class="choice-label" for="${choiceId}">${choice}</label>
+        </div>
+    `;
         });
-        
+
         contentContainer.innerHTML = html;
     }
+
 
     renderTrueFalse(question) {
         const contentContainer = document.getElementById('questionContent');

@@ -79,7 +79,6 @@ namespace Zela.Hubs
         {
             try
             {
-                // Track user connection
                 userConnections[Context.ConnectionId] = userId;
 
             var conns = rooms.GetOrAdd(password, _ => new HashSet<string>());

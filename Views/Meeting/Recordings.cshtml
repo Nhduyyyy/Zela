@@ -1,6 +1,6 @@
 @{
     ViewData["Title"] = "Quản lý Recordings";
-    var userId = Context.Session.GetInt32("UserId") ?? 0;
+    var userId = ViewBag.UserId ?? Context.Session.GetInt32("UserId") ?? 0;
 }
 
 <div class="recordings-container">
