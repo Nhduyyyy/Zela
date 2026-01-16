@@ -60,6 +60,7 @@ builder.Services.AddSession(options =>
     options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP
     options.Cookie.HttpOnly = true;
     options.Cookie.Name = ".AspNetCore.Session";
+    options.Cookie.IsEssential = true; // Đảm bảo cookie luôn được gửi
     options.IdleTimeout = TimeSpan.FromMinutes(30);
 });
 
@@ -92,9 +93,10 @@ builder.Services.AddAuthentication(options =>
     {
         // Cấu hình cookie để hoạt động với HTTP (không phải HTTPS)
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP
+        options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP - QUAN TRỌNG!
         options.Cookie.HttpOnly = true;
         options.Cookie.Name = ".AspNetCore.Cookies";
+        options.Cookie.IsEssential = true; // Đảm bảo cookie luôn được gửi
         // Đảm bảo cookie được lưu giữa các request
         options.ExpireTimeSpan = TimeSpan.FromDays(30);
         options.SlidingExpiration = true;
@@ -124,8 +126,9 @@ builder.Services.AddAuthentication(options =>
         
         // 4.4d) Cấu hình cookie cho OAuth correlation (quan trọng để tránh lỗi Correlation failed)
         options.CorrelationCookie.SameSite = SameSiteMode.Lax;
-        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP - QUAN TRỌNG!
         options.CorrelationCookie.HttpOnly = true;
+        options.CorrelationCookie.IsEssential = true; // Đảm bảo cookie luôn được gửi
         // Tăng thời gian sống của correlation cookie
         options.CorrelationCookie.Expiration = TimeSpan.FromMinutes(15);
     })
