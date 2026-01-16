@@ -57,8 +57,9 @@ builder.Services.AddControllersWithViews();
 builder.Services.AddSession(options =>
 {
     options.Cookie.SameSite = SameSiteMode.Lax;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Cho phép HTTP
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP
     options.Cookie.HttpOnly = true;
+    options.Cookie.Name = ".AspNetCore.Session";
     options.IdleTimeout = TimeSpan.FromMinutes(30);
 });
 
@@ -91,8 +92,15 @@ builder.Services.AddAuthentication(options =>
     {
         // Cấu hình cookie để hoạt động với HTTP (không phải HTTPS)
         options.Cookie.SameSite = SameSiteMode.Lax;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest; // Cho phép HTTP
+        options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP
         options.Cookie.HttpOnly = true;
+        options.Cookie.Name = ".AspNetCore.Cookies";
+        // Quan trọng: Đảm bảo cookie được lưu giữa các request
+        options.Events.OnRedirectToLogin = context =>
+        {
+            context.Response.StatusCode = 401;
+            return Task.CompletedTask;
+        };
     })
     // 4.4) Thêm Google OAuth Authentication
     //    - Thiết lập ClientId và ClientSecret lấy từ cấu hình (appsettings.json hoặc environment).
@@ -116,6 +124,11 @@ builder.Services.AddAuthentication(options =>
         //      ta phải thêm scope "profile" và "email".
         options.Scope.Add("profile"); // Yêu cầu quyền lấy thông tin hồ sơ (tên, ảnh, v.v.)
         options.Scope.Add("email"); // Yêu cầu quyền lấy địa chỉ email của user
+        
+        // 4.4d) Cấu hình cookie cho OAuth correlation (quan trọng để tránh lỗi Correlation failed)
+        options.CorrelationCookie.SameSite = SameSiteMode.Lax;
+        options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP
+        options.CorrelationCookie.HttpOnly = true;
     })
     // 4.5) Thêm Facebook OAuth Authentication
     .AddFacebook(options =>
