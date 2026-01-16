@@ -19,8 +19,9 @@ services:
     healthcheck:
       test: /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "Str0ng_Pa$$w0rd!" -Q "SELECT 1" || exit 1
       interval: 10s
-      timeout: 3s
-      retries: 10
+      timeout: 5s
+      retries: 30
+      start_period: 30s
 
   # Zela Application
   zela-app:
@@ -34,7 +35,7 @@ services:
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:80
-      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Zela_FinalV2.0;User ID=SA;Password=YourStrong@Password123!;MultipleActiveResultSets=true;Encrypt=False;TrustServerCertificate=True;
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Zela_FinalV2.0;User ID=SA;Password=Str0ng_Pa$$w0rd!;MultipleActiveResultSets=true;Encrypt=False;TrustServerCertificate=True;
     volumes:
       - ./wwwroot/uploads:/app/wwwroot/uploads
       - ./wwwroot/sticker:/app/wwwroot/sticker
