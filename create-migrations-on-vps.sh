@@ -51,7 +51,7 @@ if [ $? -eq 0 ]; then
       -w /app \
       -e 'ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Zela_FinalV2.0;User ID=SA;Password=Str0ng_Pa$w0rd!;MultipleActiveResultSets=true;Encrypt=False;TrustServerCertificate=True;' \
       mcr.microsoft.com/dotnet/sdk:8.0 \
-      bash -c 'export PATH="$PATH:/root/.dotnet/tools" && dotnet ef database update --project Zela.csproj'
+      bash -c 'dotnet tool install --global dotnet-ef --version 8.0.0 > /dev/null 2>&1 && export PATH="$PATH:/root/.dotnet/tools" && dotnet ef database update --project Zela.csproj'
     
     echo ""
     echo "🔍 Kiểm tra bảng Users:"
