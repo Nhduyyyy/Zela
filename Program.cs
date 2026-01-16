@@ -57,6 +57,15 @@ builder.Services.AddDataProtection()
 // ---------------------------------------------
 builder.Services.AddControllersWithViews();
 
+// Cấu hình Antiforgery cookie để dùng SameSite=Lax (quan trọng cho OAuth)
+builder.Services.AddAntiforgery(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Cho phép HTTP
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 // ---------------------------------------------
 // 3) Đăng ký Session
 //    - Cho phép sử dụng HttpContext.Session để lưu trữ dữ liệu tạm thời (key-value).
