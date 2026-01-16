@@ -30,11 +30,14 @@ services:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:80
       - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Zela_FinalV2.0;User ID=SA;Password=Str0ng_Pa$$w0rd!;MultipleActiveResultSets=true;Encrypt=False;TrustServerCertificate=True;
+      - PayOS__PartnerCode=MOMO
+      - PayOS__ClientId=f53a4fe9-338b-4040-b228-9329d85fee29
+      - PayOS__ApiKey=22d0e505-cdb0-4233-b190-9dc5f68a5db8
+      - PayOS__Checksum=b6911d00cd425ed894e78bd680cae70f9dfa14734cdf1bb77f44f9a835d0f744
+      - AppSettings__BaseUrl=http://34.124.228.222
     volumes:
       - ./wwwroot/uploads:/app/wwwroot/uploads
       - ./wwwroot/sticker:/app/wwwroot/sticker
-      - ./appsettings.json:/app/appsettings.json:ro
-      - ./appsettings.Production.json:/app/appsettings.Production.json:ro
     depends_on:
       - sqlserver
     networks:
