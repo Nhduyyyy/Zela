@@ -33,6 +33,8 @@ services:
     volumes:
       - ./wwwroot/uploads:/app/wwwroot/uploads
       - ./wwwroot/sticker:/app/wwwroot/sticker
+      - ./appsettings.json:/app/appsettings.json:ro
+      - ./appsettings.Production.json:/app/appsettings.Production.json:ro
     depends_on:
       - sqlserver
     networks:
