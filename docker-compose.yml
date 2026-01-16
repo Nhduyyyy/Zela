@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # SQL Server Database
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: zela-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Str0ng_Pa$$w0rd!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - zela-network
+    restart: unless-stopped
+    healthcheck:
+      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "Str0ng_Pa$$w0rd!" -Q "SELECT 1" || exit 1
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  # Zela Application
+  zela-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zela-app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Zela_FinalV2.0;User ID=SA;Password=YourStrong@Password123!;MultipleActiveResultSets=true;Encrypt=False;TrustServerCertificate=True;
+    volumes:
+      - ./wwwroot/uploads:/app/wwwroot/uploads
+      - ./wwwroot/sticker:/app/wwwroot/sticker
+    depends_on:
+      sqlserver:
+        condition: service_healthy
+    networks:
+      - zela-network
+    restart: unless-stopped
+
+volumes:
+  sqlserver_data:
+    driver: local
+
+networks:
+  zela-network:
+    driver: bridge
+

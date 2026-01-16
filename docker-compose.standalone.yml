@@ -1,0 +1,31 @@
+version: '3.8'
+
+# Docker Compose này chỉ chạy ứng dụng Zela
+# SQL Server phải chạy riêng (trên VPS hoặc remote server)
+
+services:
+  # Zela Application
+  zela-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zela-app
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:80
+      # Cập nhật connection string với SQL Server của bạn
+      - ConnectionStrings__DefaultConnection=Server=your-sql-server-ip,1433;Database=Zela_FinalV2.0;User ID=SA;Password=Str0ng_Pa$$w0rd!;MultipleActiveResultSets=true;Encrypt=True;TrustServerCertificate=True;
+    volumes:
+      - ./wwwroot/uploads:/app/wwwroot/uploads
+      - ./wwwroot/sticker:/app/wwwroot/sticker
+    restart: unless-stopped
+    networks:
+      - zela-network
+
+networks:
+  zela-network:
+    driver: bridge
+
