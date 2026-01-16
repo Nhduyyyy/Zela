@@ -11,7 +11,7 @@ docker run --rm \
   /opt/mssql-tools/bin/sqlcmd \
   -S sqlserver \
   -U SA \
-  -P 'Str0ng_Pa$$w0rd!' \
+  -P 'Str0ng_Pa$w0rd!' \
   -Q 'SELECT @@VERSION'
 
 if [ $? -eq 0 ]; then
