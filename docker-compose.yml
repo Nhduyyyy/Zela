@@ -16,12 +16,6 @@ services:
     networks:
       - zela-network
     restart: unless-stopped
-    healthcheck:
-      test: /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P "Str0ng_Pa$$w0rd!" -Q "SELECT 1" || exit 1
-      interval: 10s
-      timeout: 5s
-      retries: 30
-      start_period: 30s
 
   # Zela Application
   zela-app:
@@ -40,8 +34,7 @@ services:
       - ./wwwroot/uploads:/app/wwwroot/uploads
       - ./wwwroot/sticker:/app/wwwroot/sticker
     depends_on:
-      sqlserver:
-        condition: service_healthy
+      - sqlserver
     networks:
       - zela-network
     restart: unless-stopped
