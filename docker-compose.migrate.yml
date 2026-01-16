@@ -1,0 +1,40 @@
+version: '3.8'
+
+# File này dùng để chạy migrations
+# Sử dụng: docker compose -f docker-compose.migrate.yml run --rm migrate
+
+services:
+  migrate:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrate
+    environment:
+      - ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Zela_FinalV2.0;User ID=SA;Password=Str0ng_Pa$$w0rd!;MultipleActiveResultSets=true;Encrypt=False;TrustServerCertificate=True;
+    networks:
+      - zela-network
+    depends_on:
+      - sqlserver
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: zela-sqlserver
+    environment:
+      - ACCEPT_EULA=Y
+      - SA_PASSWORD=Str0ng_Pa$$w0rd!
+      - MSSQL_PID=Express
+    ports:
+      - "1433:1433"
+    volumes:
+      - sqlserver_data:/var/opt/mssql
+    networks:
+      - zela-network
+    restart: unless-stopped
+
+networks:
+  zela-network:
+    external: true
+
+volumes:
+  sqlserver_data:
+    external: true
+

@@ -1,0 +1,21 @@
+# Dockerfile để chạy migrations (có SDK)
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS migrate
+
+WORKDIR /app
+
+# Copy csproj và restore
+COPY ["Zela.csproj", "./"]
+RUN dotnet restore "Zela.csproj"
+
+# Copy toàn bộ code
+COPY . .
+
+# Cài đặt EF Core tools
+RUN dotnet tool install --global dotnet-ef --version 8.0.0
+
+# Thêm tools vào PATH
+ENV PATH="${PATH}:/root/.dotnet/tools"
+
+# Chạy migrations
+CMD ["dotnet", "ef", "database", "update"]
+
