@@ -33,6 +33,14 @@ services:
       - PayOS__ApiKey=22d0e505-cdb0-4233-b190-9dc5f68a5db8
       - PayOS__Checksum=b6911d00cd425ed894e78bd680cae70f9dfa14734cdf1bb77f44f9a835d0f744
       - AppSettings__BaseUrl=http://34.124.228.222
+      - Authentication__Google__ClientId=869228240475-lvt9jbd8fkrhjdt6tp6ktq305g218urv.apps.googleusercontent.com
+      - Authentication__Google__ClientSecret=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
+      - Authentication__Facebook__AppId=1647959242568460
+      - Authentication__Facebook__AppSecret=a92cf82c6cc834ddda945f412d426da5
+      - Cloudinary__CloudName=da7a0c23y
+      - Cloudinary__ApiKey=537419489853277
+      - Cloudinary__ApiSecret=C2cV4EuSr5Yw_8OpGVex9SZ4Y9M
+      - OpenAI__ApiKey=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
     volumes:
       - ./wwwroot/uploads:/app/wwwroot/uploads
       - ./wwwroot/sticker:/app/wwwroot/sticker
