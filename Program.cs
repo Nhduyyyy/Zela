@@ -20,6 +20,14 @@ using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Force không dùng HTTPS trong Production (quan trọng cho OAuth cookies)
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.CheckConsentNeeded = context => false;
+    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+    options.Secure = CookieSecurePolicy.None; // Force Secure = false cho HTTP
+});
+
 
 // ---------------------------------------------
 // 1) Đăng ký IHttpContextAccessor
@@ -257,7 +265,9 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Home/Error");
-    app.UseHsts();
+    // Tắt HSTS vì đang dùng HTTP, không phải HTTPS
+    // HSTS có thể force Secure flag cho cookies
+    // app.UseHsts();
 }
 
 // 7.2) Tự động redirect HTTP sang HTTPS
@@ -269,6 +279,9 @@ app.UseStaticFiles();
 
 // 7.4) Bật routing (xác định route cho controller/action)
 app.UseRouting();
+
+// 7.4.5) Áp dụng Cookie Policy (quan trọng để force Secure = false)
+app.UseCookiePolicy();
 
 // 7.5) Bật Session middleware
 //      - Cho phép dùng HttpContext.Session trong controller/service.
