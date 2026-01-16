@@ -21,20 +21,20 @@ echo "🔍 Kiểm tra database..."
 docker run --rm \
   --network "$NETWORK_NAME" \
   mcr.microsoft.com/mssql-tools:latest \
-  /opt/mssql-tools/bin/sqlcmd -S sqlserver,1433 -U SA -P 'Str0ng_Pa$w0rd!' \
+  /opt/mssql-tools/bin/sqlcmd -S sqlserver,1433 -U SA -P 'Str0ng_Pa$$w0rd!' \
   -Q "SELECT name FROM sys.databases WHERE name = 'Zela_FinalV2.0'" 2>&1 | grep -i "Zela_FinalV2.0" || echo "Database chưa tồn tại"
 
 echo ""
 echo "🔄 Đang chạy migrations..."
 
-# Chạy migrations
+# Chạy migrations - dùng single quotes để tránh bash interpret $ trong password
 docker run --rm \
   --network "$NETWORK_NAME" \
   -v "$(pwd):/app" \
   -w /app \
-  -e ConnectionStrings__DefaultConnection="Server=sqlserver,1433;Database=Zela_FinalV2.0;User ID=SA;Password=Str0ng_Pa$w0rd!;MultipleActiveResultSets=true;Encrypt=False;TrustServerCertificate=True;" \
+  -e 'ConnectionStrings__DefaultConnection=Server=sqlserver,1433;Database=Zela_FinalV2.0;User ID=SA;Password=Str0ng_Pa$$w0rd!;MultipleActiveResultSets=true;Encrypt=False;TrustServerCertificate=True;' \
   mcr.microsoft.com/dotnet/sdk:8.0 \
-  bash -c "dotnet tool install --global dotnet-ef --version 8.0.0 && export PATH=\"\$PATH:/root/.dotnet/tools\" && dotnet ef database update --project Zela.csproj"
+  bash -c 'dotnet tool install --global dotnet-ef --version 8.0.0 > /dev/null 2>&1 && export PATH="$PATH:/root/.dotnet/tools" && dotnet ef database update --project Zela.csproj'
 
 if [ $? -eq 0 ]; then
     echo ""
@@ -44,7 +44,7 @@ if [ $? -eq 0 ]; then
     docker run --rm \
       --network "$NETWORK_NAME" \
       mcr.microsoft.com/mssql-tools:latest \
-      /opt/mssql-tools/bin/sqlcmd -S sqlserver,1433 -U SA -P 'Str0ng_Pa$w0rd!' \
+      /opt/mssql-tools/bin/sqlcmd -S sqlserver,1433 -U SA -P 'Str0ng_Pa$$w0rd!' \
       -d Zela_FinalV2.0 \
       -Q "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = 'Users'" 2>&1 | grep -i "Users" && echo "✅ Bảng Users đã tồn tại!" || echo "❌ Bảng Users chưa được tạo"
 else
