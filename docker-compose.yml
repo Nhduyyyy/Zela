@@ -21,9 +21,10 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: zela-app
-    ports:
-      - "80:80"
-      - "443:443"
+    # Không expose ports ra ngoài, chỉ dùng internal network
+    # Nginx sẽ là reverse proxy
+    expose:
+      - "80"
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=http://+:80
@@ -51,10 +52,29 @@ services:
       - zela-network
     restart: unless-stopped
 
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: zela-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - nginx_logs:/var/log/nginx
+    depends_on:
+      - zela-app
+    networks:
+      - zela-network
+    restart: unless-stopped
+
 volumes:
   sqlserver_data:
     driver: local
   dataprotection_keys:
+    driver: local
+  nginx_logs:
     driver: local
 
 networks:
