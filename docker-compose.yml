@@ -33,7 +33,7 @@ services:
       - PayOS__ClientId=f53a4fe9-338b-4040-b228-9329d85fee29
       - PayOS__ApiKey=22d0e505-cdb0-4233-b190-9dc5f68a5db8
       - PayOS__Checksum=b6911d00cd425ed894e78bd680cae70f9dfa14734cdf1bb77f44f9a835d0f744
-      - AppSettings__BaseUrl=http://zelahahaha.site
+      - AppSettings__BaseUrl=https://zelahahaha.site
       - Authentication__Google__ClientId=869228240475-lvt9jbd8fkrhjdt6tp6ktq305g218urv.apps.googleusercontent.com
       - Authentication__Google__ClientSecret=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
       - Authentication__Facebook__AppId=1647959242568460
@@ -62,12 +62,26 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - certbot_etc:/etc/letsencrypt:ro
+      - certbot_www:/var/www/certbot:ro
       - nginx_logs:/var/log/nginx
     depends_on:
       - zela-app
     networks:
       - zela-network
     restart: unless-stopped
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
+
+  # Certbot for SSL certificates
+  certbot:
+    image: certbot/certbot:latest
+    container_name: zela-certbot
+    volumes:
+      - certbot_etc:/etc/letsencrypt
+      - certbot_www:/var/www/certbot
+    networks:
+      - zela-network
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
   sqlserver_data:
@@ -75,6 +89,10 @@ volumes:
   dataprotection_keys:
     driver: local
   nginx_logs:
+    driver: local
+  certbot_etc:
+    driver: local
+  certbot_www:
     driver: local
 
 networks:
