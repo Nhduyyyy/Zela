@@ -62,7 +62,7 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./nginx/conf.d:/etc/nginx/conf.d:ro
-      - certbot_etc:/etc/letsencrypt:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro  # Mount từ host (cho DNS challenge)
       - certbot_www:/var/www/certbot:ro
       - nginx_logs:/var/log/nginx
     depends_on:
@@ -76,6 +76,9 @@ services:
   certbot:
     image: certbot/certbot:latest
     container_name: zela-certbot
+    ports:
+      - "80:80"
+      - "443:443"
     volumes:
       - certbot_etc:/etc/letsencrypt
       - certbot_www:/var/www/certbot
