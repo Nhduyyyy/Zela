@@ -19,75 +19,31 @@ if [ ! -f "seed-status-data.sql" ]; then
     exit 1
 fi
 
-# Lấy password từ docker-compose.yml hoặc dùng mặc định
-# Lưu ý: Password có thể chứa ký tự đặc biệt như $$, cần xử lý cẩn thận
-if [ -f "docker-compose.yml" ]; then
-    # Lấy password từ docker-compose.yml, dùng read để tránh expansion
-    SA_PASSWORD_LINE=$(grep "SA_PASSWORD=" docker-compose.yml | head -1)
-    if [ -n "$SA_PASSWORD_LINE" ]; then
-        # Tách password ra, loại bỏ khoảng trắng và quotes
-        DOCKER_PASSWORD=$(echo "$SA_PASSWORD_LINE" | sed 's/.*SA_PASSWORD=//' | sed "s/^[[:space:]]*//" | sed "s/[[:space:]]*$//" | sed "s/^['\"]//" | sed "s/['\"]$//")
-        if [ -n "$DOCKER_PASSWORD" ]; then
-            echo "📋 Đã lấy password từ docker-compose.yml"
-            # Gán password, dùng printf để escape đúng cách
-            PASSWORD=$(printf '%s' "$DOCKER_PASSWORD")
-        else
-            PASSWORD='Str0ng_Pa$$w0rd!'
-        fi
-    else
-        PASSWORD='Str0ng_Pa$$w0rd!'
-    fi
-else
-    # Fallback: dùng password mặc định
-    PASSWORD='Str0ng_Pa$$w0rd!'
-fi
+# Password: Trong docker-compose.yml có $$ nhưng khi dùng trong bash script cần chỉ 1 dấu $
+# Hoặc có thể dùng docker exec trực tiếp vào container
+PASSWORD='Str0ng_Pa$w0rd!'
 
-# Debug: hiển thị password (ẩn một phần để debug)
-echo "🔑 Sử dụng password: ${PASSWORD:0:5}***"
+# Kiểm tra xem có thể dùng docker exec không (nhanh hơn)
+if docker ps | grep -q zela-sqlserver; then
+    USE_DOCKER_EXEC=true
+    echo "✅ Tìm thấy container zela-sqlserver, sẽ dùng docker exec"
+else
+    USE_DOCKER_EXEC=false
+    echo "📡 Sẽ dùng docker run với network"
+fi
+echo ""
 
 # Test connection trước
 echo "🔐 Đang kiểm tra kết nối SQL Server..."
-docker run --rm \
-  --network "$NETWORK" \
-  mcr.microsoft.com/mssql-tools:latest \
-  /opt/mssql-tools/bin/sqlcmd \
-  -S sqlserver,1433 \
-  -U SA \
-  -P "$PASSWORD" \
-  -d Zela_FinalV2.0 \
-  -Q "SELECT 1" \
-  > /dev/null 2>&1
-
-if [ $? -ne 0 ]; then
-    echo "❌ Không thể kết nối với SQL Server!"
-    echo "💡 Hãy kiểm tra lại:"
-    echo "   1. Container sqlserver đã chạy chưa?"
-    echo "   2. Password trong docker-compose.yml có đúng không?"
-    echo "   3. Network '$NETWORK' có tồn tại không?"
-    exit 1
-fi
-
-echo "✅ Kết nối thành công!"
-
-# Chạy SQL script
-echo ""
-echo "🔄 Đang chèn dữ liệu vào bảng Statuses..."
-docker run --rm \
-  --network "$NETWORK" \
-  -v "$(pwd)/seed-status-data.sql:/tmp/seed.sql:ro" \
-  mcr.microsoft.com/mssql-tools:latest \
-  /opt/mssql-tools/bin/sqlcmd \
-  -S sqlserver,1433 \
-  -U SA \
-  -P "$PASSWORD" \
-  -d Zela_FinalV2.0 \
-  -i /tmp/seed.sql
-
-if [ $? -eq 0 ]; then
-    echo ""
-    echo "✅ Đã chèn dữ liệu thành công!"
-    echo ""
-    echo "🔍 Kiểm tra dữ liệu đã chèn:"
+if [ "$USE_DOCKER_EXEC" = true ]; then
+    docker exec zela-sqlserver /opt/mssql-tools/bin/sqlcmd \
+      -S localhost \
+      -U SA \
+      -P "$PASSWORD" \
+      -d Zela_FinalV2.0 \
+      -Q "SELECT 1" \
+      > /dev/null 2>&1
+else
     docker run --rm \
       --network "$NETWORK" \
       mcr.microsoft.com/mssql-tools:latest \
@@ -96,8 +52,75 @@ if [ $? -eq 0 ]; then
       -U SA \
       -P "$PASSWORD" \
       -d Zela_FinalV2.0 \
-      -Q "SELECT StatusId, StatuName, CreatedAt, Describe FROM Statuses ORDER BY StatusId" \
-      -W -h -1
+      -Q "SELECT 1" \
+      > /dev/null 2>&1
+fi
+
+if [ $? -ne 0 ]; then
+    echo "❌ Không thể kết nối với SQL Server!"
+    echo "💡 Hãy kiểm tra lại:"
+    echo "   1. Container sqlserver đã chạy chưa? (docker ps | grep sqlserver)"
+    echo "   2. Password có đúng không? (kiểm tra docker-compose.yml)"
+    echo "   3. Network '$NETWORK' có tồn tại không? (docker network ls)"
+    echo ""
+    echo "💡 Thử chạy lệnh này để test kết nối:"
+    echo "   docker exec zela-sqlserver /opt/mssql-tools/bin/sqlcmd -S localhost -U SA -P '$PASSWORD' -Q 'SELECT 1'"
+    exit 1
+fi
+
+echo "✅ Kết nối thành công!"
+
+# Chạy SQL script
+echo ""
+echo "🔄 Đang chèn dữ liệu vào bảng Statuses..."
+if [ "$USE_DOCKER_EXEC" = true ]; then
+    # Copy file SQL vào container và chạy
+    docker cp seed-status-data.sql zela-sqlserver:/tmp/seed.sql
+    docker exec zela-sqlserver /opt/mssql-tools/bin/sqlcmd \
+      -S localhost \
+      -U SA \
+      -P "$PASSWORD" \
+      -d Zela_FinalV2.0 \
+      -i /tmp/seed.sql
+    docker exec zela-sqlserver rm -f /tmp/seed.sql
+else
+    docker run --rm \
+      --network "$NETWORK" \
+      -v "$(pwd)/seed-status-data.sql:/tmp/seed.sql:ro" \
+      mcr.microsoft.com/mssql-tools:latest \
+      /opt/mssql-tools/bin/sqlcmd \
+      -S sqlserver,1433 \
+      -U SA \
+      -P "$PASSWORD" \
+      -d Zela_FinalV2.0 \
+      -i /tmp/seed.sql
+fi
+
+if [ $? -eq 0 ]; then
+    echo ""
+    echo "✅ Đã chèn dữ liệu thành công!"
+    echo ""
+    echo "🔍 Kiểm tra dữ liệu đã chèn:"
+    if [ "$USE_DOCKER_EXEC" = true ]; then
+        docker exec zela-sqlserver /opt/mssql-tools/bin/sqlcmd \
+          -S localhost \
+          -U SA \
+          -P "$PASSWORD" \
+          -d Zela_FinalV2.0 \
+          -Q "SELECT StatusId, StatuName, CreatedAt, Describe FROM Statuses ORDER BY StatusId" \
+          -W -h -1
+    else
+        docker run --rm \
+          --network "$NETWORK" \
+          mcr.microsoft.com/mssql-tools:latest \
+          /opt/mssql-tools/bin/sqlcmd \
+          -S sqlserver,1433 \
+          -U SA \
+          -P "$PASSWORD" \
+          -d Zela_FinalV2.0 \
+          -Q "SELECT StatusId, StatuName, CreatedAt, Describe FROM Statuses ORDER BY StatusId" \
+          -W -h -1
+    fi
 else
     echo ""
     echo "❌ Có lỗi xảy ra khi chèn dữ liệu!"
